@@ -1,0 +1,135 @@
+# motocan
+
+Reverse-engineering what a **Yamaha R9 (2026)** says on its CAN bus, so the bike's own
+data — engine speed, gear, throttle, temperatures, wheel speeds — can be logged while
+riding without Yamaha's Y-TRAC app or an AiM logger.
+
+Nothing here comes from Yamaha. Every row below was measured on one bike with a USB CAN
+adapter on the diagnostic connector, a laptop, and something independent to hold each
+number against: the dash, a recording of the engine's sound, a second sensor.
+
+**Status, 2026-10-12:** twelve fields decoded from three captures taken at a standstill.
+The two wheel speeds are next. The device that would stream all this to a phone works on
+the bench and cannot yet read this particular connector.
+
+## What is decoded so far
+
+The R9's diagnostic connector carries 23 ids at 506 frames a second, at 500 kbps — and
+only when the listening node acknowledges them. Bytes are numbered from 0; `b3` is byte 3.
+
+| Signal | Frame | Rate | Raw value | Equation | How sure |
+|---|---|---|---|---|---|
+| Engine speed | `0x27C` | 100 Hz | `b0 << 8 \| b1` (16 bits, big-endian) | `rpm = raw * 100 / 256` | `b0` is whole hundreds of rpm, sent again on their own in `0x750`; agrees with the engine's sound at idle (0.3915 ± 1.5 %) and holds to 3 400 rpm |
+| Gear | `0x27C` | 100 Hz | `b4 & 0x07` | `0` = N, `1`–`6`, `7` = between gears | confirmed, 12 anchors of 12 |
+| TCS setting | `0x27C` | 100 Hz | `b3 >> 1` | the number on the dash | confirmed, 5 anchors of 5 |
+| A bit that is set for about half a second as the engine starts | `0x27C` | 100 Hz | `b3 & 0x01` | `1` during the start, `0` at all other times | both starts captured. What the bit means is not known — only when it changes |
+| A bit that is set while the engine runs | `0x27C` | 100 Hz | `b6 >> 7` | `0` with the engine off, `1` with it running | two starts and one stop. What the bit means is not known — only when it changes |
+| Mode setting, PWR at a guess | `0x27C` and `0x76E` | 100 Hz / 2 Hz | `b4 >> 6`, and `0x76E` `b1` | sport `1`, street `2`, rain `3`, custom 1 `0` | follows the ride mode; what it is, and custom 2's value, are open |
+| Neutral | `0x751` | 100 Hz | `b6` | `0x60` or `0x70` = neutral, `0x00` = in gear | agrees with every change into and out of neutral |
+| Water temperature | `0x512` | 1 Hz | `b0` | `°C = raw * 0.625 - 30` | confirmed, 6 dash anchors from 17 to 76 °C |
+| Intake air temperature | `0x512` | 1 Hz | `b1` | `°C = raw * 0.625 - 30` | held against the water sensor after a cold soak; the dash shows 1–2 °C less |
+| Throttle grip (APS) | `0x758` | 20 Hz | `(b7 & 0x0F) << 12 \| (b6 & 0x0F) << 8 \| b5` (15 bits) | `% = raw / 31672 * 100` | both ends measured; reads 0 for the first twentieth of the travel |
+| Throttle valve (TPS), measured | `0x758` | 20 Hz | `(b0 >> 4) << 8 \| b2` (12 bits) | `% = raw / 16 / 144.4 * 100` | top measured, zero provisional: a warm idle reads about 8 % |
+| Throttle valve, commanded | `0x759` | 20 Hz | `(b0 >> 4) << 4 \| (b2 >> 4)` (8 bits) | `% = raw / 144.4 * 100` | the same unit as the measured one, and leads it by a sample |
+
+The same as a DBC file: [analysis/r9.dbc](analysis/r9.dbc). Every id, including about
+forty fields that change and have no name yet:
+[analysis/r9-signals.md](analysis/r9-signals.md).
+
+## What is not there, and what is left
+
+- **Not on this connector:** lean angle, the SCS, LIF and quickshifter settings, battery
+  voltage, fuel used. The R9's ECU has three separate CAN pairs and the diagnostic
+  connector is on the one with nothing but the ECU on it
+  ([analysis/R9_CANbus.md](analysis/R9_CANbus.md)).
+- **Next:** the two wheel speeds and the meaning of the mode field, in one session with
+  the rear wheel on a stand ([analysis/stand-session.md](analysis/stand-session.md)).
+- **Open:** the throttle valve's zero, the unnamed fields, anything that needs the bike
+  moving. The whole list, with what would settle each item:
+  [analysis/open-questions.md](analysis/open-questions.md).
+
+## Where things are
+
+Two halves that meet at the CAN bus and nowhere else.
+
+| | |
+|---|---|
+| [analysis/](analysis/) | **What the bytes mean.** A laptop, a CANable adapter and a log file |
+| &nbsp;&nbsp;[r9-signals.md](analysis/r9-signals.md), [r9.dbc](analysis/r9.dbc) | the result: what every id carries |
+| &nbsp;&nbsp;[open-questions.md](analysis/open-questions.md) | what is left |
+| &nbsp;&nbsp;[connector.md](analysis/connector.md) | where to connect, and the pinout |
+| &nbsp;&nbsp;[captures/](analysis/captures/) | the raw logs, and a write-up beside each with the evidence |
+| &nbsp;&nbsp;[tools/](analysis/tools/) | the capture session as one script, and the converters |
+| &nbsp;&nbsp;[R9_CANbus.md](analysis/R9_CANbus.md) | the bike's CAN wiring, from the service manual |
+| &nbsp;&nbsp;[background/](analysis/background/) | the research from before the bike was reached: other Yamahas, AiM's protocols |
+| [bluecan/](bluecan/) | **The device that streams them**: an ESP32-S3 Feather feeding [RaceChrono](https://racechrono.com/) over Bluetooth LE. Proven on the bench; it only listens, and this connector needs a node that acknowledges, so it does not read the R9 yet |
+| [journal/](journal/) | the author's working notes. Set aside, and may be removed |
+| [AGENTS.md](AGENTS.md) | the conventions, for a coding agent or a person about to change something |
+
+## Starting from here
+
+To **use the result**, [analysis/r9.dbc](analysis/r9.dbc) and the table above are all of
+it. To **check it or carry it further** without a bike:
+
+```bash
+cd analysis && ./tools/0-setup.sh && ./tools/1-selftest.sh   # Linux or WSL2; builds .venv, proves the chain on a virtual bus
+xz -dk captures/session-2026-10-11_200550/capture.log.xz      # a candump log, 465 000 frames, engine running
+```
+
+Each capture folder has the log, `ref.csv` with the marks made during the session (what
+the rider did and what the dash showed, with timestamps), and a write-up of what was
+found. To **capture on your own bike**, [analysis/README.md](analysis/README.md) has the
+order of the scripts and [analysis/connector.md](analysis/connector.md) the connection.
+
+## Before you connect anything to a motorcycle
+
+This is one person's measurements on one bike, with no warranty of any kind. The adapter
+here never sends a frame of its own, but it does acknowledge the ECU's, which makes it a
+participant on the bus and not a bystander; `tools/2-session.sh` proves the bit rate in
+listen-only first and runs a watchdog that takes the adapter off the bus if it ever
+transmits. Nothing in this repository was captured while riding. If you do otherwise, that
+is your decision and your risk.
+
+## Thanks
+
+None of this started from nothing. In the order they helped:
+
+- The RaceChrono forum thread ["PIDs for yamaha"](https://racechrono.com/forum/d/2296-2296/3),
+  and the r1-forum.com thread ["CAN Bus Protocol"](https://www.r1-forum.com/threads/can-bus-protocol.512553/)
+  — the first evidence of what Yamaha frames look like, worked out by hand by people who
+  then wrote it down.
+- [terrafirma2021/Yamaha-DataLogger](https://github.com/terrafirma2021/Yamaha-DataLogger),
+  [JackHat1/MT07_CAN_Project](https://github.com/JackHat1/MT07_CAN_Project) and
+  [DKey96/T7-ABS-Dongle](https://github.com/DKey96/T7-ABS-Dongle) — working code for the
+  R9's relatives.
+- [AiM](https://www.aim-sportline.com/) — its published user guides for the MT-09 platform
+  gave the connector, the pin functions and the channel list this project aims at, and its
+  engine-speed scale of 0.391 turned out to be the R9's 100/256. Copies of two guides are
+  in [analysis/sources/aim-yamaha/](analysis/sources/aim-yamaha/README.md); they are AiM's.
+- [billyjack2/CAN-DBC-Collection](https://github.com/billyjack2/CAN-DBC-Collection) — AiM's
+  protocols as DBC files, four of which are copied beside the guides.
+- [KDS](https://kds-online.de/en/obd-adapter-euro5-for-motorcycle-6-pin-to-obd2-k-line-can-bus.html)
+  — the one picture found anywhere that numbers the cavities of the Euro5 connector.
+- [CSS Electronics](https://www.csselectronics.com/pages/can-bus-reverse-engineering-ai-llm-claude)
+  — the analysis scripts vendored in [analysis/css-skill/](analysis/css-skill/) (MIT), and
+  a method written up as engineering. Jordans Garage's
+  ["How to decode CANbus with AI"](https://www.youtube.com/watch?v=GlQO8fLgHi4) for
+  showing where that method fails.
+- [joeroback/racechrono-canbus](https://github.com/joeroback/racechrono-canbus), which
+  Bluecan is built on, [aollin/racechrono-ble-diy-device](https://github.com/aollin/racechrono-ble-diy-device)
+  for the specification of RaceChrono's Bluetooth service, and
+  [timurrrr/RaceChronoDiyBleDevice](https://github.com/timurrrr/RaceChronoDiyBleDevice).
+- [Elmue's Candlelight firmware](https://github.com/Elmue/CANable-2.5-firmware-Slcan-and-Candlelight) for the CANable, which fixed a stall the stock firmware had
+  ([bluecan/gs-usb-stall.md](bluecan/gs-usb-stall.md)).
+
+Most of the analysis and the writing was done in conversation with Claude, Anthropic's
+model, working from the owner's captures and the owner's decisions.
+
+If something here is yours and you would rather it were not copied, open an issue and it
+will be removed.
+
+## Licence
+
+Code is under the [MIT licence](LICENSE). The text, the captures and `r9.dbc` are under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). `analysis/css-skill/` and the
+files in `analysis/sources/` belong to their authors and keep their own terms.

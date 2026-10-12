@@ -1,0 +1,116 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: YAMAHA_CAN_2015 AIM_LOGGER
+
+BO_ 517 YAMAHA_CAN_2015_205: 8 YAMAHA_CAN_2015
+ SG_ ECU_W_SPD_F : 8|16@1+ (0.01,0) [0|655.35] "km/h"  AIM_LOGGER
+ SG_ ECU_W_SPD_R : 24|16@1+ (0.01,0) [0|655.35] "km/h"  AIM_LOGGER
+
+BO_ 521 YAMAHA_CAN_2015_209: 8 YAMAHA_CAN_2015
+ SG_ ECU_RPM : 8|16@1+ (0.4,0) [0|26214] "rpm"  AIM_LOGGER
+ SG_ TCS_MODE : 25|4@1+ (1,0) [0|15] ""  AIM_LOGGER
+ SG_ ECU_GEAR : 29|3@1+ (1,0) [0|7] "gear"  AIM_LOGGER
+ SG_ ECU_GEAR_RAW : 32|3@1+ (1,0) [0|7] ""  AIM_LOGGER
+ SG_ ECU_POW_MODE : 38|2@1+ (1,0) [0|3] ""  AIM_LOGGER
+
+BO_ 533 YAMAHA_CAN_2015_215: 8 YAMAHA_CAN_2015
+ SG_ ECU_THROTTLE : 8|10@1+ (0.15,0) [0|153.45] "deg"  AIM_LOGGER
+ SG_ ECU_TPS_HAND : 24|10@1+ (0.145,0) [0|148.335] "%"  AIM_LOGGER
+ SG_ ECU_LIFT_SET : 32|2@1+ (1,0) [0|3] ""  AIM_LOGGER
+ SG_ ECU_LAUNCH_SET : 34|2@1+ (1,0) [0|3] ""  AIM_LOGGER
+ SG_ ECU_SCS_SET : 40|2@1+ (1,0) [0|3] ""  AIM_LOGGER
+ SG_ ECU_QSS_SET : 45|2@1+ (1,0) [0|3] ""  AIM_LOGGER
+ SG_ ECU_R_ABS_IN : 56|1@1+ (1,0) [0|1] ""  AIM_LOGGER
+ SG_ ECU_F_ABS_IN : 57|1@1+ (1,0) [0|1] ""  AIM_LOGGER
+ SG_ ECU_LAUNCH_IN : 58|1@1+ (1,0) [0|1] ""  AIM_LOGGER
+ SG_ ECU_LIFT_IN : 59|1@1+ (1,0) [0|1] ""  AIM_LOGGER
+ SG_ ECU_SCS_IN : 60|1@1+ (1,0) [0|1] ""  AIM_LOGGER
+ SG_ ECU_TCS_IN : 61|1@1+ (1,0) [0|1] ""  AIM_LOGGER
+
+BO_ 550 YAMAHA_CAN_2015_226: 8 YAMAHA_CAN_2015
+ SG_ ECU_MAP_SEL : 53|3@1+ (1,0) [0|7] ""  AIM_LOGGER
+
+BO_ 574 YAMAHA_CAN_2015_23E: 8 YAMAHA_CAN_2015
+ SG_ ECU_ECT : 0|8@1+ (0.66,-36) [-36|132.3] "C"  AIM_LOGGER
+ SG_ ECU_AAT : 8|8@1+ (0.66,-36) [-36|132.3] "C"  AIM_LOGGER
+
+BO_ 592 YAMAHA_CAN_2015_250: 8 YAMAHA_CAN_2015
+ SG_ ECU_ACCX : 8|16@1+ (0.001,-7) [-7|58.535] "g"  AIM_LOGGER
+ SG_ ECU_ACCY : 24|16@1+ (0.001,-7) [-7|58.535] "g"  AIM_LOGGER
+
+BO_ 596 YAMAHA_CAN_2015_254: 8 YAMAHA_CAN_2015
+ SG_ ECU_GYRO : 40|16@1+ (-0.01,300) [-355.35|300] "deg/s"  AIM_LOGGER
+
+BO_ 608 YAMAHA_CAN_2015_260: 9 YAMAHA_CAN_2015
+ SG_ ECU_BRK_F_REQ : 8|16@1+ (0.1,0) [0|6553.5] "bar"  AIM_LOGGER
+ SG_ ECU_BRK_R_REQ : 24|16@1+ (0.1,0) [0|6553.5] "bar"  AIM_LOGGER
+ SG_ ECU_BRKP_F : 40|16@1+ (0.1,0) [0|6553.5] "bar"  AIM_LOGGER
+ SG_ ECU_BRKP_R : 56|16@1+ (0.1,0) [0|6553.5] "bar"  AIM_LOGGER
+
+
+CM_ "AiM protocol YAMAHA / CAN_2015, driver 02.00.01, bus mode 6";
+CM_ SG_ 517 ECU_W_SPD_F "AiM channel CC01, 10 Hz, physical = raw*0.01+0";
+CM_ SG_ 517 ECU_W_SPD_R "AiM channel CC02, 10 Hz, physical = raw*0.01+0";
+CM_ SG_ 521 ECU_RPM "AiM channel CC03, 10 Hz, physical = raw*0.4+0";
+CM_ SG_ 521 TCS_MODE "AiM channel CC04, 10 Hz, physical = raw*1+0";
+CM_ SG_ 521 ECU_GEAR "AiM channel CC05, 10 Hz, enumeration, see VAL_";
+CM_ SG_ 521 ECU_GEAR_RAW "AiM channel CC06, 10 Hz, physical = raw*1+0";
+CM_ SG_ 521 ECU_POW_MODE "AiM channel CC07, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_THROTTLE "AiM channel CC08, 10 Hz, physical = raw*0.15+0";
+CM_ SG_ 533 ECU_TPS_HAND "AiM channel CC09, 10 Hz, physical = raw*0.145+0";
+CM_ SG_ 533 ECU_LIFT_SET "AiM channel CC10, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_LAUNCH_SET "AiM channel CC11, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_SCS_SET "AiM channel CC12, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_QSS_SET "AiM channel CC13, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_R_ABS_IN "AiM channel CC14, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_F_ABS_IN "AiM channel CC15, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_LAUNCH_IN "AiM channel CC16, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_LIFT_IN "AiM channel CC17, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_SCS_IN "AiM channel CC18, 10 Hz, physical = raw*1+0";
+CM_ SG_ 533 ECU_TCS_IN "AiM channel CC19, 10 Hz, physical = raw*1+0";
+CM_ SG_ 550 ECU_MAP_SEL "AiM channel CC20, 10 Hz, physical = raw*1+0";
+CM_ SG_ 574 ECU_ECT "AiM channel CC21, 10 Hz, physical = raw*0.66-36";
+CM_ SG_ 574 ECU_AAT "AiM channel CC22, 10 Hz, physical = raw*0.66-36";
+CM_ SG_ 592 ECU_ACCX "AiM channel CC23, 10 Hz, physical = raw*0.001-7";
+CM_ SG_ 592 ECU_ACCY "AiM channel CC24, 10 Hz, physical = raw*0.001-7";
+CM_ SG_ 596 ECU_GYRO "AiM channel CC25, 10 Hz, physical = raw*-0.01+300";
+CM_ SG_ 608 ECU_BRK_F_REQ "AiM channel CC26, 10 Hz, physical = raw*0.1+0";
+CM_ SG_ 608 ECU_BRK_R_REQ "AiM channel CC27, 10 Hz, physical = raw*0.1+0";
+CM_ SG_ 608 ECU_BRKP_F "AiM channel CC28, 10 Hz, physical = raw*0.1+0";
+CM_ SG_ 608 ECU_BRKP_R "AiM channel CC29, 10 Hz, physical = raw*0.1+0";
+
+VAL_ 521 ECU_GEAR 0 "N" 1 "1" 2 "2" 3 "3" 4 "4" 5 "5" 6 "6" 7 "7" 8 "8" 9 "9" 10 "-" ;
+

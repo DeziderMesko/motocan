@@ -1,0 +1,17 @@
+.DS_Store
+node_modules/
+*.log
+
+# arduino-cli build output. Also in bluecan/firmware/.gitignore for that tree;
+# repeated here because a root build/ appears whenever a compile is run from the
+# repository root, and only a global gitconfig was hiding it on this machine.
+build/
+
+# The CSS analysis scripts default their JSON and PNG output to a relative
+# temp-output/, which lands wherever they were run from. analysis-selftest.sh names
+# every output explicitly so this stays empty, but a script run by hand will not.
+temp-output/
+
+# the analysis venv, built by analysis/tools/0-setup.sh
+analysis/.venv/
+__pycache__/

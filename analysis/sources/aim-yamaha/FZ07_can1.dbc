@@ -1,0 +1,67 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: YAMAHA_FZ07 AIM_LOGGER
+
+BO_ 522 YAMAHA_FZ07_20A: 8 YAMAHA_FZ07
+ SG_ RPM : 24|16@1+ (0.375,0) [0|24575.6] "rpm"  AIM_LOGGER
+
+BO_ 534 YAMAHA_FZ07_216: 8 YAMAHA_FZ07
+ SG_ ThrottlePosition : 0|8@1+ (0.5814,-19.767) [-19.767|128.49] "%"  AIM_LOGGER
+
+BO_ 566 YAMAHA_FZ07_236: 8 YAMAHA_FZ07
+ SG_ Gear : 4|4@1+ (1,0) [0|15] "gear"  AIM_LOGGER
+
+BO_ 570 YAMAHA_FZ07_23A: 8 YAMAHA_FZ07
+ SG_ MIL : 0|8@1+ (1,0) [0|255] ""  AIM_LOGGER
+ SG_ Error : 16|8@1+ (1,0) [0|255] ""  AIM_LOGGER
+
+BO_ 574 YAMAHA_FZ07_23E: 8 YAMAHA_FZ07
+ SG_ CoolantTemp : 0|8@1+ (0.555556,-24.4444) [-24.4444|117.222] "C"  AIM_LOGGER
+ SG_ IntakeAirTemp : 8|8@1+ (0.555556,-24.4444) [-24.4444|117.222] "C"  AIM_LOGGER
+ SG_ VehicleSpeed : 24|16@1+ (0.1,0) [0|6553.5] "km/h"  AIM_LOGGER
+
+
+CM_ "AiM protocol YAMAHA / FZ07, driver 02.00.01, bus mode 6";
+CM_ SG_ 522 RPM "AiM channel C101, 10 Hz, physical = raw*0.375+0";
+CM_ SG_ 534 ThrottlePosition "AiM channel C102, 10 Hz, physical = raw*0.5814-19.767";
+CM_ SG_ 566 Gear "AiM channel C103, 10 Hz, identity";
+CM_ SG_ 570 MIL "AiM channel C105, 10 Hz, identity";
+CM_ SG_ 570 Error "AiM channel CC04, 10 Hz, identity";
+CM_ SG_ 574 CoolantTemp "AiM channel CC07, 10 Hz, physical = raw*0.555556-24.4444";
+CM_ SG_ 574 IntakeAirTemp "AiM channel C108, 10 Hz, physical = raw*0.555556-24.4444";
+CM_ SG_ 574 VehicleSpeed "AiM channel CC06, 10 Hz, physical = raw*0.1+0";
+
+

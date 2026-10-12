@@ -1,0 +1,77 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: YAMAHA_FZ09_MT09 AIM_LOGGER
+
+BO_ 522 YAMAHA_FZ09_MT09_20A: 8 YAMAHA_FZ09_MT09
+ SG_ Speed : 8|16@1+ (0.0025,0) [0|163.838] "km/h"  AIM_LOGGER
+ SG_ RPM : 24|16@1+ (0.391,0) [0|25624.2] "rpm"  AIM_LOGGER
+ SG_ Speed_2 : 40|16@1+ (0.6,0) [0|39321] "km/h"  AIM_LOGGER
+ SG_ S_20Ab56b60 : 56|5@1+ (1,0) [0|31] ""  AIM_LOGGER
+ SG_ Mode : 61|2@1+ (1,0) [0|3] ""  AIM_LOGGER
+
+BO_ 534 YAMAHA_FZ09_MT09_216: 8 YAMAHA_FZ09_MT09
+ SG_ TPS : 8|16@1+ (0.15,0) [0|9830.25] "%"  AIM_LOGGER
+ SG_ PPS : 24|16@1+ (0.145,0) [0|9502.57] "%"  AIM_LOGGER
+
+BO_ 566 YAMAHA_FZ09_MT09_236: 8 YAMAHA_FZ09_MT09
+ SG_ Gear : 0|8@1+ (1,0) [0|255] "gear"  AIM_LOGGER
+
+BO_ 570 YAMAHA_FZ09_MT09_23A: 8 YAMAHA_FZ09_MT09
+ SG_ FlagError : 0|8@1+ (1,0) [0|255] ""  AIM_LOGGER
+ SG_ Error : 16|8@1+ (1,0) [0|255] ""  AIM_LOGGER
+
+BO_ 574 YAMAHA_FZ09_MT09_23E: 8 YAMAHA_FZ09_MT09
+ SG_ Water_Temp : 0|8@1+ (0.625,-30) [-30|129.375] "C"  AIM_LOGGER
+ SG_ Air_Temp : 8|8@1+ (0.625,-30) [-30|129.375] "C"  AIM_LOGGER
+ SG_ S_23EB3_forse_MAP : 24|16@1+ (1,0) [0|65535] ""  AIM_LOGGER
+
+
+CM_ "AiM protocol YAMAHA / FZ09 MT09, driver 02.00.00, bus mode 6";
+CM_ SG_ 522 Speed "AiM channel CC02, 10 Hz, physical = raw*0.0025+0";
+CM_ SG_ 522 RPM "AiM channel CC01, 10 Hz, physical = raw*0.391+0";
+CM_ SG_ 522 Speed_2 "AiM channel CC03, 10 Hz, physical = raw*0.6+0";
+CM_ SG_ 522 S_20Ab56b60 "AiM channel CC04, 10 Hz, physical = raw*1+0";
+CM_ SG_ 522 Mode "AiM channel CC05, 10 Hz, identity";
+CM_ SG_ 534 TPS "AiM channel CC07, 10 Hz, physical = raw*0.15+0";
+CM_ SG_ 534 PPS "AiM channel CC06, 10 Hz, physical = raw*0.145+0";
+CM_ SG_ 566 Gear "AiM channel CC08, 10 Hz, physical = raw*1+0";
+CM_ SG_ 570 FlagError "AiM channel CC09, 10 Hz, physical = raw*1+0";
+CM_ SG_ 570 Error "AiM channel CC10, 10 Hz, physical = raw*1+0";
+CM_ SG_ 574 Water_Temp "AiM channel CC11, 10 Hz, physical = raw*0.625-30";
+CM_ SG_ 574 Air_Temp "AiM channel CC12, 10 Hz, physical = raw*0.625-30";
+CM_ SG_ 574 S_23EB3_forse_MAP "AiM channel CC13, 10 Hz, physical = raw*1+0";
+
+

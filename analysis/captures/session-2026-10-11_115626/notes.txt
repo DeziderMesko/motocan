@@ -1,0 +1,45 @@
+session 2026-10-11T11:56:26+02:00
+iface can0 @ 500000
+census: 2 ids, ~3820 msg/s
+27C 751 
+predicted-profile ids present: 0/5
+11:58:24  anchor  gear               0
+11:58:55  event   gear_between       
+11:59:00  anchor  gear               1
+11:59:22  anchor  gear               2
+11:59:37  anchor  gear               3
+11:59:49  anchor  gear               4
+12:00:01  anchor  gear               5
+12:00:10  anchor  gear               6
+12:00:16  anchor  gear               5
+12:00:23  anchor  gear               4
+12:00:30  anchor  gear               3
+12:00:48  anchor  gear               2
+12:00:54  anchor  gear               0
+12:01:33  event   throttle_start     
+12:01:44  event   throttle_end       
+12:01:47  event   throttle_start     
+12:02:02  event   throttle_end       
+12:02:30  event   lean_start         
+12:03:00  event   lean_end           
+12:03:33  anchor  ride_mode          1
+12:03:44  anchor  ride_mode          2
+12:03:53  anchor  ride_mode          3
+12:04:00  anchor  ride_mode          4
+12:05:14  anchor  tcs                1
+12:05:28  anchor  tcs                3
+12:05:37  anchor  tcs                9
+12:05:46  anchor  lif                3
+12:05:56  anchor  lif                1
+12:06:01  anchor  lif                2
+12:06:22  anchor  scs                2
+12:06:28  anchor  scs                1
+12:06:34  anchor  scs                3
+12:07:00  anchor  water_temp         16
+12:07:07  anchor  air_temp           16
+12:07:45  anchor  water_temp         17
+12:07:49  anchor  water_temp         18
+12:07:54  anchor  water_temp         19
+12:08:00  anchor  water_temp         21
+12:08:09  anchor  water_temp         24
+   2599203 frames, 39 marks, 685s

@@ -1,0 +1,57 @@
+session 2026-10-11T20:05:50+02:00
+iface can0 @ 500000
+mode: ACK (normal), watchdog log in ack-watchdog.log
+census: 23 ids, ~506 msg/s
+27C 383 512 750 751 755 756 757 758 759 75F 760 761 762 763 764 765 769 76A 76B 76C 76D 76E 
+20:07:19  event   throttle_negative_start 
+20:07:26  event   throttle_negative_end 
+20:07:30  event   throttle_negative_start 
+20:07:37  event   throttle_negative_end 
+20:07:43  event   throttle_negative_start 
+20:07:52  event   throttle_negative_end 
+20:08:13  event   throttle_start     
+20:08:40  event   throttle_end       
+20:08:52  event   throttle_snap      
+20:10:10  event   lean_start         
+20:11:17  event   lean_end           
+20:12:02  anchor  scs                3
+20:12:17  anchor  scs                2
+20:12:33  anchor  scs                1
+20:12:53  anchor  scs                2
+20:13:03  anchor  lif                1
+20:13:09  anchor  lif                2
+20:13:16  anchor  lif                3
+20:13:24  anchor  lif                2
+20:13:30  anchor  lif                1
+20:13:54  anchor  ride_mode          5
+20:14:09  anchor  ride_mode          4
+20:14:21  anchor  ride_mode          5
+20:14:29  anchor  ride_mode          4
+20:14:33  anchor  ride_mode          3
+20:15:18  anchor  water_temp         17
+20:15:24  anchor  air_temp           16
+20:16:15  re-learned noise: 31 bytes
+20:16:35  event   revs_start         
+20:16:44  event   revs_end           
+20:17:08  event   revs_start         
+20:17:18  event   revs_end           
+20:17:31  anchor  water_temp         40
+20:17:37  anchor  water_temp         43
+20:17:43  anchor  water_temp         44
+20:17:55  event   lean_start         
+20:18:06  event   lean_end           
+20:18:47  anchor  lif                1
+20:18:54  anchor  lif                2
+20:18:59  anchor  lif                3
+20:19:10  anchor  scs                1
+20:19:15  anchor  scs                2
+20:19:23  anchor  scs                3
+20:20:00  anchor  qs                 1
+20:20:04  anchor  qs                 2
+20:20:18  anchor  qs                 o
+20:20:31  anchor  qs                 1
+20:20:36  anchor  qs                 2
+20:20:41  anchor  qs                 o
+20:21:14  anchor  water_temp         76
+frames transmitted: 0
+   464793 frames, 49 marks, 943s

@@ -1,0 +1,69 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: YAMAHA_YZ_F AIM_LOGGER
+
+BO_ 522 YAMAHA_YZ_F_20A: 8 YAMAHA_YZ_F
+ SG_ RPM : 24|16@1+ (0.391,0) [0|25624.2] "rpm"  AIM_LOGGER
+
+BO_ 534 YAMAHA_YZ_F_216: 8 YAMAHA_YZ_F
+ SG_ TPS : 8|16@1+ (0.158,0) [0|10354.5] "%"  AIM_LOGGER
+
+BO_ 570 YAMAHA_YZ_F_23A: 8 YAMAHA_YZ_F
+ SG_ FlagError : 0|8@1+ (1,0) [0|255] ""  AIM_LOGGER
+ SG_ Error : 16|8@1+ (1,0) [0|255] ""  AIM_LOGGER
+
+BO_ 574 YAMAHA_YZ_F_23E: 8 YAMAHA_YZ_F
+ SG_ Water_Temp : 0|8@1+ (0.625,-30) [-30|129.375] "C"  AIM_LOGGER
+ SG_ Air_Temp : 8|8@1+ (0.625,-30) [-30|129.375] "C"  AIM_LOGGER
+
+BO_ 583 YAMAHA_YZ_F_247: 8 YAMAHA_YZ_F
+ SG_ Battery_Voltage : 0|8@1+ (73,0) [0|18615] "V"  AIM_LOGGER
+ SG_ Tot_Run_Time : 24|16@1+ (59999.9,0) [0|3.93209e+09] "min"  AIM_LOGGER
+ SG_ MAP : 32|8@1+ (0.00498,0) [0|1.2699] "mbar"  AIM_LOGGER
+
+
+CM_ "AiM protocol YAMAHA / YZ-F, driver 02.00.01, bus mode 6";
+CM_ SG_ 522 RPM "AiM channel CC01, 10 Hz, physical = raw*0.391+0";
+CM_ SG_ 534 TPS "AiM channel CC02, 10 Hz, physical = raw*0.158+0";
+CM_ SG_ 570 FlagError "AiM channel CC03, 10 Hz, physical = raw*1+0";
+CM_ SG_ 570 Error "AiM channel CC04, 10 Hz, physical = raw*1+0";
+CM_ SG_ 574 Water_Temp "AiM channel CC05, 10 Hz, physical = raw*0.625-30";
+CM_ SG_ 574 Air_Temp "AiM channel CC06, 10 Hz, physical = raw*0.625-30";
+CM_ SG_ 583 Battery_Voltage "AiM channel CC08, 10 Hz, physical = raw*73+0";
+CM_ SG_ 583 Tot_Run_Time "AiM channel CC09, 10 Hz, physical = raw*59999.9+0";
+CM_ SG_ 583 MAP "AiM channel CC07, 10 Hz, physical = raw*0.00498+0";
+
+

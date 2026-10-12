@@ -1,0 +1,23 @@
+session 2026-10-11T13:09:05+02:00
+iface can0 @ 500000
+mode: ACK (normal), watchdog log in ack-watchdog.log
+census: 23 ids, ~506 msg/s
+27C 383 512 750 751 755 756 757 758 759 75F 760 761 762 763 764 765 769 76A 76B 76C 76D 76E 
+predicted-profile ids present: 0/5
+13:10:36  event   throttle_start     
+13:10:45  event   throttle_end       
+13:10:47  event   throttle_start     
+13:10:58  event   throttle_end       
+13:11:15  anchor  ride_mode          5
+13:11:21  anchor  ride_mode          4
+13:11:25  anchor  ride_mode          3
+13:11:29  anchor  ride_mode          2
+13:11:35  anchor  ride_mode          1
+13:12:41  anchor  tcs                9
+13:12:58  anchor  tcs                3
+13:13:07  anchor  lif                2
+13:13:15  anchor  lif                1
+13:13:32  anchor  water_temp         22
+13:13:41  anchor  air_temp           18
+frames transmitted: 0
+   134449 frames, 15 marks, 273s

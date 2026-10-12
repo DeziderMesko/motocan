@@ -1,0 +1,55 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: ECU
+
+BO_ 636 R9_27C: 7 ECU
+ SG_ EngineSpeed : 7|16@0+ (0.390625,0) [0|25600] "rpm" Vector__XXX
+ SG_ StartPulse : 24|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ TCS : 25|7@1+ (1,0) [0|127] "" Vector__XXX
+ SG_ Gear : 32|3@1+ (1,0) [0|7] "" Vector__XXX
+ SG_ ModeField : 38|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ SetWhileRunning : 55|1@1+ (1,0) [0|1] "" Vector__XXX
+
+BO_ 1298 R9_512: 4 ECU
+ SG_ WaterTemp : 0|8@1+ (0.625,-30) [-30|129.375] "degC" Vector__XXX
+ SG_ AirTemp : 8|8@1+ (0.625,-30) [-30|129.375] "degC" Vector__XXX
+
+BO_ 1873 R9_751: 8 ECU
+ SG_ NeutralByte : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1880 R9_758: 8 ECU
+ SG_ ValveMeasured_Hi : 4|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ValveMeasured_Lo : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ Grip_Lo12 : 40|12@1+ (1,0) [0|4095] "" Vector__XXX
+ SG_ Grip_Hi : 56|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1881 R9_759: 8 ECU
+ SG_ ValveCommanded_Hi : 4|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ValveCommanded_Lo : 20|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1902 R9_76E: 8 ECU
+ SG_ ModeField : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+CM_ "Yamaha R9 (2026), diagnostic (YDT) connector, 500 kbps. Measured, not from Yamaha. The connector only carries these frames when the listening node acknowledges them. Evidence and everything not decoded: r9-signals.md beside this file.";
+CM_ SG_ 636 EngineSpeed "Bytes 0-1 big-endian, raw*100/256. Byte 0 is whole hundreds of rpm. Checked against the engine's sound at idle and against 0x750 to 3400 rpm.";
+CM_ SG_ 636 StartPulse "Set for about half a second as the engine starts. What it means is not known.";
+CM_ SG_ 636 TCS "The TCS setting shown on the dash.";
+CM_ SG_ 636 ModeField "A 2-bit setting that follows the ride mode: sport 1, street 2, rain 3, custom 1 0. PWR at a guess. Open.";
+CM_ SG_ 636 SetWhileRunning "0 with the engine off, 1 with it running. What it means is not known.";
+CM_ SG_ 1298 AirTemp "Intake air. The dash shows 1-2 degC less than this equation gives.";
+CM_ SG_ 1873 NeutralByte "0x60 or 0x70 in neutral, 0x00 in gear.";
+CM_ SG_ 1880 Grip_Lo12 "Throttle grip (APS) is split over two fields a DBC signal cannot join: raw = Grip_Hi*4096 + Grip_Lo12, percent = raw/31672*100. Reads 0 for the first twentieth of the travel.";
+CM_ SG_ 1880 Grip_Hi "See Grip_Lo12.";
+CM_ SG_ 1880 ValveMeasured_Hi "Throttle valve (TPS), measured: raw = ValveMeasured_Hi*256 + ValveMeasured_Lo, percent = raw/16/144.4*100. Zero is provisional: a warm idle reads about 8 percent.";
+CM_ SG_ 1880 ValveMeasured_Lo "See ValveMeasured_Hi.";
+CM_ SG_ 1881 ValveCommanded_Hi "Throttle valve, commanded: raw = ValveCommanded_Hi*16 + ValveCommanded_Lo, percent = raw/144.4*100. Leads the measured value by one sample.";
+CM_ SG_ 1881 ValveCommanded_Lo "See ValveCommanded_Hi.";
+CM_ SG_ 1902 ModeField "The same setting as ModeField in 0x27C.";
+
+VAL_ 636 Gear 0 "N" 1 "1" 2 "2" 3 "3" 4 "4" 5 "5" 6 "6" 7 "between gears" ;
+VAL_ 636 ModeField 0 "custom 1" 1 "sport" 2 "street" 3 "rain" ;
+VAL_ 1873 NeutralByte 0 "in gear" 96 "neutral" 112 "neutral" ;
