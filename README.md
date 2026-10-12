@@ -34,7 +34,10 @@ only when the listening node acknowledges them. Bytes are numbered from 0; `b3` 
 
 The same as a DBC file: [analysis/r9.dbc](analysis/r9.dbc). Every id, including about
 forty fields that change and have no name yet:
-[analysis/r9-signals.md](analysis/r9-signals.md).
+[analysis/r9-signals.md](analysis/r9-signals.md). What those unnamed fields could be, going
+by the sensors, monitor items and control states the service manual says the ECU has:
+[analysis/R9_CAN_unknowns_vs_manual.md](analysis/R9_CAN_unknowns_vs_manual.md) —
+candidates, graded by how well they fit, not findings.
 
 ## What is not there, and what is left
 
