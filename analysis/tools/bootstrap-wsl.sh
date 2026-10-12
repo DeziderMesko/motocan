@@ -13,8 +13,9 @@
 # and it does not clone the racechrono-canbus fork. This machine reads the bus and works
 # out what the bytes mean; the device that streams them is built elsewhere.
 #
-# The repository is private, so this script cannot be curl'd from it. Copy it over, or
-# paste it into a file on the new machine. Copying it through Windows brings CRLF line
+# The repository is public since 2026-10-12, so the script can be fetched on its own:
+#   curl -fsSLO https://raw.githubusercontent.com/DeziderMesko/motocan/main/analysis/tools/bootstrap-wsl.sh
+# Copying it through Windows instead brings CRLF line
 # endings with it and the shebang then fails with `env: bash\r: No such file or
 # directory`; fix that with `sed -i 's/\r$//' bootstrap-wsl.sh` before running it.
 set -euo pipefail

@@ -45,8 +45,9 @@ without a session to watch, and it takes the interface down when that session en
 [`tools/bootstrap-wsl.sh`](tools/bootstrap-wsl.sh) is not a step either, and runs before
 there is a checkout to run a step from: on a fresh WSL2 Ubuntu it installs the packages
 the chain needs, Claude Code and `gh`, authenticates git, clones this repository and
-hands over to `0-setup.sh`. It installs nothing for the bluecan half. It was
-written while the repository was private, so it expects to be copied to the new machine by hand.
+hands over to `0-setup.sh`. It installs nothing for the bluecan half. Since
+2026-10-12 the repository is public, so the script can be fetched on its own; the
+command is in its header.
 
 Then the analysis itself, which is not one of ours: `survey` → `correlate` → `bitsearch` →
 `build_dbc` / `calibrate` → `verify`, from [`css-skill/`](css-skill/). It is a
