@@ -6,7 +6,7 @@
 |---|---|---|
 | [Adafruit ESP32-S3 Reverse TFT Feather](https://www.adafruit.com/product/5691) | working | 4 MB flash / 2 MB PSRAM, 240×135 ST7789, 3 buttons |
 | [KAmod CAN SN65HVD230](https://kamami.pl/en/CAN-converters/1200043-kamod-can-sn65hvd230-can-interface-module-with-the-sn65hvd230-chip-5902186316799.html) | working | Kamami's 3.3 V SN65HVD230 breakout: goldpin + Phoenix MC 3.81 screw terminal, power LED, **switchable** on-board 120 Ω terminator. Proven on a real two-node bus, not just self-reception — [bench-link.md](bench-link.md) |
-| MKS CANable 2.0 Pro | working | Makerbase build of the isolated USB-CAN adapter, STM32G431, CAN-FD capable — the "fake bike" and reference sniffer. Reflashed, see [Firmware modes](#firmware-modes) below |
+| MKS CANable 2.0 Pro | working | Makerbase build of the isolated USB-CAN adapter, STM32G431, CAN-FD capable — the "fake bike" and reference sniffer. Runs **ElmüSoft Candlelight 2.5** ([Elmue/CANable-2.5-firmware-Slcan-and-Candlelight](https://github.com/Elmue/CANable-2.5-firmware-Slcan-and-Candlelight), `STM32G431 - Candlelight2.5 - Multiboard.dfu`), flashed 2026-08-21 in place of the shipped build, which stalled after three frames — where it came from, how it was flashed and the diagnosis are in [gs-usb-stall.md](gs-usb-stall.md). See also [Firmware modes](#firmware-modes) below |
 | Diagnostic pigtail | in hand since 2026-09-21 | pins metered and marked — see the connector section of [connector.md](../analysis/connector.md). It was "the only missing part" when the rest of this page was written |
 
 ## Why this board
