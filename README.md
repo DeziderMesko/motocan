@@ -123,10 +123,19 @@ queue slot or an mbuf.
 
 ### The display
 
-Three pages on the TFT, on their own task on core 0 — bus health, the ID census, the last
-raw frames — repainting a character cell at a time through a change-detection cache.
-Buttons: **D0** cycles panel + pixel, pixel alone, dark; **D1** cycles pages; **D2**
-freezes the glass without pausing the counting.
+Four pages on the TFT, on their own task on core 0 — what the bike is sending, bus health,
+the ID census, the last raw frames — repainting a character cell at a time through a
+change-detection cache. Buttons: **D0** cycles panel + pixel, pixel alone, dark; **D1**
+cycles pages; **D2** freezes the glass without pausing the counting.
+
+**LIVE, the page it boots into, shows the R9 decoded**: gear, engine speed, grip, throttle
+valve, water and air temperature, TCS and the mode field, from four frames
+(`src/canbus/r9.hpp`, written from motocan's `analysis/r9.dbc` and checked against it by
+motocan's `tools/r9-decode-check.py`). It is for holding up against the dash at a
+standstill. The decoder keeps the latest payload of those four ids ahead of the allow-list,
+so the page reads the same whether or not a phone has asked for them, and a value that has
+stopped arriving turns to dashes instead of standing. RaceChrono still gets raw frames;
+none of this is on the path to the phone.
 
 This puts dropped frames, queue peak, refusals and the discarded 29-bit/RTR classes in
 front of the rider **in a release build**, where they previously existed only in a `DEBUG`
@@ -139,7 +148,8 @@ models the charger's rail as one when it is not.
 **The on-board NeoPixel is driven as a status light**, on the same task: hue for where the
 chain is (booting / advertising / configuring / recording), blips at a rate that follows
 the forwarded frames, a double flash when they stop, and a latching red flash over the top
-when something is lost. It never shows vehicle data — this firmware decodes nothing.
+when something is lost. It never shows vehicle data: the light is about the chain to the
+phone, and the decoding the LIVE page does stays on the panel.
 
 ### Logging
 

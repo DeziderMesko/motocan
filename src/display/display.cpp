@@ -226,7 +226,7 @@ display::display() noexcept
     , _ring{}
     , _ring_pos(0U)
     , _handle(nullptr)
-    , _page(page_bus_id)
+    , _page(page_live_id)
     , _light(light_both)
     , _hold(false)
     , _fault(false)
@@ -384,7 +384,8 @@ void display::run() noexcept
         // animation's frame time.
         update_status_led();
 
-        uint32_t interval = _page == page_bus_id ? refresh_bus_ms : refresh_slow_ms;
+        uint32_t interval = (_page == page_live_id || _page == page_bus_id) ? refresh_bus_ms
+                                                                            : refresh_slow_ms;
 
         if (_light == light_both && !_hold && (now - last_paint) >= interval)
         {
@@ -412,7 +413,8 @@ void display::stats() noexcept
     {
         if (_stats_timer.elapsed(CONFIG_RC_STATS_TIMEOUT) > 0UL)
         {
-            const char* name = _page == page_ids_id ? "IDS"
+            const char* name = _page == page_live_id ? "LIVE"
+                             : _page == page_ids_id  ? "IDS"
                              : _page == page_last_id ? "LAST"
                                                      : "BUS";
 
@@ -950,6 +952,18 @@ void display::seg_fill(int y, int& col, uint16_t color, const char* fmt, ...) no
     col += avail;
 }
 
+void display::cell(int y, uint8_t size, int col, uint16_t color, const char* fmt, ...) noexcept
+{
+    char buf[cache_len];
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+
+    field(y, size, color, slot_for(y), buf, col);
+}
+
 void display::wipe() noexcept
 {
     tft.fillRect(0, content_y - 2, screen_w, screen_h - (content_y - 2), ST77XX_BLACK);
@@ -1036,6 +1050,9 @@ void display::refresh() noexcept
 
     switch (_page)
     {
+    case page_live_id:
+        page_live();
+        break;
     case page_ids_id:
         page_ids();
         break;
@@ -1048,7 +1065,10 @@ void display::refresh() noexcept
     }
 
     char foot[cache_len];
-    const char* name = _page == page_ids_id ? "IDS" : _page == page_last_id ? "LAST" : "BUS";
+    const char* name = _page == page_live_id ? "LIVE"
+                     : _page == page_ids_id  ? "IDS"
+                     : _page == page_last_id ? "LAST"
+                                             : "BUS";
     snprintf(foot, sizeof(foot), "%-4s %-9s D0 lit D1 page D2 hold",
              name, _hold ? "**HOLD**" : "");
     field(footer_y, 1, _hold ? ST77XX_YELLOW : ST77XX_CYAN, cache_slots - 1, foot);
@@ -1310,6 +1330,143 @@ void display::page_bus() noexcept
     seg_fill(y, col, ST77XX_WHITE, "%3lu:%02lu", up_m, up_sec);
 }
 
+void display::page_live() noexcept
+{
+    using namespace canbus;
+
+    // What the R9 is sending, decoded -- the page to hold up against the dash. Every
+    // value comes from the decoder's own copy of the latest frame, taken ahead of the
+    // allow-list, so this page reads the same whether a phone has asked for these ids
+    // or not.
+    //
+    // A frame older than this is shown as dashes rather than as its last value. A
+    // number that has stopped arriving looks exactly like one that has stopped
+    // changing, and with the key off that would leave the last engine speed standing
+    // on the glass. Half a second is 50 frames of 0x27C and 10 of 0x758 and 0x759;
+    // 0x512 comes once a second, so it gets three.
+    constexpr uint32_t stale_fast_ms = 500;
+    constexpr uint32_t stale_slow_ms = 3000;
+
+    // Four lines at text size 2 -- twenty columns, two values a line -- on every
+    // second content row, and one line at size 1 under them. Labels sit at fixed
+    // columns and never change, so they are drawn once; each value is padded to a
+    // fixed width so a shorter one cannot leave the tail of a longer one behind.
+    // The right-hand label starts at column 11 rather than 10 so that a three-digit
+    // value on the left still has a space after it.
+    constexpr int big = 2;
+    constexpr int left_col = 0;
+    constexpr int right_col = 11;
+
+    uint8_t d[8];
+    uint32_t age;
+    char a[8];
+    char b[8];
+
+    // --- 0x27C: gear and engine speed, and further down TCS and the mode field
+    const bool engine = CANDEC.latest(r9::id_engine, d, age) && age < stale_fast_ms;
+    char tcs[8];
+    char mode[8];
+
+    if (engine)
+    {
+        const uint8_t g = r9::gear(d);
+        snprintf(a, sizeof(a), "%c", g == 0U ? 'N' : g == r9::gear_between ? '-' : static_cast<char>('0' + g));
+        snprintf(b, sizeof(b), "%5lu", (unsigned long)r9::rpm(d));
+        snprintf(tcs, sizeof(tcs), "%-2u", (unsigned)r9::tcs(d));
+        snprintf(mode, sizeof(mode), "%u", (unsigned)r9::mode(d));
+    }
+    else
+    {
+        snprintf(a, sizeof(a), "-");
+        snprintf(b, sizeof(b), "   --");
+        snprintf(tcs, sizeof(tcs), "--");
+        snprintf(mode, sizeof(mode), "-");
+    }
+
+    const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
+
+    int y = content_y + 0 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "Gear");
+    cell(y, big, left_col + 5, engine_color, "%s", a);
+    cell(y, big, right_col, ST77XX_YELLOW, "RPM");
+    cell(y, big, right_col + 4, engine_color, "%s", b);
+
+    // --- 0x758: the grip and the throttle valve, in whole percent
+    const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
+
+    if (throttle)
+    {
+        snprintf(a, sizeof(a), "%3u%%", (unsigned)((r9::grip_tenths(d) + 5U) / 10U));
+        snprintf(b, sizeof(b), "%3u%%", (unsigned)((r9::valve_tenths(d) + 5U) / 10U));
+    }
+    else
+    {
+        snprintf(a, sizeof(a), "  --");
+        snprintf(b, sizeof(b), "  --");
+    }
+
+    const uint16_t throttle_color = throttle ? ST77XX_WHITE : color_grey_dim;
+
+    y = content_y + 2 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "Grip");
+    cell(y, big, left_col + 5, throttle_color, "%s", a);
+    cell(y, big, right_col, ST77XX_YELLOW, "Valve");
+    cell(y, big, right_col + 5, throttle_color, "%s", b);
+
+    // --- 0x512: the two temperatures, in whole degrees
+    const bool temps = CANDEC.latest(r9::id_temps, d, age) && age < stale_slow_ms;
+
+    if (temps)
+    {
+        const int water = r9::water_tenths(d);
+        const int air = r9::air_tenths(d);
+        // rounded to nearest, away from zero: the sensor reads down to -30
+        snprintf(a, sizeof(a), "%3dC", (water + (water < 0 ? -5 : 5)) / 10);
+        snprintf(b, sizeof(b), "%3dC", (air + (air < 0 ? -5 : 5)) / 10);
+    }
+    else
+    {
+        snprintf(a, sizeof(a), "  --");
+        snprintf(b, sizeof(b), "  --");
+    }
+
+    const uint16_t temps_color = temps ? ST77XX_WHITE : color_grey_dim;
+
+    y = content_y + 4 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "Water");
+    cell(y, big, left_col + 6, temps_color, "%s", a);
+    cell(y, big, right_col, ST77XX_YELLOW, "Air");
+    cell(y, big, right_col + 4, temps_color, "%s", b);
+
+    // --- 0x27C again. Mode is the number the bike sends and nothing more: it follows
+    // the ride mode, and what it is has not been settled.
+    y = content_y + 6 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "TCS");
+    cell(y, big, left_col + 4, engine_color, "%s", tcs);
+    cell(y, big, right_col, ST77XX_YELLOW, "Mode");
+    cell(y, big, right_col + 5, engine_color, "%s", mode);
+
+    // --- 0x759: the valve as commanded, which leads the measured one by a sample.
+    // At size 1, with its tenth: it is the one value here that is only interesting
+    // next to another.
+    const bool cmd = CANDEC.latest(r9::id_valve_cmd, d, age) && age < stale_fast_ms;
+    char c[12];
+
+    if (cmd)
+    {
+        const unsigned t = r9::valve_cmd_tenths(d);
+        snprintf(c, sizeof(c), "%3u.%u %%", t / 10U, t % 10U);
+    }
+    else
+    {
+        snprintf(c, sizeof(c), "   -- %%");
+    }
+
+    y = content_y + 8 * row_h;
+    cell(y, 1, 0, ST77XX_YELLOW, "Valve commanded");
+    cell(y, 1, 16, cmd ? ST77XX_WHITE : color_grey_dim, "%s", c);
+}
+
 void display::page_ids() noexcept
 {
     int used = _id_used.load(std::memory_order_acquire);
@@ -1317,35 +1474,38 @@ void display::page_ids() noexcept
     // The census holds id_slots entries and this page has room for fewer, so there are
     // two ways to be hiding an id. Both have to raise the marker, or a truncated list
     // reads as the whole bus -- which is the one question this page exists to answer.
-    static constexpr int id_cells = (rows - 1) * 2;
+    //
+    // Three columns of eight, which is 24: one more than the R9 sends. It was two
+    // columns of sixteen with each id's running total beside its rate, and that was
+    // seven ids short of this bike. The total went, because the count is what this
+    // page is read for now: 23 means the controller is acknowledging, 2 means it is
+    // not.
+    static constexpr int id_columns = 3;
+    static constexpr int id_cells = (rows - 1) * id_columns;
 
     row(0, ST77XX_CYAN, "ids seen %d%s", used,
         (_id_overflow || used > id_cells) ? " (+more)" : "");
 
-    // Two columns of ids, newest-discovered last. This is the first question the
-    // device exists to answer: which CAN family the R9 belongs to is read off the id
-    // list, not off any decoded value.
+    // Newest-discovered last, filling across each row.
     for (int r = 0; r < rows - 1; r++)
     {
-        int left = r * 2;
-        int right = left + 1;
-        char cell[2][20];
+        char cells[id_columns][14];
 
-        for (int col = 0; col < 2; col++)
+        for (int col = 0; col < id_columns; col++)
         {
-            int i = col == 0 ? left : right;
+            int i = r * id_columns + col;
             if (i < used)
             {
-                snprintf(cell[col], sizeof(cell[col]), "%03lX %7lu %3u/s",
-                         (unsigned long)_ids[i], (unsigned long)_hits[i], _rates[i]);
+                snprintf(cells[col], sizeof(cells[col]), "%03lX %4u/s",
+                         (unsigned long)_ids[i], _rates[i]);
             }
             else
             {
-                cell[col][0] = '\0';
+                cells[col][0] = '\0';
             }
         }
 
-        row(r + 1, ST77XX_WHITE, "%-19s %-19s", cell[0], cell[1]);
+        row(r + 1, ST77XX_WHITE, "%-13s%-13s%-13s", cells[0], cells[1], cells[2]);
     }
 }
 
@@ -1403,7 +1563,7 @@ display::display() noexcept
     , _ring{}
     , _ring_pos(0U)
     , _handle(nullptr)
-    , _page(page_bus_id)
+    , _page(page_live_id)
     , _light(light_dark)
     , _hold(false)
     , _fault(false)
@@ -1449,7 +1609,9 @@ void display::field(int, uint8_t, uint16_t, int, const char*, int) noexcept {}
 void display::row(int, uint16_t, const char*, ...) noexcept {}
 void display::seg(int, int&, uint16_t, const char*, ...) noexcept {}
 void display::seg_fill(int, int&, uint16_t, const char*, ...) noexcept {}
+void display::cell(int, uint8_t, int, uint16_t, const char*, ...) noexcept {}
 void display::wipe() noexcept {}
+void display::page_live() noexcept {}
 void display::page_bus() noexcept {}
 void display::page_ids() noexcept {}
 void display::page_last() noexcept {}

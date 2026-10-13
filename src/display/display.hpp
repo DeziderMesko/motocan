@@ -155,18 +155,27 @@ private:
     /// blank the content area and invalidate every cache slot
     void wipe() noexcept;
 
+    /// draw one piece of text at text size *size*, at column *col* counted in that
+    /// size's own character widths, taking its cache slot from slot_for() like seg().
+    /// For the LIVE page, which mixes sizes and puts values at fixed columns.
+    void cell(int y, uint8_t size, int col, uint16_t color, const char* fmt, ...) noexcept __attribute__((format(printf, 6, 7)));
+
+    void page_live() noexcept;
     void page_bus() noexcept;
     void page_ids() noexcept;
     void page_last() noexcept;
 
 private:
-    /// pages, in the order D1 cycles through them
+    /// pages, in the order D1 cycles through them. LIVE is first and is what the
+    /// board boots into: it is the page about the bike, and the other three are about
+    /// the device.
     enum page : uint8_t
     {
-        page_bus_id = 0,
-        page_ids_id = 1,
-        page_last_id = 2,
-        page_count = 3,
+        page_live_id = 0,
+        page_bus_id = 1,
+        page_ids_id = 2,
+        page_last_id = 3,
+        page_count = 4,
     };
 
     /// what D0 cycles through. The middle position is the riding one: the backlight
@@ -180,10 +189,12 @@ private:
         light_count = 3,
     };
 
-    /// arbitration ids tracked by the census. The R1-family bus carries ~16
-    /// (motocan/canbus-mapping.md). The IDS page shows fewer than this -- see
-    /// id_cells in page_ids() -- and says so when it is hiding any.
-    static constexpr int id_slots = 20;
+    /// arbitration ids tracked by the census. The R9's diagnostic connector carries
+    /// 23 (motocan/analysis/r9-signals.md), and the 20 this used to be was sized
+    /// against another Yamaha: a replay of the R9's own traffic overflowed it. 32 is
+    /// also as many ids as the allow-list holds. The IDS page shows fewer than this --
+    /// see id_cells in page_ids() -- and says so when it is hiding any.
+    static constexpr int id_slots = 32;
     /// recent frames kept for the LAST page
     static constexpr int ring_slots = 6;
     /// change-detection cache: one entry per drawable line, in fixed regions.
