@@ -1624,9 +1624,10 @@ has acknowledged a bus shaped like the R9's.
 | Ages while it ran | 2–9 ms on `0x27C`, 10–37 ms on `0x758`/`0x759`, under a second on `0x512` — their 100, 20 and 1 Hz |
 | Ages after it stopped | counting up from the stop, 3 s and then 8 s at the next two readings |
 
-**Not checked: that it holds under a phone's allow-list.** No phone was connected, so the
-filter stood at allow-all throughout. The latch is ahead of the filter in the code; the
-run that shows it is a recording session with a channel missing.
+**Not checked in that run: that it holds under a phone's allow-list.** No phone was
+connected, so the filter stood at allow-all throughout. The run that shows it is a
+recording session with a channel missing, and it came the same evening —
+[below](#under-a-recording-phone).
 
 One thing the replay showed that was not the latch's: **the census was too small for this
 bike.** It had 20 slots and the R9 sends 23 ids, and the console said so —
@@ -1699,10 +1700,28 @@ out the difference with nothing on the bus. The page was doing what it was built
 with half a second of silence. candump's timestamps ride on the same clock, so a replay
 through `canplayer` on this machine is good for values and no good for timing.
 
+### Under a recording phone
+
+The same evening, with the replay looping and RaceChrono Pro recording a session on eight
+channels over three PIDs — `0x27C`, `0x512` and `0x758`
+([racechrono-channels.md](racechrono-channels.md)). The commanded valve on `0x759` had not
+been entered, which made it the missing channel the check needs.
+
+| | |
+|---|---|
+| BUS page | `flt 3` — the app's three ids, where it had read `flt ALL` while the channels were being set up |
+| LIVE page, `Valve commanded` | **still a number.** It is decoded from `0x759`, which the filter was dropping in the ISR |
+| In the app | 1609 rpm, gear 0, TCS 7, mode 3, coolant 31 °C, air 21 °C, grip 0 %, valve 14 % — what the capture holds at that point |
+
+Read off the glass and the phone by the rider; there was no console, the board was on a
+release build. So the latch is ahead of the filter on the board as well as in the code,
+and [patch 14](#patch-14--honour-the-allow-list-and-the-notify-interval--applied-and-measured)'s
+filter has now run against the R9's own ids rather than a bench's.
+
 ### What has not happened
 
-It has not been on the R9, and it has not run under a phone's allow-list. The first is the
-check the page exists for: every value on it against the dash.
+It has not been on the R9. That is the check the page exists for: every value on it
+against the dash.
 
 ## Open questions before the bike
 

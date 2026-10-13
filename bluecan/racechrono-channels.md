@@ -152,6 +152,21 @@ engine idling: 1609 rpm, gear 0, Digital 1 at 7, Digital 2 at 3, coolant 31 °C,
 throttle position 1 at 0 % and 2 at 14 %. The capture at that point holds TCS 7, mode 3,
 water 31.8 °C, air 21.8 °C, the grip at rest and the valve between 13 and 14.5 %.
 
+## Time and the rates on the Live screen
+
+With the channels reading correctly, the app's Live screen still showed an empty **Time**
+tile under the CAN-Bus reader and `- Hz` under every channel. The GPS receiver was not
+connected at the time — the screen said it was still connecting to it.
+
+That is probably the whole explanation, and it is not confirmed. A frame sent to
+RaceChrono over this protocol is an id and a payload with no timestamp in it
+([the protocol's own description](https://github.com/aollin/racechrono-ble-diy-device)),
+so the app has to time the data itself, and a search turned up RaceChrono's developer
+telling a forum user that the Hz and time readings appear once the GPS has a lock. That
+reply could not be opened and read here, and the app's documentation does not say either
+way. The test is the obvious one: the same screen with the GPS receiver connected and
+locked.
+
 ## What it costs the link
 
 Four ids with all nine channels, three as entered so far. Recording, the app asks for
