@@ -1545,6 +1545,98 @@ read the same zero, which is how the patch was cleared.
 It has not been on the R9. That is the next thing this patch is owed, and what it should
 show is on the BUS page: `ACK`, the IDS page counting 23, and REC at 0.
 
+## Patch 19 — the firmware decodes four frames, for the panel — **decoder and latch applied and measured; the page is not built yet**
+
+In Bluecan at `trunk`, two commits: `bd0d51a` for the decoder (`src/canbus/r9.hpp`) and
+`826263e` for the latch (`decoder::observe()` and `latest()`, implemented in
+`decoder_yamahar9.cpp`, fed from the ISR in `controller.cpp`).
+
+Until now this firmware forwarded raw frames and understood none of them, on purpose:
+RaceChrono decodes app-side, so an unfinished mapping never blocked the device. That is
+still how the phone gets its data and nothing here touches it. What changes is the panel.
+With [three captures read](../analysis/r9-signals.md), the device can show what the bike
+is sending in the bike's own terms, to be held up against the dash at a standstill —
+which is the check a raw-frame page cannot give.
+
+### The decoder
+
+`r9.hpp` is ten pure functions over four frames, written by hand from
+[r9.dbc](../analysis/r9.dbc): engine speed, gear, TCS and the mode field from `0x27C`; the
+two temperatures from `0x512`; the grip and the measured throttle valve from `0x758`; the
+commanded valve from `0x759`. Integer results in the units the panel prints — rpm, tenths
+of a degree, tenths of a percent.
+
+Four ids and not six. `0x751`'s neutral byte adds nothing, since gear 0 in `0x27C` is
+neutral already, and `0x76E` is a copy of the mode field. The two bits that change with
+the engine running are left out by decision; the fields with no name are left out by rule.
+
+A second hand-written copy of the DBC's equations is a thing that drifts, and the panel
+is where a wrong one would be believed. So
+[tools/r9-decode-check.py](firmware/tools/r9-decode-check.py) compiles the firmware's own
+header on the host and decodes every distinct payload in the captures both ways:
+
+| Capture | Distinct payloads | Worst difference from the DBC |
+|---|---|---|
+| `session-2026-10-11_115626` | 124 | under one unit of the firmware's resolution |
+| `session-2026-10-11_130905` | 230 | the same |
+| `session-2026-10-11_200550` | 4 239 | the same |
+
+The differences are the firmware truncating where the DBC gives a float. A copy of the
+header with two equations deliberately broken fails on the first payloads it meets, which
+is the only reason to believe the pass.
+
+### The latch, and why it is ahead of the filter
+
+The census and the LAST page are fed from the drain task, after the send, so they see what
+was *forwarded*. Under a recording RaceChrono that is the allow-list's choice: every id
+without a channel is dropped in the ISR and the rest are thinned to the app's 50 ms. A
+decoded page fed the same way would show the temperature only to a rider who had defined a
+temperature channel.
+
+So the decoder is shown every standard data frame **before** it is asked whether to
+forward it, and the R9 decoder keeps the latest payload of its four ids. Each sits behind
+a sequence lock: the ISR on core 1 never waits, and the display task on core 0 reads again
+if it caught a write in progress, so it cannot pair the two bytes of the engine speed from
+different frames. It costs every other frame four comparisons, and the ISR's data copy now
+happens before the filter instead of after it — up to eight register reads on a frame that
+is then dropped.
+
+Whether this costs the radio anything was asked before it was built. It should not: the
+decoding itself happens in the display task, at the repaint rate, and the per-frame work
+is in the ISR on core 1 while the BLE host lives on core 0. Switching it off with the
+panel was considered and left for the day a measurement asks for it.
+
+### Measured, 2026-10-13
+
+There is no bike on the bench, but there is its traffic: twenty seconds of
+[the third capture](../analysis/captures/session-2026-10-11_200550/README.md) — 9 861
+frames, all 23 ids, ending just after the highest engine speed in it — replayed through
+the CANable with `canplayer`. It is also the first time
+[patch 18](#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench)
+has acknowledged a bus shaped like the R9's.
+
+| | |
+|---|---|
+| Received | **~524 msg/s**, 0 dropped, 0 errors once acknowledging, TEC 0, REC 0 |
+| Held when the replay stopped | rpm 2151, gear 0, TCS 7, mode 3 · water 31.8 °C, air 21.8 °C · grip 0, valve 13.1 % · commanded 14.5 % |
+| What the last frame of each id decodes to | **the same, every value** |
+| Ages while it ran | 2–9 ms on `0x27C`, 10–37 ms on `0x758`/`0x759`, under a second on `0x512` — their 100, 20 and 1 Hz |
+| Ages after it stopped | counting up from the stop, 3 s and then 8 s at the next two readings |
+
+**Not checked: that it holds under a phone's allow-list.** No phone was connected, so the
+filter stood at allow-all throughout. The latch is ahead of the filter in the code; the
+run that shows it is a recording session with a channel missing.
+
+One thing the replay showed that is not this patch's: **the census is too small for this
+bike.** It has 20 slots and the R9 sends 23 ids, and the console said so —
+`Census ids: 20, 120 over`. That goes with the page.
+
+### What has not happened
+
+The page. Nothing reads the latch for the glass yet; a `--debug` build prints the four
+frames decoded, with their ages, on the stats cadence, and that is where the table above
+came from.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

@@ -24,9 +24,13 @@ now, firmware source later.
 **Telemetry.** Feed live CAN data into RaceChrono Pro at a high refresh rate — an
 independent replacement for Y-TRAC Rev. That is this device's job, and now its only one.
 
-It reads the bus without understanding it: RaceChrono decodes channels app-side (CAN id
-+ offset + length + equation, entered in the app), so the firmware forwards raw frames
-and unknown mappings never block it.
+For the phone it reads the bus without understanding it: RaceChrono decodes channels
+app-side (CAN id + offset + length + equation, entered in the app), so the firmware
+forwards raw frames and unknown mappings never block it. For its own panel it does decode
+four frames now — engine speed, gear, TCS, temperatures, grip and throttle valve — kept
+ahead of the phone's filter so the glass does not depend on the app's channels
+([patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-for-the-panel--decoder-and-latch-applied-and-measured-the-page-is-not-built-yet));
+the page that shows them is not built yet.
 
 ### Sniffing is the CANable's job, not this one
 
