@@ -117,12 +117,18 @@ give the same number on every payload in the captures — 476 distinct ones of `
 
 RaceChrono offers a fixed list of channels and most of these have an obvious home in it:
 engine speed, gear, throttle position, accelerator position, coolant and intake
-temperature. **TCS and the mode field do not**, and went in as `Digital`. The **Channel
-postfix** field is what tells two channels of the same kind apart and names them in a
-session, so `Digital` with the postfix `TCS` and `Digital` with the postfix `Mode`.
+temperature. **TCS and the mode field do not**, and went in as `Digital`. Despite the
+name it is not a 0-or-1 channel: it shows the number the equation gives, so TCS reads 7
+and the mode field 3.
+
+**Neither can be given a name of its own.** The **Channel postfix** field is how two
+channels of the same kind are told apart in a session, but it is a choice from the app's
+own list, not free text — an earlier version of this page said to type `TCS` and `Mode`
+into it, and that cannot be done. So the two `Digital` channels take two different
+postfixes from the list, and which is which has to be remembered or written down here.
 
 Whether the app lets a user define a channel of their own was looked for in its
-documentation and not found; the postfix is what the documentation offers.
+documentation and not found.
 
 ## What it costs the link
 
