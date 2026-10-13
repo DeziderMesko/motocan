@@ -317,7 +317,7 @@ per-id allow-list and the supply readout are all done and measured.
    [patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench):
    the listen-only-then-ACK start, the trip back, and no frame of its own leaving the
    board. What is left is the bike: the BUS page reading `ACK`, the IDS page counting 23,
-   REC at 0.
+   REC at 0. The steps are in [at-the-bike.md](at-the-bike.md).
 
 **Not being done:** the NimBLE mbuf pool. `CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT` is baked
 into the Arduino core's precompiled libraries, so raising it means building ESP-IDF from
@@ -336,6 +336,8 @@ Also declined: link-quality/RSSI instrumentation. Both are in
   the patches needed, listen-only safety, display layer, RaceChrono app setup, and the
   [code review log](../journal/bluecan-code-review-log.md) — what has been reviewed, and the range
   the next review starts from.
+- [at-the-bike.md](at-the-bike.md) — **the checklist for the first time this device meets
+  the R9**: what to check at home, plugging in, key on, engine running, and with the phone.
 - [racechrono-channels.md](racechrono-channels.md) — the nine channels to enter into
   RaceChrono for the R9: PID in decimal and the equation, each one as the app accepted it.
 - [wsl-setup.md](wsl-setup.md) — the Windows/WSL2 development environment: what is
