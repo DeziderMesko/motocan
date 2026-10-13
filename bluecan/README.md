@@ -364,6 +364,10 @@ Also declined: link-quality/RSSI instrumentation. Both are in
     rate is capped at 100 msg/s because the blip clamp pins at 5 Hz from 40 upward, so a
     faster bus tells you less about the light rather than more; `--rate 20` is one
     allowed id at RaceChrono's 50 ms and is the realistic thing to watch.
+  - [tools/r9-decode-check.py](firmware/tools/r9-decode-check.py) — holds the decoder
+    Bluecan uses for its panel (`src/canbus/r9.hpp`) to [r9.dbc](../analysis/r9.dbc): it
+    compiles the firmware's header on the host and runs every distinct payload in the
+    captures through both. Run it after touching either. Needs `analysis/.venv`.
   - [tools/serial-monitor.sh](firmware/tools/serial-monitor.sh) — serial console via
     Windows interop.
   - [tools/check-numbers.sh](firmware/tools/check-numbers.sh) — prints every place in
