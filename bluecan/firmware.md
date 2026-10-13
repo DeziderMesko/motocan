@@ -1662,6 +1662,15 @@ total and rate to three of id and rate — 24 cells, one more than the R9 sends.
 went because the count is what that page is read for now: 23 means the controller is
 acknowledging, 2 means it is not.
 
+That reading has a condition, found with a phone on 2026-10-13. **The count is of ids
+forwarded since boot, and it never falls.** A phone that starts recording brings the filter
+down to its own ids — `flt 3` that evening — and the page went on saying `ids seen 23`,
+because the other twenty had been seen while the app was still asking for everything. What
+changes is the rate beside each id: the three asked for at about 20/s, the rest at 0. And a
+board that meets a recording phone before it meets the bus would count 3, acknowledging or
+not. So 23 against 2 is a check to make with no phone recording; the BUS page's `ACK` is
+the one that holds either way.
+
 ### The page, measured and looked at
 
 The same replay, with the page on the glass, and then a longer one in a loop: 150 s of
