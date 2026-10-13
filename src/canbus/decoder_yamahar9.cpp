@@ -27,6 +27,7 @@
 #include <esp_timer.h>
 
 #include "decoder.hpp"
+#include "r9.hpp"
 
 namespace canbus
 {
@@ -34,8 +35,9 @@ namespace canbus
 /**
  * decoder for the Yamaha R9 (2026).
  *
- * No CAN id on this bike is confirmed, so unlike decoder_bmwg8x this decoder has no
- * static id table and no per-id rates of its own. What it has instead is an allow-list
+ * Unlike decoder_bmwg8x this decoder has no static id table and no per-id rates of its
+ * own: it was written before anything had been read off an R9, and what crosses the
+ * radio is still the app's decision, not a table's. What it has instead is an allow-list
  * filled in at run time from RaceChrono's own requests: the app sends a deny-all and
  * then one allow per id it has a channel for, each with the notify interval it wants
  * that id at. Both are honoured here.
@@ -58,9 +60,11 @@ namespace canbus
  *   writing this table from two contexts at once. Allow-all is the sniffer case
  *   anyway; the interval it carries is read, logged and then ignored.
  *
- * Once motocan/canbus-mapping.md has confirmed ids, a static table with measured
- * per-id rates could live here as well, modelled on decoder_bmwg8x -- but the app's
- * request would still be the thing that decides what crosses the radio.
+ * Four ids are known now (r9.hpp, from motocan/analysis/r9-signals.md), and the one thing
+ * done with that knowledge here is to keep their latest payloads for the panel --
+ * observe() and latest(). That is beside the allow-list, not part of it: it sees every
+ * frame before the filter does, so the panel shows the bike whatever the phone asked
+ * for, and it puts nothing on the radio that the app did not request.
  */
 class decoder_yamahar9
     : public decoder
@@ -80,6 +84,22 @@ class decoder_yamahar9
     };
 
     static constexpr size_t max_slots = 32;
+
+    /// The latest payload of one id the panel decodes, written by the ISR on core 1 and
+    /// read by the display task on core 0. A sequence lock rather than a mutex or a
+    /// bare copy: the ISR must never wait, and a reader that caught the two bytes of
+    /// the engine speed from different frames would paint a number the bike never sent.
+    /// seq is odd while the ISR is writing and steps by two per frame; a reader that
+    /// saw it odd, or saw it move, reads again. Zero means no such frame since boot.
+    struct live
+    {
+        uint32_t id;
+        std::atomic<uint32_t> seq;
+        uint8_t data[8];
+        int64_t us;  ///< esp_timer_get_time() at arrival
+    };
+
+    static constexpr size_t live_slots = 4;
 
 public:
     static decoder_yamahar9& get() noexcept
@@ -146,6 +166,91 @@ public:
             {
                 s.last_us = now;
                 return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * called from the CAN ISR for every standard data frame, before should_decode().
+     *
+     * Four comparisons for the frames the panel does not decode, which is most of
+     * them; eight bytes and one systimer read for the ~141 a second that it does.
+     */
+    void observe(uint32_t id, const uint8_t* data, uint8_t dlc) noexcept override
+    {
+        for (size_t i = 0; i < live_slots; i++)
+        {
+            live& l = _live[i];
+
+            if (l.id != id)
+            {
+                continue;
+            }
+
+            const uint32_t seq = l.seq.load(std::memory_order_relaxed);
+
+            l.seq.store(seq + 1U, std::memory_order_release);
+            // Zero-padded: 0x27C is seven bytes and 0x512 four, and r9.hpp only reads
+            // the bytes a frame has, but a short frame must not leave the tail of a
+            // longer one behind for anything that looks.
+            for (uint8_t b = 0; b < 8; b++)
+            {
+                l.data[b] = b < dlc ? data[b] : 0U;
+            }
+            l.us = esp_timer_get_time();
+            l.seq.store(seq + 2U, std::memory_order_release);
+            return;
+        }
+    }
+
+    bool latest(uint32_t id, uint8_t data[8], uint32_t& age_ms) const noexcept override
+    {
+        for (size_t i = 0; i < live_slots; i++)
+        {
+            const live& l = _live[i];
+
+            if (l.id != id)
+            {
+                continue;
+            }
+
+            // The ISR holds a slot for well under a microsecond and writes one at most
+            // 100 times a second, so a second attempt is already unlikely. A reader
+            // that loses every one of these reports nothing rather than a torn frame;
+            // the panel repaints in 200 ms and asks again.
+            for (int attempt = 0; attempt < 4; attempt++)
+            {
+                const uint32_t before = l.seq.load(std::memory_order_acquire);
+
+                if (before == 0U)
+                {
+                    return false;
+                }
+                if (before & 1U)
+                {
+                    continue;
+                }
+
+                uint8_t copy[8];
+                for (uint8_t b = 0; b < 8; b++)
+                {
+                    copy[b] = l.data[b];
+                }
+                const int64_t us = l.us;
+
+                if (l.seq.load(std::memory_order_acquire) == before)
+                {
+                    for (uint8_t b = 0; b < 8; b++)
+                    {
+                        data[b] = copy[b];
+                    }
+                    age_ms = static_cast<uint32_t>((esp_timer_get_time() - us) / 1000);
+                    return true;
+                }
             }
 
             return false;
@@ -243,7 +348,12 @@ private:
         , _count(0U)
         , _allow_all(true)
         , _overflow(0U)
+        , _live{}
     {
+        _live[0].id = r9::id_engine;
+        _live[1].id = r9::id_temps;
+        _live[2].id = r9::id_throttle;
+        _live[3].id = r9::id_valve_cmd;
     }
 
     /// written by the BLE task, read by the CAN ISR
@@ -251,6 +361,9 @@ private:
     std::atomic<size_t> _count;
     std::atomic<bool> _allow_all;
     std::atomic<uint32_t> _overflow;
+
+    /// written by the CAN ISR, read by the display task; ids set once, here
+    live _live[live_slots];
 };
 
 } // namespace canbus

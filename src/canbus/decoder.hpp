@@ -115,6 +115,25 @@ public:
     virtual bool should_decode(uint32_t id) noexcept;
 
     /**
+     * called from the CAN ISR with every standard data frame, before should_decode()
+     * and whatever it goes on to decide. It is how a decoder that knows what some ids
+     * mean keeps their latest payload for the panel: what the board shows of the bike
+     * must not depend on which channels a phone happens to have asked for. The default
+     * keeps nothing.
+     *
+     * The same rules as should_decode(): no allocation, no blocking lock, no logging.
+     */
+    virtual void observe(uint32_t id, const uint8_t* data, uint8_t dlc) noexcept;
+
+    /**
+     * the latest payload observe() kept for \p id, zero-padded to eight bytes, and how
+     * long ago it arrived. For the display task; never called from the ISR.
+     * @return false if this decoder keeps nothing for \p id, or no such frame has
+     *         arrived since boot
+     */
+    virtual bool latest(uint32_t id, uint8_t data[8], uint32_t& age_ms) const noexcept;
+
+    /**
      * what the allow-list currently holds, for the panel. A decoder that forwards
      * everything regardless of what the app asked for reports -1: the difference
      * between "nothing is allowed" and "everything is" is exactly what a reader

@@ -547,12 +547,6 @@ void controller::isr() noexcept
 
             f.id = (dev->tx_rx_buffer[1].val << 3) | (dev->tx_rx_buffer[2].val >> 5);
 
-            if (!CANDEC.should_decode(f.id))
-            {
-                twai_ll_set_cmd_release_rx_buffer(dev);
-                continue;
-            }
-
             // The DLC field is four bits, so the wire can say 9-15. CAN 2.0 requires a
             // receiver to accept that and treat the payload as eight bytes, and a bit
             // error in the nibble on a vehicle harness produces the same thing. Clamp
@@ -564,10 +558,21 @@ void controller::isr() noexcept
                 f.info.dlc = 8;
             }
 
-            // copy data bytes
+            // Copy data bytes. Before the filter rather than after it, which costs up
+            // to eight register reads on a frame that is then dropped: the decoder is
+            // shown every frame, so what it keeps for the panel does not depend on
+            // what the app asked to be sent.
             for (uint8_t i = 0; i < f.info.dlc; i++)
             {
                 f.data.u8[i] = dev->tx_rx_buffer[i+3].val;
+            }
+
+            CANDEC.observe(f.id, f.data.u8, f.info.dlc);
+
+            if (!CANDEC.should_decode(f.id))
+            {
+                twai_ll_set_cmd_release_rx_buffer(dev);
+                continue;
             }
 
             // A full queue drops the frame, and upstream ignored that: the counter

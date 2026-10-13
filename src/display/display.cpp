@@ -23,6 +23,7 @@
 
 #include "../canbus/controller.hpp"
 #include "../canbus/decoder.hpp"
+#include "../canbus/r9.hpp"
 #include "../led/led.hpp"
 #include "../logging/logging.hpp"
 #include "../power/power.hpp"
@@ -430,6 +431,39 @@ void display::stats() noexcept
                    _id_used.load(std::memory_order_acquire),
                    (unsigned long)_id_overflow);
 
+#if defined(CONFIG_CANBUS_DECODER_YAMAHAR9)
+            // What the decoder is holding for the panel, decoded, with its age. The
+            // age is the part a shell needs: a value that stopped arriving looks
+            // exactly like one that stopped changing.
+            {
+                using namespace canbus;
+                uint8_t d[8];
+                uint32_t age;
+
+                if (CANDEC.latest(r9::id_engine, d, age))
+                {
+                    infoln("          R9 0x27C: rpm %lu, gear %u, TCS %u, mode %u (%lu ms old)",
+                           (unsigned long)r9::rpm(d), (unsigned)r9::gear(d), (unsigned)r9::tcs(d),
+                           (unsigned)r9::mode(d), (unsigned long)age);
+                }
+                if (CANDEC.latest(r9::id_temps, d, age))
+                {
+                    infoln("          R9 0x512: water %d, air %d tenths C (%lu ms old)",
+                           (int)r9::water_tenths(d), (int)r9::air_tenths(d), (unsigned long)age);
+                }
+                if (CANDEC.latest(r9::id_throttle, d, age))
+                {
+                    infoln("          R9 0x758: grip %u, valve %u tenths %% (%lu ms old)",
+                           (unsigned)r9::grip_tenths(d), (unsigned)r9::valve_tenths(d), (unsigned long)age);
+                }
+                if (CANDEC.latest(r9::id_valve_cmd, d, age))
+                {
+                    infoln("          R9 0x759: valve commanded %u tenths %% (%lu ms old)",
+                           (unsigned)r9::valve_cmd_tenths(d), (unsigned long)age);
+                }
+            }
+#endif
+
             // The supply, on the console for the same reason the repaint cost is:
             // the panel is the one instrument a shell cannot read, and this is the
             // number that explains a board that rebooted while nobody was watching.
@@ -648,10 +682,11 @@ void display::update_status_led() noexcept
     // frames are moving, and every term below is a counter the BUS page already
     // reads -- nothing is measured for the light's sake.
     //
-    // What is deliberately absent is vehicle data. This firmware forwards raw frames
-    // and never decodes a signal, which is why an unfinished canbus-mapping.md never
-    // blocks it; a shift light would need a confirmed mapping, a decoder here and a
-    // scale to trust, which is the sniffer role that was settled the other way.
+    // What is deliberately absent is vehicle data. The light's subject is the chain
+    // from the bus to the phone, and the one fault a rider can act on is that chain
+    // breaking. The panel does decode a few signals now (canbus/r9.hpp), to be held
+    // up against the dash at a standstill; a shift light would be a second meaning
+    // on the only indicator readable at speed, and it is not here for that reason.
     uint8_t r;
     uint8_t g;
     uint8_t b;

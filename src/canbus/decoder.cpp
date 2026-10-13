@@ -78,6 +78,15 @@ bool decoder::should_decode(uint32_t id) noexcept
     return false;
 }
 
+void decoder::observe(uint32_t, const uint8_t*, uint8_t) noexcept
+{
+}
+
+bool decoder::latest(uint32_t, uint8_t*, uint32_t&) const noexcept
+{
+    return false;
+}
+
 void decoder::deny_all() noexcept
 {
     for (size_t i = 0; i < size(); i++)
