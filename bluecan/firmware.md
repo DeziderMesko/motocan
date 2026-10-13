@@ -1836,6 +1836,10 @@ Channels are configured **in the app**, not in the firmware: CAN ID, bit offset,
 length, byte order and a conversion equation are all entered per channel in
 RaceChrono Pro. The firmware just streams raw frames.
 
+**The R9's channels, as the app accepted them, are in
+[racechrono-channels.md](racechrono-channels.md).** What follows is the history of getting
+there.
+
 The practical consequence for this project: the empty and 🟡 rows in
 [pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md) do not block the device. Build it, capture
 raw traffic, correlate afterwards, and enter equations in the app as they get

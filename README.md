@@ -32,7 +32,9 @@ only when the listening node acknowledges them. Bytes are numbered from 0; `b3` 
 | Throttle valve (TPS), measured | `0x758` | 20 Hz | `(b0 >> 4) << 8 \| b2` (12 bits) | `% = raw / 16 / 144.4 * 100` | top measured, zero provisional: a warm idle reads about 8 % |
 | Throttle valve, commanded | `0x759` | 20 Hz | `(b0 >> 4) << 4 \| (b2 >> 4)` (8 bits) | `% = raw / 144.4 * 100` | the same unit as the measured one, and leads it by a sample |
 
-The same as a DBC file: [analysis/r9.dbc](analysis/r9.dbc). Every id, including about
+The same as a DBC file: [analysis/r9.dbc](analysis/r9.dbc). The same as equations
+RaceChrono accepts, with the ids in decimal as it wants them:
+[bluecan/racechrono-channels.md](bluecan/racechrono-channels.md). Every id, including about
 forty fields that change and have no name yet:
 [analysis/r9-signals.md](analysis/r9-signals.md). What those unnamed fields could be, going
 by the sensors, monitor items and control states the service manual says the ECU has:

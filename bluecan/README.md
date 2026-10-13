@@ -336,6 +336,8 @@ Also declined: link-quality/RSSI instrumentation. Both are in
   the patches needed, listen-only safety, display layer, RaceChrono app setup, and the
   [code review log](../journal/bluecan-code-review-log.md) — what has been reviewed, and the range
   the next review starts from.
+- [racechrono-channels.md](racechrono-channels.md) — the nine channels to enter into
+  RaceChrono for the R9: PID in decimal and the equation, each one as the app accepted it.
 - [wsl-setup.md](wsl-setup.md) — the Windows/WSL2 development environment: what is
   installed, and how flashing and serial monitoring work without USB passthrough.
 - [bench-link.md](bench-link.md) — the two-node bench link: what was tested, the numbers,
