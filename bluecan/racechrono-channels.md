@@ -127,11 +127,11 @@ names are the app's, read off its Live screen on 2026-10-13:
 | Coolant temperature | water temperature | 1298 |
 | Air temperature | intake air temperature | 1298 |
 | Throttle position 1 | the throttle grip | 1880 |
-| Throttle position 2 | a throttle valve | 1880 or 1881 |
+| Throttle position 2 | the throttle valve as measured | 1880 |
 
-That screen showed eight channels, and the two valve equations make nine: which of the
-measured and the commanded valve is `Throttle position 2`, and where the other one went,
-is not recorded yet.
+That is eight channels on three PIDs. The ninth, the valve as commanded on PID 1881, has
+its equation above and was not entered, so a recording session asks Bluecan for three ids
+and its BUS page reads `flt 3`.
 
 **TCS and the mode field have no channel of their own**, and went in as `Digital`.
 Despite the name it is not a 0-or-1 channel: it shows the number the equation gives, so
@@ -154,7 +154,8 @@ water 31.8 °C, air 21.8 °C, the grip at rest and the valve between 13 and 14.5
 
 ## What it costs the link
 
-Four ids. Recording, the app asks for each at 50 ms, so about 61 frames a second cross the
-radio out of the 506 on the bus — [numbers.md](numbers.md). The same four are what
+Four ids with all nine channels, three as entered so far. Recording, the app asks for
+each at 50 ms, so about 61 frames a second cross the radio with four — 41 with three — out
+of the 506 on the bus — [numbers.md](numbers.md). The same four are what
 Bluecan decodes for its own LIVE page, which does not depend on any of this: it reads the
 frames ahead of the app's filter.
