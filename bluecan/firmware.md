@@ -1545,11 +1545,12 @@ read the same zero, which is how the patch was cleared.
 It has not been on the R9. That is the next thing this patch is owed, and what it should
 show is on the BUS page: `ACK`, the IDS page counting 23, and REC at 0.
 
-## Patch 19 — the firmware decodes four frames, for the panel — **decoder and latch applied and measured; the page is not built yet**
+## Patch 19 — the firmware decodes four frames, and shows them — **applied and measured on the bench**
 
-In Bluecan at `trunk`, two commits: `bd0d51a` for the decoder (`src/canbus/r9.hpp`) and
+In Bluecan at `trunk`, three commits: `bd0d51a` for the decoder (`src/canbus/r9.hpp`),
 `826263e` for the latch (`decoder::observe()` and `latest()`, implemented in
-`decoder_yamahar9.cpp`, fed from the ISR in `controller.cpp`).
+`decoder_yamahar9.cpp`, fed from the ISR in `controller.cpp`), and `1a45b7d` for the page
+(`page_live()` in `src/display/display.cpp`).
 
 Until now this firmware forwarded raw frames and understood none of them, on purpose:
 RaceChrono decodes app-side, so an unfinished mapping never blocked the device. That is
@@ -1627,15 +1628,72 @@ has acknowledged a bus shaped like the R9's.
 filter stood at allow-all throughout. The latch is ahead of the filter in the code; the
 run that shows it is a recording session with a channel missing.
 
-One thing the replay showed that is not this patch's: **the census is too small for this
-bike.** It has 20 slots and the R9 sends 23 ids, and the console said so —
-`Census ids: 20, 120 over`. That goes with the page.
+One thing the replay showed that was not the latch's: **the census was too small for this
+bike.** It had 20 slots and the R9 sends 23 ids, and the console said so —
+`Census ids: 20, 120 over`. Fixed with the page, below.
+
+### The LIVE page
+
+The page the board boots into, and the first in **D1**'s order: it is the page about the
+bike, and the other three are about the device.
+
+```
+bluecan advertising
+Gear 3     RPM  8450
+Grip  42%  Valve  38%
+Water 76C  Air   17C
+TCS 7      Mode 3
+Valve commanded  14.5 %
+```
+
+Four lines at text size 2 and one at size 1. Labels are yellow, capitalised, at fixed
+columns and drawn once; each value is white and padded to a fixed width. `Gear` reads `N`,
+`1`–`6`, and `-` between gears. `Mode` is the number the bike sends and nothing more — it
+follows the ride mode, and [what it is](../analysis/open-questions.md) is still open. The
+two bits that change with the engine running are not on it, by decision.
+
+**A value that has stopped arriving turns to grey dashes** — after half a second for
+`0x27C`, `0x758` and `0x759`, three seconds for `0x512`, which comes once a second. A
+number that has stopped arriving looks exactly like one that has stopped changing, and with
+the key off that would leave the last engine speed standing on the glass.
+
+The census grew from 20 ids to 32 with it, and the IDS page went from two columns of id,
+total and rate to three of id and rate — 24 cells, one more than the R9 sends. The total
+went because the count is what that page is read for now: 23 means the controller is
+acknowledging, 2 means it is not.
+
+### The page, measured and looked at
+
+The same replay, with the page on the glass, and then a longer one in a loop: 150 s of
+gear changes from [the first capture](../analysis/captures/session-2026-10-11_115626/README.md),
+which holds `0x27C` and little else, followed by the 20 s above.
+
+| | |
+|---|---|
+| A repaint of LIVE while values move | **2–4 ms**, 2–5 characters changing |
+| A repaint with nothing changed | **135–180 µs** |
+| First paint of LIVE | ~90 ms; the worst page change of the session, onto the BUS page, 254 ms |
+| Dropped at ~524 msg/s with the page running | 0 |
+| Census | 23 ids, none over |
+| Display task stack free, after every page had been visited | **1824 B** of 4 KB, from 1912 |
+
+Looked at on the board by the rider: readable, nothing overlapping, no stale characters
+left behind, and all four pages cycle. The BUS page read `CAN 500k ACK`.
+
+**The values vanished for a moment every half minute or so, and that was the bench.**
+Gear, RPM, TCS and Mode all went to dashes and came back. The replay file has no gap in it
+longer than 0.2 s. Timed on the host with a clock that does not step, the frames on `can0`
+had five silences of **1.9 s** in 175 s — at gears 6, between-gears, N, 1 and 2, so nothing
+about the data — and across each one the realtime clock had advanced 0.01 s. `canplayer`
+paces itself on the realtime clock, WSL2 steps that clock back, and `canplayer` then waits
+out the difference with nothing on the bus. The page was doing what it was built to do
+with half a second of silence. candump's timestamps ride on the same clock, so a replay
+through `canplayer` on this machine is good for values and no good for timing.
 
 ### What has not happened
 
-The page. Nothing reads the latch for the glass yet; a `--debug` build prints the four
-frames decoded, with their ages, on the stats cadence, and that is where the table above
-came from.
+It has not been on the R9, and it has not run under a phone's allow-list. The first is the
+check the page exists for: every value on it against the dash.
 
 ## Open questions before the bike
 
@@ -1715,7 +1773,7 @@ Measured on the board, at 500 kbps with no frames dropped:
 | One character redrawn | **~650 µs** |
 | A pass while the counters tick | 2–6 ms |
 | First paint after boot, or after a page change | **245 ms** |
-| Display task stack | 4 KB, **1912 B** still free — the 2.2 KB is stale, [measured 2026-08-22](#cost-measured-on-the-board) |
+| Display task stack | 4 KB, 1912 B still free when [measured 2026-08-22](#cost-measured-on-the-board); 1824 B with the LIVE page, [numbers.md](numbers.md#the-panel) |
 
 650 µs per character is the cost of Adafruit_GFX rendering text a pixel at a time; it is
 why the answer is to draw fewer characters rather than to draw them faster. The 245 ms
@@ -1726,16 +1784,22 @@ cannot read that fast.
 
 ### Pages
 
-Sniffer-oriented, which is more useful than a dashboard while the mapping is still
-unknown. **D1** cycles them:
+**D1** cycles them. LIVE is first and the default since
+[patch 19](#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench);
+the other three are the sniffer-oriented pages this section was written about, built while
+the mapping was still unknown.
 
+- **LIVE** — what the R9 is sending, decoded: gear, engine speed, grip, throttle valve,
+  water and air temperature, TCS, the mode field, the commanded valve. Dashes for anything
+  that has stopped arriving
 - **BUS** — frames received and forwarded with their rates, BLE frames and rate, queue
   depth and peak against capacity, dropped frames, error interrupts, the discarded 29-bit
   and RTR classes, TEC/REC, free and minimum heap, display stack, repaint cost, uptime,
   and the supply voltage ([patch 17](#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read))
-- **IDS** — the ID census with per-ID totals and rates. This is the first question the
-  device exists to answer: which CAN family the R9 belongs to is read off the ID list,
-  not off any decoded value
+- **IDS** — the ID census, each id with its rate, three columns of eight. It was the first
+  question the device existed to answer — which CAN family the R9 belongs to is read off
+  the ID list — and it is now the wiring check: 23 ids is a controller that is
+  acknowledging, 2 is one that is not
 - **LAST** — the six most recent raw frames, ID and payload
 
 The header carries the one thing asked most often — whether the phone is actually

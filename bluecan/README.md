@@ -28,9 +28,9 @@ For the phone it reads the bus without understanding it: RaceChrono decodes chan
 app-side (CAN id + offset + length + equation, entered in the app), so the firmware
 forwards raw frames and unknown mappings never block it. For its own panel it does decode
 four frames now — engine speed, gear, TCS, temperatures, grip and throttle valve — kept
-ahead of the phone's filter so the glass does not depend on the app's channels
-([patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-for-the-panel--decoder-and-latch-applied-and-measured-the-page-is-not-built-yet));
-the page that shows them is not built yet.
+ahead of the phone's filter so the glass does not depend on the app's channels, and
+shown on the LIVE page it boots into
+([patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench)).
 
 ### Sniffing is the CANable's job, not this one
 
@@ -119,6 +119,7 @@ without dropping a frame. Full results and method in [bench-link.md](bench-link.
 | Status light | the NeoPixel shows the chain — hue for where it is, blips for frames moving, a latching red flash for a loss. Fault flash confirmed by eye, the flatline was invisible and is fixed, the rest unseen. [Patch 16](firmware.md#patch-16--the-neopixel-as-the-riders-status-light--applied) |
 | Supply readout | the BUS page shows the BAT rail's voltage off the board's MAX17048; 4.09 V on the bench, no measurable cost. Not the outlet's 5 V, which nothing on this board can read, and state of charge is behind `CONFIG_CELL_FITTED` until there is a cell to test with. [Patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read) |
 | Acknowledging | **done and measured on the bench** — listen-only at boot, acknowledging once 32 frames have proved the bit rate, back to listen-only if the bus looks wrong. 199–202 msg/s received with both nodes' error counters at 0 and no frame of its own on the wire. Not yet on the R9. [Patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |
+| Decoded page | **done and measured on the bench** — LIVE, the page it boots into: gear, engine speed, grip, throttle valve, temperatures, TCS and the mode field, decoded from four frames kept ahead of the phone's filter, dashes for anything that stops arriving. Checked against a replay of the R9's own captures; not yet against the dash. [Patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench) |
 | Per-id allow-list | **done and measured** — an unasked-for id is dropped in the CAN ISR, an allowed one leaves at 19.5 msg/s against the 50 ms the app asked for, and 635.8 msg/s on the bus becomes 19.6 over the radio with zero refusals. [Patch 14](firmware.md#patch-14--honour-the-allow-list-and-the-notify-interval--applied-and-measured) |
 
 ### What is proven
@@ -161,7 +162,8 @@ Everything from the source file to the CAN controller, end to end:
   The same shape of surprise as patch 4, found the same way — by reaching for something
   and watching it not be there. See [firmware.md](firmware.md#nimble-not-bluedroid--found-while-instrumenting-the-ble-half)
 - **the sniffer UI, in the real firmware**: three pages on the TFT — bus health, the ID
-  census, the last raw frames — on their own task on core 0, repainting a character at a
+  census, the last raw frames, with a fourth, LIVE, in front of them since
+  [patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench) — on their own task on core 0, repainting a character at a
   time. An idle pass costs ~420 µs and a busy one 2–6 ms, against 245 ms for the full
   panel, and the frame counters do not move when it runs. That puts dropped frames, queue
   peak and the discarded 29-bit/RTR classes in front of the rider in a release build,
@@ -218,8 +220,8 @@ sudo -v && ./tools/ble-load.py                # where the BLE link stops keeping
 is what is wanted; `./tools/reflash-bluecan.sh` (no flag) returns to the silent release
 build. Both handle the USB re-attach dance.
 
-The board is no longer silent to look at, whichever build it carries: **D1** cycles the
-BUS, IDS and LAST pages, **D2** freezes the glass without pausing the counting, and
+The board is no longer silent to look at, whichever build it carries: it boots into LIVE,
+the R9's own values decoded, and **D1** cycles LIVE, BUS, IDS and LAST, **D2** freezes the glass without pausing the counting, and
 **D0** cycles panel + status pixel, pixel alone, dark. The middle position kills the
 backlight and the repaint with it — the cheapest A/B on the board, since everything else
 keeps running — and leaves the light that is actually readable from a moving bike on. In
@@ -297,8 +299,9 @@ per-id allow-list and the supply readout are all done and measured.
    no supervision, and it is the only open thing that needs the phone at all. See
    [item 3](../journal/next-without-the-bike.md).
 
-2. **The UI in daylight** — whether three pages are the right three now that the device
-   is a telemetry link rather than a sniffer, and whether any of it is readable at a
+2. **The UI in daylight** — whether the pages are the right ones now that the device
+   is a telemetry link rather than a sniffer (a fourth, LIVE, went in front of the three
+   with [patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench)), and whether any of it is readable at a
    glance at speed. Only a bike can answer that. Half of it is answered without one: it is
    not readable, which is what the **NeoPixel status light** is for —
    [patch 16](firmware.md#patch-16--the-neopixel-as-the-riders-status-light--applied),

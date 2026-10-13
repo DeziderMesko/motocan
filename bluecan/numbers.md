@@ -82,7 +82,9 @@ everything downstream and the phone picks it afresh on every reconnect.
 | One character redrawn | **~650 µs** | [patch 9](firmware.md#patch-9--the-display--applied) |
 | A pass while the counters tick | 2–6 ms | [patch 9](firmware.md#patch-9--the-display--applied) |
 | First paint after boot or a page change | **~245 ms**, worst seen ~251 ms | [cost, measured on the board](firmware.md#cost-measured-on-the-board) |
-| Display task stack free | **1912 B** of 4 KB. *Retired: 2.2 KB* | [cost, measured on the board](firmware.md#cost-measured-on-the-board) |
+| Display task stack free | **1824 B** of 4 KB, after every page had been visited — measured 2026-10-13. *Retired: 1912 B, before the LIVE page; 2.2 KB before that* | [patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench) |
+| LIVE page, a repaint while values move | **2–4 ms**, 2–5 characters; 135–180 µs with nothing changed | [patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench) |
+| Census capacity | **32 ids**; the IDS page shows 24. *Retired: 20, which the R9's 23 overflowed* | [patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench) |
 | Status pixel, one update | **~30 µs** | [patch 16](firmware.md#patch-16--the-neopixel-as-the-riders-status-light--applied) |
 | Cost to the frame counters | none measurable, at any of the above | [patch 9](firmware.md#patch-9--the-display--applied) |
 
@@ -140,14 +142,14 @@ queue-peak-soak    :: 21 of 2000                     :: peak in the 600 s soak
 disp-idle          :: ~?420 (µs|us)                  :: idle repaint
 disp-char          :: ~?650 (µs|us)                  :: one character redrawn
 disp-full          :: 24[05] ms|251 ms               :: a full repaint
-disp-stack         :: 1912                           :: display task stack free
+disp-stack         :: 1824                           :: display task stack free
 led-update         :: ~?30 (µs|us)                   :: one status-pixel update
 soak-bench-hour    :: 3 ?224 ?404                    :: the one-hour bench soak
 soak-bluecan       :: 600 s at 919|919 msg/s         :: the 600 s Bluecan soak
 soak-phone         :: 150 s at 476                   :: the longest run with a phone
 supply-bench       :: 4\.09 V                        :: BAT rail on the bench
 stale-disp-idle    :: 280 (µs|us)                    :: retired idle repaint
-stale-disp-stack   :: 2\.2 KB                        :: retired stack figure
+stale-disp-stack   :: 2\.2 KB|1912                   :: retired stack figures
 stale-console      :: ten seconds|ten-second         :: retired serial-console limit
 stale-ble-ceiling  :: ~?200 msg/s                    :: the pre-patch-12 ceiling
 ```
