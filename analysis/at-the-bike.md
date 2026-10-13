@@ -125,6 +125,12 @@ there is one — the session is worth doing without it, and step 8 says what cha
    Task 5 is just typing the dash temperatures now and then — go back to it a few times
    as the engine warms. Task 7 is the rider aids: change one setting at a time.
 
+   Task 0, added 2026-10-14, is the Track display and the four modes that come with it.
+   It has the one key that does not mark something you did: `i` sits still for 15 s and
+   says which ids are new and which bytes have started moving by themselves. That is the
+   question to ask of a state — a display left on Track — where the list after a mark
+   answers it for an action.
+
    **Without a rear stand**, 2, 3, 5, 6, 7 and 8 are untouched — 8 is the bike leaned by
    hand. Two change:
    - **1, gear: do what the gearbox allows.** N and 1st for certain; rocking the bike

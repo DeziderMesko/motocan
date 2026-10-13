@@ -1,12 +1,15 @@
 # The stand session — the checklist
 
-One session with the rear wheel off the ground. It is after two things, and has a list of
-extras for whatever time and patience are left:
+One session with the rear wheel off the ground. It is after three things, and has a list
+of extras for whatever time and patience are left:
 
 - **Speed and Speed 2**, the two channels of AiM's list not yet looked for. The working
   guess is that they are the two wheels, and that `0x27C` byte 2 is one of them.
 - **What the 2-bit field is** — `0x27C` byte 4 top two bits, `0x76E` byte 1. It needs only
   the PWR number the dash shows in each mode.
+- **The Track display.** With the display set to Track the dash offers four more modes,
+  Track 1 to Track 4, and none of the three captures had it on. What each of them sets,
+  and whether the bus carries anything it does not carry otherwise.
 
 Setting the laptop and the adapter up is parts A and B of
 [at-the-bike.md](at-the-bike.md), unchanged. What that page calls not negotiable has moved
@@ -44,6 +47,7 @@ Then, in this order:
 |---|---|---|---|
 | 1 | — | **Census: 30 s, hands off, engine off, bike on its wheels** | it learns what moves by itself |
 | 2 | `6` ride mode | each of the five: select it, settle, press its key. Back in the main menu after **each one**, press `m` and type the PWR the dash shows, as `pwr 2` | names the 2-bit field. The note has to follow its mode, so do them in pairs: mode key, `.`, `m`, `6` |
+| 2b | `0` track | Display to **Track**, then `d`. Then `i`, and **sit still for 15 s**. Then each of Track 1–4: select it, settle, press its number; and for **every** setting the dash shows for that mode press `v` and type it as a name and a number — `pwr 2`, `tcs 1`, whatever is on the screen. Display back to normal, then `n`, then `i` again | what the four modes set — nine modes against a field of two bits says more about that field than five did — and whether the bus carries more with the Track display on. `d` prints what changed at the switch; `i` prints the ids that are new and the bytes that have started moving by themselves, there and then |
 | 3 | main menu | **Push.** Neutral, engine off, laptop carried or on the seat. `m` `push forward start`, walk it five metres at a steady pace, stop, `m` `push forward end`. Wait 3 s. The same backwards: `push back start`, `push back end` | both wheels turning at one speed: the only time the front turns at all |
 | 4 | — | Bike onto the stand. Laptop off the bike. Start the engine | |
 | 5 | main menu | `b`, and **sit still for 10 s** | re-learns the noise with the engine running, or every later mark lists the same engine bytes |
@@ -120,7 +124,10 @@ where it is and say it is there. What gets read out of it:
   6–7 — that is rear against front;
 - the scale of each, from the dash anchors and from rpm × gearing in three gears;
 - whether `0x27C` byte 2 is one of them;
-- the PWR notes against the 2-bit field, five pairs.
+- the PWR notes against the 2-bit field, five pairs;
+- from step 2b: what `notes.txt` says after each `still check` — new ids, bytes newly
+  moving — which bytes stepped at `display_track`, and `ride_mode` 6 to 9 with their
+  settings beside the first five.
 
 ## Not in this session
 

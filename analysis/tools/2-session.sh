@@ -76,6 +76,7 @@ REF="$OUTDIR/ref.csv"
 NOTES="$OUTDIR/notes.txt"
 WATCHDOG_LOG="$OUTDIR/ack-watchdog.log"
 MOVING="$OUTDIR/census-moving.txt"
+IDS_SEEN="$OUTDIR/census-ids.txt"
 LAST_LINE=1
 CANDUMP_PID=""
 CAPTURE_STARTED=0
@@ -153,6 +154,50 @@ relearn() { # after the engine is started, or anything else that changes what is
     LAST_LINE=$(wc -l < "$CAPTURE")
     echo "   $(wc -l < "$MOVING") bytes are now treated as noise"
     echo "$(date +%H:%M:%S)  re-learned noise: $(wc -l < "$MOVING") bytes" >> "$NOTES"
+}
+
+# What the bus carries now that it did not before: ids never seen in this capture, and
+# bytes that move with the bike left alone and were still until now. For a change that is
+# a state rather than an action -- the display put on Track -- where "did the bus react to
+# what I just did" is the wrong question and "is it sending more than it was" is the right
+# one. An id that turns up with a payload that never changes moves no byte, so the ids are
+# compared on their own; nothing else in this script would notice one.
+#
+# The ids are held against the census and the checks before this one, not against the
+# capture up to the moment the key is pressed. The first version did the second, and its
+# dry run reported no new ids with a new one on the bus: the thing being looked for
+# starts when the display is switched, which is before anybody presses anything.
+newdata() {
+    local from i before now new gone fresh
+    tag event still_start ""
+    echo "   sit still for 15 s, hands off -- looking for ids and bytes that are new"
+    from=$(wc -l < "$CAPTURE")
+    for (( i = 15; i > 0; i-- )); do printf '\r   %2ds ' "$i"; sleep 1; done
+    printf '\r        \r'
+    before=$(cat "$IDS_SEEN")
+    now=$(tail -n +"$(( from + 1 ))" "$CAPTURE" | head -n -1 | awk '{print $3}' | cut -d'#' -f1 | sort -u)
+    new=$(comm -13 <(echo "$before") <(echo "$now") | tr '\n' ' ')
+    gone=$(comm -23 <(echo "$before") <(echo "$now") | tr '\n' ' ')
+    fresh=$(positions "$(( from + 1 ))" | cut -d' ' -f1 | { grep -vxFf "$MOVING" || true; } | tr '\n' ' ')
+    # Written without tag(): the feedback it prints is about what moved since the last
+    # mark, and this function has just said something better about the same stretch.
+    printf '%s;event;still_end;\n' "$(now)" >> "$REF"
+    printf '%s  %-7s %-18s\n' "$(date +%H:%M:%S)" event still_end >> "$NOTES"
+    echo "   ids: $(grep -c . <<<"$now") in these 15 s, $(grep -c . <<<"$before") known before"
+    echo "   NEW ids:               ${new:-none}"
+    [[ -n "$gone" ]] && echo "   ids gone quiet:        $gone"
+    echo "   bytes moving that were still (id:byte): ${fresh:-none}"
+    {   echo "   still check: new ids: ${new:-none}"
+        echo "   still check: ids gone quiet: ${gone:-none}"
+        echo "   still check: bytes newly moving on their own: ${fresh:-none}"
+    } >> "$NOTES"
+    # They are noise from here on, like anything else that moves by itself; they are in
+    # notes.txt, which is where they are wanted.
+    { cat "$MOVING"; tr ' ' '\n' <<<"$fresh" | grep . || true; } | sort -u > "$MOVING.new"
+    mv "$MOVING.new" "$MOVING"
+    { echo "$before"; echo "$now"; } | grep . | sort -u > "$IDS_SEEN.new"
+    mv "$IDS_SEEN.new" "$IDS_SEEN"
+    LAST_LINE=$(wc -l < "$CAPTURE")
 }
 
 stop_capture() {
@@ -294,6 +339,7 @@ echo   # the folded list ends without a newline
 { echo "census: $nids ids, ~$(( total / (CENSUS_S + 3) )) msg/s"; echo "$ids" | tr '\n' ' '; echo; } >> "$NOTES"
 
 positions 1 | cut -d' ' -f1 > "$MOVING"
+echo "$ids" > "$IDS_SEEN"
 LAST_LINE=$total
 echo "   $(wc -l < "$MOVING") bytes move on their own; they are left out of what follows"
 
@@ -321,6 +367,7 @@ tasks() {
    7  rider aids    TCS, SCS, LIF, LCS, quickshifter
    8  lean          rock it, and hold it at an angle
    9  switches      lever, clutch, sidestand, brakes, buttons -- one at a time
+   0  track         the Track display, and Track 1-4 that come with it
 
    .  back here    x  BOTCHED, undo last    m  note    q  finish
    b  sit still 10 s and re-learn the noise (do it after starting
@@ -561,6 +608,46 @@ T
     done
 }
 
+# The dash has a Track display, and with it four ride modes the other display does not
+# offer. Two questions, and they need different marks: what each Track mode sets, which is
+# an anchor per mode like any other mode; and whether the bus carries anything more with
+# the display on Track, which is newdata(), because switching a display is a state and not
+# an action.
+task_track() {
+    hdr "TRACK DISPLAY, TRACK 1-4"
+    cat <<'T'
+   Start on the normal display, in a mode recorded before. Then:
+   display to Track, press d, press i and sit still. Then each Track
+   mode: select it, settle, press its number -- and for every setting
+   the dash shows for that mode, press v and type it. At the end the
+   display back to normal, n, and i once more.
+     d   the display is on TRACK now      n   back on the normal display
+     i   sit still 15 s: any new ids, any bytes newly moving?
+     1 2 3 4   settled in Track 1-4 (ride mode 6-9 in ref.csv)
+     v   a setting the dash shows, as name and number:  pwr 2
+T
+    local k v name
+    while true; do
+        printf '\r  [%s frames, %s marks] track> ' "$(frames)" "$(marks)"
+        read -rsn1 k || return; echo
+        case "$k" in
+            d) tag anchor display_track 1; echo "   display on Track" ;;
+            n) tag anchor display_track 0; echo "   display back to normal" ;;
+            i) newdata ;;
+            # 6-9, carrying on from task_mode's 1-5, so that one ride_mode column
+            # holds all nine and a single search runs across them.
+            [1-4]) tag anchor ride_mode "$(( k + 5 ))"; echo "   track $k ($(( k + 5 )))" ;;
+            v) read -r -p "   setting and number, e.g. pwr 2: " name v
+               name=${name,,}
+               if [[ -n "$name" && -n "$v" ]]; then tag anchor "$name" "$v"; echo "   $name = $v"
+               else echo "   needs both: a name and a number"; fi ;;
+            .) return ;;
+            x) undo ;;
+            *) echo "   d, n, i, 1-4, v, or . to go back" ;;
+        esac
+    done
+}
+
 sweep() { # sweep <label> -- bracket a stretch worth analysing
     if [[ "$sweep_open" == "$1" ]]; then
         tag event "${1}_end" ""; echo "   $1 ENDED"; sweep_open=""
@@ -609,6 +696,7 @@ while true; do
         7) task_aids ;;
         8) task_imu ;;
         9) task_switches ;;
+        0) task_track ;;
         m) read -r -p "   note: " v; [[ -n "$v" ]] && { tag event note "$v"; echo "   noted"; } ;;
         x) undo ;;
         b) [[ -n "$sweep_open" ]] && { echo "   $sweep_open is still open"; continue; }; relearn ;;
@@ -668,6 +756,7 @@ cat <<EOF
      ref.csv       what you tagged
      notes.txt     the same in a form you can read
      census-moving.txt   the bytes that were treated as noise, as id:byte
+     census-ids.txt      the ids the census and the still checks have seen
 
 >> next, at a desk. Start with the census:
 
