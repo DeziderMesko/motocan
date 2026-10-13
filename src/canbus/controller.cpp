@@ -45,6 +45,33 @@ namespace
 
 twai_dev_t* dev = &TWAI;
 
+#if defined(CONFIG_CANBUS_ACK)
+/// How often supervise() looks, in microseconds. This is also how long the controller
+/// stays on a bus that has turned bad. It does not bound the damage on a bus that
+/// turns bad all at once: against a transmitter at the wrong bit rate REC was at 128
+/// by the time anything looked, at 100 ms and at 10 ms alike. What bounds that is the
+/// controller itself, which stops sending dominant error flags once it is
+/// error-passive at 128. The limit below is for a bus that degrades slowly.
+constexpr unsigned long ack_poll_us = 10000UL;
+/// What counts as the bit rate proved: this many frames received intact, over at
+/// least this long, with no error interrupt among them. At the wrong bit rate not one
+/// frame gets through its CRC, so the count is the proof and the time is only there
+/// to keep a single burst from being the whole of it.
+///
+/// The time was 500 ms and that lost a race on the bench: the CANable's Candlelight
+/// firmware gives up an unacknowledged transmission after about 440 ms (tx-timeout),
+/// so the controller proved the bit rate on the flood of retries and began
+/// acknowledging a bus that had just gone quiet. The R9's ECU never gives up, so it
+/// is only the bench that cares, but the bench is where this gets tested.
+constexpr uint32_t ack_proof_frames = 32U;
+constexpr uint32_t ack_proof_ms = 200U;
+/// REC at which the controller stops acknowledging. A receive error adds 1 (8 for
+/// some) and every good frame takes 1 back, so a healthy bus sits at 0; 32 is several
+/// bad frames in a row and well short of the 96 where the controller raises its own
+/// warning. The same limit motocan's can-up-ack.sh holds the CANable to.
+constexpr uint32_t ack_rec_limit = 32U;
+#endif
+
 }
 
 namespace canbus
@@ -67,6 +94,13 @@ controller::controller() noexcept
     , _er_last(0U)
     , _cb_last(0U)
     , _rc_last(0U)
+    , _ack(ack_state::listening)
+#if defined(CONFIG_CANBUS_ACK)
+    , _ack_timer{}
+    , _proof_frames(0U)
+    , _proof_errors(0U)
+    , _proof_ms(0U)
+#endif
     , _isr_handle(nullptr)
     , _queue_storage{}
     , _static_queue{}
@@ -119,6 +153,18 @@ void controller::stats() noexcept
             infoln("     Dropped frames: %4u", dr_count);
             infoln("    Extended frames: %4u", ef_count);
             infoln("      Remote frames: %4u", rt_count);
+            // The panel shows this and a shell cannot see the panel. TEC and REC are
+            // read off the peripheral, which is safe here: stats() only runs from
+            // loop(), after install() has ungated its clock.
+            ack_state a = ack();
+            infoln("           Bus mode: %s, TEC %u, REC %u, status 0x%02x, mode 0x%02x",
+                   a == ack_state::listening ? "listen-only"
+                   : a == ack_state::acknowledging ? "acknowledging"
+                   : a == ack_state::tripped_state ? "TRIPPED on controller state"
+                   : a == ack_state::tripped_rec ? "TRIPPED on REC"
+                   : "TRIPPED on TEC",
+                   static_cast<unsigned>(tec()), static_cast<unsigned>(rec()),
+                   static_cast<unsigned>(status()), static_cast<unsigned>(dev->mode_reg.val));
         }
     }
 }
@@ -193,6 +239,9 @@ bool controller::install() noexcept
     // never ACKs a frame and never sends an error frame, so a wrong bit rate or a
     // wiring mistake cannot disturb the bike's network. It also freezes REC.
     // ESP32 Arduino core 3.x takes the mode as three flags instead of a twai_mode_t.
+    //
+    // Every boot starts here, whatever the build. With CONFIG_CANBUS_ACK it is
+    // supervise() that leaves it, and only on the evidence of frames received.
     twai_ll_set_mode(dev, true /* listen_only */, false /* no_ack */, false /* loopback */);
     // reset RX and TX error counters
     twai_ll_set_rec(dev, 0);
@@ -238,9 +287,10 @@ bool controller::install() noexcept
     bootln("        TSEG2: %3u", t_config.tseg_2);
     bootln("  3x Sampling: %3s", t_config.triple_sampling == 0 ? "No" : "Yes");
 
-    // Only RX is connected to the peripheral. TX is never routed through the GPIO
-    // matrix, so the controller physically cannot transmit - a second layer of
-    // listen-only that does not depend on a register staying set.
+    // Only RX is connected to the peripheral. TX is not routed through the GPIO
+    // matrix here, so the controller physically cannot transmit - a second layer of
+    // listen-only that does not depend on a register staying set. set_ack() is the
+    // one place that routes it, and the one place that takes it away again.
     gpio_set_pull_mode(CAN_RX_PIN, GPIO_FLOATING);
     esp_rom_gpio_connect_in_signal(CAN_RX_PIN, TWAI_RX_IDX, false);
     esp_rom_gpio_pad_select_gpio(CAN_RX_PIN);
@@ -295,10 +345,130 @@ bool controller::start() noexcept
 
     EXIT_CRITICAL();
 
+#if defined(CONFIG_CANBUS_ACK)
+    // The proof window opens now rather than at zero: millis() is already seconds
+    // into the boot, and a window dated from power-on would have its time served
+    // before the first frame arrived.
+    _proof_frames = _cb_count.load(std::memory_order_relaxed);
+    _proof_errors = _er_count.load(std::memory_order_relaxed);
+    _proof_ms = millis();
+#endif
+
     bootln("CAN bus started!");
 
     return true;
 }
+
+#if defined(CONFIG_CANBUS_ACK)
+bool controller::set_ack(bool on) noexcept
+{
+    // Nothing in here may log or block -- see install().
+    ENTER_CRITICAL();
+
+    // The mode register only takes a write in reset mode, where the controller is off
+    // the bus and its TX output is recessive. Leaving it, the controller waits for
+    // eleven recessive bits before it takes part, so it cannot come up acknowledging
+    // the middle of a frame. Whatever was in the receive FIFO is lost: a few frames,
+    // and in listen-only on the R9 they were copies of one another anyway.
+    twai_ll_enter_reset_mode(dev);
+    if (!twai_ll_is_in_reset_mode(dev))
+    {
+        EXIT_CRITICAL();
+        return false;
+    }
+
+    twai_ll_set_mode(dev, !on /* listen_only */, false /* no_ack */, false /* loopback */);
+    twai_ll_set_rec(dev, 0);
+    twai_ll_set_tec(dev, 0);
+
+    if (on)
+    {
+        // The pad is already an output driven high (install()), and the peripheral's
+        // TX is recessive in reset mode, so handing the pad over changes no level.
+        esp_rom_gpio_connect_out_signal(CAN_TX_PIN, TWAI_TX_IDX, false, false);
+    }
+    else
+    {
+        // Back to a plain GPIO held recessive. Level before routing, for the same
+        // reason install() sets it before the direction.
+        gpio_set_level(CAN_TX_PIN, 1);
+        esp_rom_gpio_connect_out_signal(CAN_TX_PIN, SIG_GPIO_OUT_IDX, false, false);
+    }
+
+    (void) twai_ll_get_and_clear_intrs(dev);    // clear any latched interrupts
+    twai_ll_exit_reset_mode(dev);
+
+    EXIT_CRITICAL();
+
+    return true;
+}
+
+void controller::supervise() noexcept
+{
+    if (!_running || _ack_timer.elapsed(ack_poll_us) == 0UL)
+    {
+        return;
+    }
+
+    switch (ack())
+    {
+    case ack_state::listening:
+    {
+        uint32_t frames = _cb_count.load(std::memory_order_relaxed);
+        uint32_t errors = _er_count.load(std::memory_order_relaxed);
+        uint32_t now = millis();
+
+        if (errors != _proof_errors)
+        {
+            _proof_frames = frames;
+            _proof_errors = errors;
+            _proof_ms = now;
+        }
+        else if ((frames - _proof_frames) >= ack_proof_frames && (now - _proof_ms) >= ack_proof_ms)
+        {
+            if (set_ack(true))
+            {
+                _ack.store(ack_state::acknowledging, std::memory_order_relaxed);
+                bootln("CAN bus bit rate proved on %u frames (%u errors before them), acknowledging from here",
+                       static_cast<unsigned>(frames - _proof_frames), static_cast<unsigned>(errors));
+            }
+        }
+        break;
+    }
+
+    case ack_state::acknowledging:
+    {
+        uint32_t status = twai_ll_get_status(dev);
+        uint32_t tec = twai_ll_get_tec(dev);
+        uint32_t rec = twai_ll_get_rec(dev);
+
+        // TEC first: it only counts for a transmitter, and this node acknowledges
+        // and flags errors but never transmits a frame. If it has moved, something
+        // was sent that this firmware has no code to send.
+        ack_state why = tec != 0U                                            ? ack_state::tripped_tec
+                      : rec >= ack_rec_limit                                 ? ack_state::tripped_rec
+                      : (status & (TWAI_LL_STATUS_ES | TWAI_LL_STATUS_BS))   ? ack_state::tripped_state
+                                                                             : ack_state::acknowledging;
+
+        if (why != ack_state::acknowledging)
+        {
+            // Latched until the next boot. Listen-only is what the bus has whenever
+            // nothing is plugged into the connector, so falling back to it costs the
+            // rider the telemetry and the bike nothing; rejoining on a bus that has
+            // just looked wrong is the half of that trade not worth making.
+            (void) set_ack(false);
+            _ack.store(why, std::memory_order_relaxed);
+            errorln("ERROR: CAN bus acknowledging stopped (status 0x%02x, TEC %u, REC %u), listen-only until reboot",
+                    static_cast<unsigned>(status), static_cast<unsigned>(tec), static_cast<unsigned>(rec));
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+}
+#endif
 
 bool controller::stop() noexcept
 {
@@ -427,6 +597,15 @@ void controller::isr() noexcept
     if (interrupts & (TWAI_LL_INTR_EI | TWAI_LL_INTR_EPI | TWAI_LL_INTR_ALI | TWAI_LL_INTR_BEI))
     {
         _er_count.fetch_add(1, std::memory_order_relaxed);
+
+        // Reading the error code capture register is what re-arms the bus-error
+        // interrupt. Left unread it fires once per boot and this counter stops at
+        // one, which was survivable while it was only a readout and is not now that
+        // supervise() takes "no error since" as part of its proof.
+        if (interrupts & TWAI_LL_INTR_BEI)
+        {
+            (void) dev->error_code_capture_reg.val;
+        }
     }
 
     EXIT_CRITICAL_ISR();

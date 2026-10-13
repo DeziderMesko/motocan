@@ -98,11 +98,43 @@ public:
 
     /**
      * transmit and receive error counters. Both are frozen in listen-only mode,
-     * where the controller neither transmits nor acknowledges, so they are reported
-     * as context rather than read as a health signal -- status() is the health signal.
+     * where the controller neither transmits nor acknowledges, so there they are
+     * context rather than a health signal -- status() is the health signal. Once the
+     * controller acknowledges, REC is live and supervise() watches it; TEC must stay
+     * at zero, because nothing here ever transmits a frame.
      */
     uint32_t tec() const noexcept;
     uint32_t rec() const noexcept;
+
+    /**
+     * Where the controller stands on acknowledging. It always boots listening; with
+     * CONFIG_CANBUS_ACK it moves to acknowledging once supervise() has seen the bit
+     * rate proved, and to one of the tripped states -- listen-only again, until the
+     * next boot -- if the bus stops looking healthy afterwards.
+     */
+    enum class ack_state : uint8_t
+    {
+        listening = 0,
+        acknowledging = 1,
+        tripped_state = 2,  //!< the controller reported error-warning or bus-off
+        tripped_rec = 3,    //!< the receive error counter reached its limit
+        tripped_tec = 4,    //!< the transmit error counter moved: something was sent
+    };
+
+    __always_inline ack_state ack() const noexcept { return _ack.load(std::memory_order_relaxed); }
+
+    /**
+     * Decide whether to start acknowledging, and whether to stop.
+     *
+     * Called from loop() on core 1, where everything else that touches the peripheral
+     * runs; it rate-limits itself, so the call costs a comparison. Changing the mode
+     * means a pass through reset mode, which is not something to do from the ISR.
+     */
+#if defined(CONFIG_CANBUS_ACK)
+    void supervise() noexcept;
+#else
+    void supervise() noexcept {}
+#endif
 
     /**
      * Install the controller driver: queue, peripheral, bit timing, GPIO, ISR.
@@ -155,6 +187,16 @@ private:
      */
     void isr() noexcept;
 
+#if defined(CONFIG_CANBUS_ACK)
+    /**
+     * Take the controller through reset mode into normal mode with the TX pad
+     * connected, or back to listen-only with the pad a plain GPIO held recessive.
+     *
+     * @return false if the peripheral would not enter reset mode; nothing was changed
+     */
+    bool set_ack(bool on) noexcept;
+#endif
+
     __always_inline void ENTER_CRITICAL() noexcept { portENTER_CRITICAL(&_lock); }
     __always_inline void EXIT_CRITICAL() noexcept { portEXIT_CRITICAL(&_lock); }
     __always_inline void ENTER_CRITICAL_ISR() noexcept { portENTER_CRITICAL_ISR(&_lock); }
@@ -182,6 +224,17 @@ private:
     uint32_t _er_last;
     uint32_t _cb_last;
     uint32_t _rc_last;
+    /// written by supervise() on core 1, read by the display task on core 0
+    std::atomic<ack_state> _ack;
+#if defined(CONFIG_CANBUS_ACK)
+    utils::timer _ack_timer;
+    /// the proof window: the frame and error counts it opened at, and when. An error
+    /// reopens it, so what promotes the controller is a run of intact frames with
+    /// nothing wrong in between.
+    uint32_t _proof_frames;
+    uint32_t _proof_errors;
+    uint32_t _proof_ms;
+#endif
     intr_handle_t _isr_handle;
     /// frames the queue holds while core 0 is not draining it. At the R9's ~1050
     /// msg/s that is ~1.9 s of bus, and ~0.5 s of a saturated 500 kbps one. Costs

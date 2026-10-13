@@ -563,6 +563,13 @@ void display::sample_rates() noexcept
         _fault = true;
     }
 
+    // So is the controller giving up acknowledging. On the R9 that takes the bus from
+    // 23 ids to 2, and the hue alone would go on saying frames are moving.
+    if (!_fault && CANCTLR.ack() > canbus::controller::ack_state::acknowledging)
+    {
+        _fault = true;
+    }
+
     // A refusal is only a fault while the allow-list is in force. An allow-all --
     // what RaceChrono sends while channels are being configured -- has no per-id slot
     // to rate-limit against, so it offers the whole bus to a radio measured at about
@@ -664,9 +671,10 @@ void display::update_status_led() noexcept
     }
     else if (status & TWAI_LL_STATUS_BS)
     {
-        // Bus-off. Nearly unreachable in listen-only, where this node never
-        // transmits and its error counters are frozen, and kept for the day that
-        // assumption is wrong: two comparisons is a fair price.
+        // Bus-off. Nearly unreachable: in listen-only this node's error counters
+        // are frozen, and acknowledging it still never transmits a frame, which is
+        // what bus-off counts. Kept for the day that assumption is wrong: two
+        // comparisons is a fair price.
         r = 255; g = 0; b = 0;
         lvl = 255;
         rung = 1U;
@@ -1093,6 +1101,21 @@ void display::page_bus() noexcept
         supply_color = color_grey_dim;
     }
 
+    // Whether this node is acknowledging, which on the R9 is the difference between
+    // 23 ids and 2. Every word is padded to the 11 columns of LISTEN-ONLY, and a trip
+    // takes the row's colour whatever the controller's own state says: it has been
+    // put back in listen-only with its counters cleared, so that state reads RUN.
+    const canbus::controller::ack_state ack = CANCTLR.ack();
+    const char* mode = ack == canbus::controller::ack_state::listening     ? "LISTEN-ONLY"
+                     : ack == canbus::controller::ack_state::acknowledging ? "ACK"
+                     : ack == canbus::controller::ack_state::tripped_state ? "TRIP-STATE"
+                     : ack == canbus::controller::ack_state::tripped_rec   ? "TRIP-REC"
+                                                                           : "TRIP-TEC";
+    if (ack > canbus::controller::ack_state::acknowledging)
+    {
+        state_color = ST77XX_RED;
+    }
+
     // where the supply readout starts: "CAN 500k LISTEN-ONLY " is 21 columns and the
     // state word after it is padded to 7, the width of BUS-OFF
     constexpr int supply_col = 28;
@@ -1102,7 +1125,7 @@ void display::page_bus() noexcept
     // "%-7s" rather than "%s": the readout after it has to start at the same column
     // whatever the bus is doing -- see the column-change comment on field() for what
     // a moving anchor does to the slot that follows it.
-    seg(y, col, state_color, "CAN 500k LISTEN-ONLY %-7s", state);
+    seg(y, col, state_color, "CAN 500k %-11s %-7s", mode, state);
     col = supply_col;
     seg_fill(y, col, supply_color, "%s", supply);
 

@@ -38,6 +38,18 @@
 /// define to build the raw pass-through decoder for the Yamaha R9
 #define CONFIG_CANBUS_DECODER_YAMAHAR9 1
 
+/// Let the controller acknowledge frames, once it has proved the bit rate by
+/// receiving in listen-only. Undefined, the controller stays listen-only for good and
+/// the TX pad is never connected to it, which is what every board ran until the R9.
+///
+/// The R9 needs it: its diagnostic connector is a pair with only the ECU on it, and
+/// with nothing acknowledging the ECU resends one frame ~3800 times a second and 2 ids
+/// of 23 get through (motocan/analysis/r9-signals.md). What goes on the wire is the
+/// ACK bit and, over a frame received broken, an error flag. No frame is ever sent --
+/// nothing in this firmware writes the TX buffer -- and controller::supervise() takes
+/// the controller back to listen-only if the bus stops looking healthy.
+#define CONFIG_CANBUS_ACK 1
+
 /// statistics timeout in microseconds
 #define CONFIG_RC_STATS_TIMEOUT 5000000
 

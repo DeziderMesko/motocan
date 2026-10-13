@@ -210,4 +210,6 @@ void loop()
 {
     // print out stats
     CANCTLR.stats();
+    // start acknowledging once the bit rate is proved, stop if the bus looks wrong
+    CANCTLR.supervise();
 }

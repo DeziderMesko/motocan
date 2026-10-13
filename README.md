@@ -32,7 +32,7 @@ any of them mean.
 |---|---|
 | Board | Adafruit Feather ESP32-S3 Reverse TFT (#5691) — 240×135 ST7789, three buttons |
 | Transceiver | SN65HVD230 breakout, `CAN_RX` = GPIO18 (A0), `CAN_TX` = GPIO17 (A1) |
-| Bus | 500 kbps, **listen-only**: the controller never transmits and never ACKs |
+| Bus | 500 kbps, **listen-only at boot**; it acknowledges once frames received have proved the bit rate, and never transmits a frame of its own |
 | Phone | Pixel 6, RaceChrono Pro for Android |
 | Bench partner | CANable 2.0 Pro (candleLight) over a twisted pair, driven by `cangen` |
 
@@ -62,6 +62,18 @@ compiles in only for the Reverse TFT.
   CANable drops to ERROR-PASSIVE with TEC 128 because nothing here ever ACKs it. The mode
   register is not read back — the registers that were read back, once, are the bit-timing
   ones.
+- **It acknowledges, but only after listening** (`CONFIG_CANBUS_ACK`). The R9's diagnostic
+  connector has only the ECU on it, and unacknowledged it sends 2 ids of 23. So the
+  controller boots listen-only with the TX pad unconnected, as before; after 32 frames
+  received intact over 200 ms with no error among them it goes to normal mode and
+  the pad is routed to the peripheral. It goes back to listen-only, until the next boot, if
+  REC reaches 32, if the controller reports error-warning or bus-off, or if TEC moves at
+  all — nothing here writes the TX buffer, so TEC has no reason to. The BUS page says which
+  of those it is in. Run on the bench against the CANable: it acknowledges 200 frames a
+  second with both nodes' error counters at zero and no frame of its own on the wire, and
+  a transmitter at the wrong bit rate trips it. Not yet run on the R9.
+- **The bus-error interrupt is re-armed.** The ISR never read the error code capture
+  register, so the interrupt fired once per boot and the error counter stopped at one.
 - **The TX pad is held recessive** instead of left floating.
 - **DLC is clamped to 8 in the ISR.** The wire can say 9–15; CAN 2.0 requires a receiver to
   treat that as eight bytes, and a bit error in that nibble on a vehicle harness produces
