@@ -2006,7 +2006,8 @@ distinguished it from a dead link.
 
    **The channel editor has no offset, length or byte-order fields** — an earlier version
    of this document assumed it did, and it does not. There are four things: a **Channel**
-   to map onto (via *Show more…*), a **PID**, which is the CAN arbitration id in hex, an
+   to map onto (via *Show more…*), a **PID**, which is the CAN arbitration id **in
+   decimal** — `0x27C` is entered as `636`; this said "in hex" until 2026-10-13 — an
    **Equation**, and a **Source data** row that shows the live bytes for that PID when
    *Use live data* is ticked, with the equation's result under **Solution**.
 
