@@ -14,11 +14,13 @@
 # passive and cannot ACK or emit error frames onto a bus shared with the ECU,
 # ABS and IMU nodes.
 #
-# --one-shot is what to use on the bench against Bluecan, which is
-# listen-only in hardware: nothing on that bus ever ACKs, and without one-shot the
-# controller retransmits every unacknowledged frame forever. The bus then floods
-# with duplicates while cangen wedges and no new id gets out. It is not a mode in
-# the loopback/listen-only sense -- it is an independent flag, so it combines with
+# --one-shot is what to use on the bench against a board that never ACKs: a Bluecan
+# built without CONFIG_CANBUS_ACK, or one that has tripped back to listen-only. Nothing
+# on that bus ACKs, and without one-shot the controller retransmits every
+# unacknowledged frame forever. The bus then floods with duplicates while cangen
+# wedges and no new id gets out. Bluecan as built since patch 18 acknowledges a
+# fraction of a second into the first traffic and does not need it. It is not a mode
+# in the loopback/listen-only sense -- it is an independent flag, so it combines with
 # any of them.
 set -euo pipefail
 

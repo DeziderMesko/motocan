@@ -116,7 +116,8 @@ a separate pair with only the ECU on it, and "no downside" turned out to have on
 nobody acknowledging, the ECU resends a single frame about 3 800 times a second and two
 ids of 23 arrive. The patch does what it says and stays as the safe default; for the R9 it
 has to be followed by its opposite, a deliberate normal mode with the TX pin connected,
-entered only after the bit rate is proved in listen-only. Not written yet. The reasoning
+entered only after the bit rate is proved in listen-only. That is
+[patch 18](#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench). The reasoning
 and the CANable's version of the same step are in
 [the README](README.md#what-the-r9-turned-out-to-send). The "~1050 msg/s" quoted for the
 R9 throughout the patches below is the R1-family estimate; measured, the R9's connector
@@ -1440,6 +1441,109 @@ and it costs nothing measurable. What is untested is everything behind
 | pull USB, run on the cell | marker flips to `-`, and the voltage now genuinely falls |
 | plug USB back in | marker back to `+` |
 | a board with the gauge unreachable (SDA shorted, or QT power off) | `bat n/a` in grey after three seconds, nothing else on the page disturbed |
+
+## Patch 18 — acknowledge, after listening — **applied and measured on the bench**
+
+In Bluecan at `trunk`, commit `f5ef901`: `CONFIG_CANBUS_ACK` in
+`src/racechrono-canbus.hpp`, `controller::supervise()` and `set_ack()` in
+`src/canbus/controller.cpp`, one call from `loop()`, and a word on the BUS page's top row.
+
+[Patch 2](#patch-2--listen-only-mode--applied) made the controller listen-only and called
+it the one change that had to land before the device touched an R9. The R9 then turned out
+to need the opposite: its diagnostic connector is a pair with only the ECU on it, and with
+nothing acknowledging, the ECU resends one frame about 3 800 times a second and 2 ids of 23
+get through ([what the R9 turned out to send](README.md#what-the-r9-turned-out-to-send)).
+This patch is that opposite, built the way the CANable's version was
+([can-up-ack.sh](../analysis/tools/can-up-ack.sh)): listen first, acknowledge only on
+evidence, never send a frame, and get off the bus when it looks wrong.
+
+### What it does
+
+- **Every boot still starts listen-only**, with the TX pad a plain GPIO held recessive —
+  patches 2 and 6, unchanged. A build without `CONFIG_CANBUS_ACK` never leaves that state.
+- **It starts acknowledging once the bit rate is proved**: 32 frames received intact, over
+  at least 200 ms, with no error interrupt among them. At the wrong bit rate not one frame
+  gets through its CRC, so the count is the proof and the time only keeps a single burst
+  from being the whole of it. The switch is a pass through reset mode — normal mode, both
+  error counters cleared, the pad routed to the peripheral — and leaving reset mode the
+  controller waits for eleven recessive bits, so it cannot come up acknowledging the
+  middle of a frame.
+- **It stops, until the next boot**, on any of three things, looked for every 10 ms: REC
+  at 32 or more, the controller reporting error-warning or bus-off, or TEC moving at all.
+  Stopping is the same pass in reverse, and the pad goes back to a GPIO held high.
+- **What reaches the wire** is the ACK bit and, over a frame received broken, an error
+  flag. Nothing in the firmware writes the TX buffer or issues a transmit command, which
+  is why a TEC other than zero is treated as a trip of its own: it only counts for a
+  transmitter.
+
+The trip latches because listen-only is what this bus has whenever nothing is plugged into
+the connector. Falling back to it costs the rider the telemetry and the bike nothing;
+rejoining a bus that has just looked wrong is the half of that trade not worth making.
+
+### On the panel, the light and the console
+
+The BUS page's top row reads `CAN 500k LISTEN-ONLY`, `CAN 500k ACK`, or `TRIP-STATE`,
+`TRIP-REC`, `TRIP-TEC` in red. A trip also arms the status light's fault flash: on the R9
+it takes the bus from 23 ids to 2, and the hue alone would go on saying frames are moving.
+Both were confirmed by eye after the trip test below. A `--debug` build prints
+`Bus mode:` with TEC, REC and the status and mode registers on the stats cadence, and one
+line at each change of state.
+
+### The error counter had been stopping at one
+
+The ISR counted bus-error interrupts and never read the error code capture register, and
+reading it is what re-arms that interrupt. So it fired once per boot and `err` on the
+panel could not pass 1 — which is also why [patch 4](#patch-4--bit-rate-prescaler--applied)
+describes a controller at the wrong bit rate raising "a single bus error". Survivable
+while the counter was a readout; not once "no error since" is part of the proof. The ISR
+reads the register now, and the counter counts.
+
+### Measured, 2026-10-13
+
+Bench: the CANable in normal mode with retransmission on — not `--one-shot` — and
+`cangen can0 -g 5 -I 123 -L 8 -D i`, 200 frames a second.
+
+| | |
+|---|---|
+| Cold boot, then traffic | `listen-only` → `acknowledging` after **720 frames** |
+| Received while acknowledging | **199–202 msg/s**, 0 errors, 0 dropped, TEC 0, REC 0 |
+| The CANable meanwhile | error-passive for the first fraction of a second, then back to ERROR-ACTIVE with both counters at 0 |
+| Frames on the wire sent by the Feather | **none** of about 1 880 — every one in `candump -x` is the CANable's own |
+| The CANable moved to 250 kbps, Feather acknowledging | **tripped on REC**, back in listen-only, mode register reading listen-only |
+
+Three things the runs said that the design had not:
+
+- **The proof time was 500 ms, and that lost a race with the bench.** Candlelight gives up
+  an unacknowledged transmission after about 440 ms and reports `tx-timeout`. So the board
+  proved the bit rate on the flood of retries, switched, and was acknowledging a bus that
+  had just gone quiet — `acknowledging`, 0 msg/s, 0 errors, and a status register that
+  said idle. 200 ms wins the race. The R9's ECU never gives up, so only the bench cares.
+- **The REC limit does not bound a bus that turns bad at once.** Against the 250 kbps
+  transmitter REC was already **128** when `supervise()` looked — at the 100 ms poll this
+  started with and at 10 ms alike. What bounds that case is the controller, which stops
+  sending dominant error flags once it is error-passive; the supervisor then takes it off
+  the bus within a poll. The limit of 32 is for a bus that degrades slowly.
+- **About 250 error interrupts arrive before the switch, none after.** The log line at the
+  switch counts them: 246 before the 720 frames. They belong to the start of the
+  unacknowledged flood and were not chased further.
+
+### What changes on the bench
+
+Bluecan acknowledges the CANable now, a fraction of a second into the first traffic after
+a boot. Everything in this file and in [README.md](README.md) about nothing acknowledging
+the CANable, the flood of duplicates, and `--one-shot` being needed to get distinct frames
+out describes the board **before this patch** or in the listen-only moment before the
+switch. After it, the bus is an ordinary acknowledged one and `--one-shot` is not needed.
+
+One thing that cost three runs and is not this patch's doing: **a board that receives
+nothing at all, with zero errors, while the CANable sits at TEC 128, is `CAN H` and
+`CAN L` crossed** — here, a female pigtail built the other way up. The unpatched firmware
+read the same zero, which is how the patch was cleared.
+
+### What has not happened
+
+It has not been on the R9. That is the next thing this patch is owed, and what it should
+show is on the BUS page: `ACK`, the IDS page counting 23, and REC at 0.
 
 ## Open questions before the bike
 

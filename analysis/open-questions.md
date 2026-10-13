@@ -10,7 +10,7 @@ The state of what *has* been found is [r9-signals.md](r9-signals.md).
 | 3 | **The throttle valve's zero.** The top of the scale is measured; a warm idle reads about 8 %, and nothing has shown the valve fully closed | a closed-throttle deceleration, which is not available at a standstill |
 | 4 | **The fields that change and have no name** — about forty, listed in [r9-signals.md](r9-signals.md#everything-that-changes-and-has-no-name) | the candidates and their tests are in the section below and in [R9_CAN_unknowns_vs_manual.md](R9_CAN_unknowns_vs_manual.md); the tests are extras A–N of the stand session |
 | 5 | **Anything that needs the bike moving**: speed against a reference, brake switches under way, what the valve does against the grip when traction control steps in | nothing has been captured while riding, and that is a rule of this project so far, not an oversight |
-| 6 | **Bluecan cannot read this connector yet.** The streaming device listens only, and this bus needs an acknowledging node | a firmware change, described and not made: [bluecan/README.md](../bluecan/README.md#what-the-r9-turned-out-to-send) |
+| 6 | **Bluecan has not read this connector yet.** This bus needs an acknowledging node, and the firmware acknowledges now — proved on the bench against the CANable, not on the bike | plugging it into the R9: [patch 18](../bluecan/firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |
 
 **Not on this connector, on the evidence:** lean angle, the SCS, LIF and quickshifter
 settings, the ride mode as a number, battery voltage, fuel used. The service manual says

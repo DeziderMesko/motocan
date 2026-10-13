@@ -4,11 +4,13 @@ The hardware half of the project: a DIY Bluetooth LE CAN-bus reader for the
 Yamaha R9, built on an Adafruit Feather, talking to the
 [RaceChrono](https://racechrono.com/) mobile app over its DIY BLE protocol.
 
-> **Status, 2026-10-12.** The device works on the bench: it receives a 500 kbps bus and
-> streams it to RaceChrono on a phone. It does **not** read the R9 yet. It only listens,
-> and the R9's diagnostic connector sends 2 ids of 23 unless the listening node
-> acknowledges — see [What the R9 turned out to send](#what-the-r9-turned-out-to-send).
-> That firmware change is described and not made. Much of this folder was written before
+> **Status, 2026-10-13.** The device works on the bench: it receives a 500 kbps bus and
+> streams it to RaceChrono on a phone. It has **not** read the R9 yet. The R9's diagnostic
+> connector sends 2 ids of 23 unless the listening node acknowledges — see
+> [What the R9 turned out to send](#what-the-r9-turned-out-to-send) — and the firmware
+> does that now, proved on the bench and not yet on the bike
+> ([patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench)).
+> Much of this folder was written before
 > the bike was reached and is sized against another Yamaha's bus; [numbers.md](numbers.md)
 > has the measured figures side by side. The firmware source is its own repository,
 > [DeziderMesko/racechrono-canbus](https://github.com/DeziderMesko/racechrono-canbus).
@@ -80,13 +82,13 @@ three things, and leave what it can do exactly where it was measured.
   device touches an R9", has to be turned round for this bike: the controller in normal
   mode, and the TX pin — which upstream never connects to the peripheral — connected.
 
-  **That change is not made yet, and it is not a one-liner to make carelessly.** What made
-  it acceptable on the CANable is worth copying: come up listen-only first and prove the
-  bit rate on real frames, only then start acknowledging, and never queue a data frame —
-  the adapter's watchdog pulls it off the bus if a single one is transmitted. The Feather
-  has no isolation and shares the bike's ground, which the CANable does not. Until it is
-  done and proved on the bench, the Feather on the R9 would show the retransmission storm
-  and nothing else.
+  **That change is made, and proved on the bench** —
+  [patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench).
+  It copies what made it acceptable on the CANable: come up listen-only and prove the bit
+  rate on real frames, only then start acknowledging, never send a frame, and go back to
+  listen-only until the next boot if the error counters say the bus looks wrong. What it
+  has not done is meet the R9. The Feather has no isolation and shares the bike's ground,
+  which the CANable does not.
 
 ## Status
 
@@ -112,6 +114,7 @@ without dropping a frame. Full results and method in [bench-link.md](bench-link.
 | RaceChrono link | working — 8018 frames to an Android phone, 0 lost, with a channel tracking the bench sweep; clean to ~590 msg/s after [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied) |
 | Status light | the NeoPixel shows the chain — hue for where it is, blips for frames moving, a latching red flash for a loss. Fault flash confirmed by eye, the flatline was invisible and is fixed, the rest unseen. [Patch 16](firmware.md#patch-16--the-neopixel-as-the-riders-status-light--applied) |
 | Supply readout | the BUS page shows the BAT rail's voltage off the board's MAX17048; 4.09 V on the bench, no measurable cost. Not the outlet's 5 V, which nothing on this board can read, and state of charge is behind `CONFIG_CELL_FITTED` until there is a cell to test with. [Patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read) |
+| Acknowledging | **done and measured on the bench** — listen-only at boot, acknowledging once 32 frames have proved the bit rate, back to listen-only if the bus looks wrong. 199–202 msg/s received with both nodes' error counters at 0 and no frame of its own on the wire. Not yet on the R9. [Patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |
 | Per-id allow-list | **done and measured** — an unasked-for id is dropped in the CAN ISR, an allowed one leaves at 19.5 msg/s against the 50 ms the app asked for, and 635.8 msg/s on the bus becomes 19.6 over the radio with zero refusals. [Patch 14](firmware.md#patch-14--honour-the-allow-list-and-the-notify-interval--applied-and-measured) |
 
 ### What is proven
@@ -226,8 +229,15 @@ sudo bluecan/firmware/tools/can-up.sh --one-shot
 timeout 8 cangen can0 -g 2 -I 123 -L 8 -D i
 ```
 
-The CANable is the only transmitter on this bench, and Bluecan is listen-only in
-hardware, so **nothing ACKs the CANable** — that is listen-only working, not a fault.
+**Since [patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench)
+Bluecan acknowledges the CANable** a fraction of a second into the first traffic after a
+boot, so what follows describes only that first moment, a build without
+`CONFIG_CANBUS_ACK`, or a board that has tripped back to listen-only. `--one-shot` is no
+longer needed against it.
+
+The CANable is the only transmitter on this bench, and until it switches Bluecan is
+listen-only in hardware, so **nothing ACKs the CANable** — that is listen-only working,
+not a fault.
 This section used to say the traffic reaches ERROR-PASSIVE after ~1800 frames and then
 stops, which reads as a quiet bus and is not what happens.
 [bench-link.md](bench-link.md) has the mechanism: the CANable **retransmits the same
@@ -296,12 +306,11 @@ per-id allow-list and the supply readout are all done and measured.
    the charge/discharge marker sit behind `CONFIG_CELL_FITTED` until there is a battery to
    test them against — [patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read).
 
-4. **Acknowledging on the R9's diagnostic pair.** The pigtail is here and the bike has
-   been read, by the CANable. What stands between this device and the bike now is that it
-   is listen-only and the connector needs an ACK —
-   [what the R9 turned out to send](#what-the-r9-turned-out-to-send). Bench work first:
-   normal mode with TX connected, the listen-only-then-ACK start, and proof that nothing
-   but ACK bits leaves the board.
+4. **Acknowledging on the R9's diagnostic pair.** The bench half is done —
+   [patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench):
+   the listen-only-then-ACK start, the trip back, and no frame of its own leaving the
+   board. What is left is the bike: the BUS page reading `ACK`, the IDS page counting 23,
+   REC at 0.
 
 **Not being done:** the NimBLE mbuf pool. `CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT` is baked
 into the Arduino core's precompiled libraries, so raising it means building ESP-IDF from
