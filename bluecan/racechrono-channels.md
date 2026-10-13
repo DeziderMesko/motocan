@@ -115,20 +115,42 @@ give the same number on every payload in the captures — 476 distinct ones of `
 
 ## Which channel to map each one onto
 
-RaceChrono offers a fixed list of channels and most of these have an obvious home in it:
-engine speed, gear, throttle position, accelerator position, coolant and intake
-temperature. **TCS and the mode field do not**, and went in as `Digital`. Despite the
-name it is not a 0-or-1 channel: it shows the number the equation gives, so TCS reads 7
-and the mode field 3.
+RaceChrono offers a fixed list of channels, and this is what the R9's went onto. The
+names are the app's, read off its Live screen on 2026-10-13:
 
-**Neither can be given a name of its own.** The **Channel postfix** field is how two
-channels of the same kind are told apart in a session, but it is a choice from the app's
-own list, not free text — an earlier version of this page said to type `TCS` and `Mode`
-into it, and that cannot be done. So the two `Digital` channels take two different
-postfixes from the list, and which is which has to be remembered or written down here.
+| In RaceChrono | Is | PID |
+|---|---|---|
+| Engine RPM | engine speed | 636 |
+| Gear | gear | 636 |
+| **Digital 1** | **TCS** | 636 |
+| **Digital 2** | **the mode field** | 636 |
+| Coolant temperature | water temperature | 1298 |
+| Air temperature | intake air temperature | 1298 |
+| Throttle position 1 | the throttle grip | 1880 |
+| Throttle position 2 | a throttle valve | 1880 or 1881 |
+
+That screen showed eight channels, and the two valve equations make nine: which of the
+measured and the commanded valve is `Throttle position 2`, and where the other one went,
+is not recorded yet.
+
+**TCS and the mode field have no channel of their own**, and went in as `Digital`.
+Despite the name it is not a 0-or-1 channel: it shows the number the equation gives, so
+TCS reads 7 and the mode field 3.
+
+**Neither can be given a name.** The **Channel postfix** field is how two channels of the
+same kind are told apart in a session, but it is a choice from the app's own list — a
+number — not free text. An earlier version of this page said to type `TCS` and `Mode` into
+it, and that cannot be done. So `Digital 1` and `Digital 2` they stay, and the table above
+is where which is which is kept.
 
 Whether the app lets a user define a channel of their own was looked for in its
 documentation and not found.
+
+What that screen read, against a replay of
+[the third capture](../analysis/captures/session-2026-10-11_200550/README.md) with the
+engine idling: 1609 rpm, gear 0, Digital 1 at 7, Digital 2 at 3, coolant 31 °C, air 21 °C,
+throttle position 1 at 0 % and 2 at 14 %. The capture at that point holds TCS 7, mode 3,
+water 31.8 °C, air 21.8 °C, the grip at rest and the valve between 13 and 14.5 %.
 
 ## What it costs the link
 
