@@ -32,7 +32,7 @@ USBIPD="/mnt/c/Program Files/usbipd-win/usbipd.exe"
 #   1d50:606f  CANable with candleLight firmware -> becomes can0
 #   16d0:117e  CANable variants also claimed by gs_usb
 #   0483:df11  ...same adapter in STM32 ROM bootloader mode (DFU), for reflashing --
-#              and where it lands by itself if the 5V rail dips, see ../../hardware.md
+#              and where it lands by itself if the 5V rail dips, see ../../bench.md
 KNOWN='239a:8123|239a:0123|303a:1001|1d50:606f|16d0:117e|16d0:0f30|0483:df11'
 
 list() { "$USBIPD" list 2>&1 | tr -d '\r'; }

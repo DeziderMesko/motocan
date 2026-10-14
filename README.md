@@ -125,7 +125,7 @@ None of this started from nothing. In the order they helped:
   for the specification of RaceChrono's Bluetooth service, and
   [timurrrr/RaceChronoDiyBleDevice](https://github.com/timurrrr/RaceChronoDiyBleDevice).
 - [Elmue's Candlelight firmware](https://github.com/Elmue/CANable-2.5-firmware-Slcan-and-Candlelight) for the CANable, which fixed a stall the stock firmware had
-  ([bluecan/gs-usb-stall.md](bluecan/gs-usb-stall.md)).
+  ([bluecan/history/gs-usb-stall.md](bluecan/history/gs-usb-stall.md)).
 
 Most of the analysis and the writing was done in conversation with Claude, Anthropic's
 model, working from the owner's captures and the owner's decisions.

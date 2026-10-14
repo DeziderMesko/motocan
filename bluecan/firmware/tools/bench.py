@@ -19,7 +19,7 @@ exactly like a crashed sketch. Nothing else distinguishes the two, so this cost 
 hour once. Asserting it is safe here specifically because USB is native to the SoC:
 there is no USB-serial bridge whose DTR/RTS can be wired to EN, so unlike almost every
 other ESP32 board, the host cannot reset this one by touching the modem lines. See
-../../wsl-setup.md.
+../../history/wsl-setup.md.
 
 RTS is left low for the same reason in reverse: it costs nothing, and it keeps the
 one line esptool does drive during a reset out of the picture.

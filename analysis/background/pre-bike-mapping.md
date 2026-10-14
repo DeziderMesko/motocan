@@ -161,7 +161,7 @@ below is the prediction this replaced, kept as it was written.
 One thing in it does not survive at all: **the device has to acknowledge frames.** With
 nothing acknowledging, this connector gave two ids, resent in a loop. That is a change to
 the Feather's firmware and wiring, recorded in
-[bluecan/README.md](../../bluecan/README.md#what-the-r9-turned-out-to-send).
+[bluecan/README.md](../../bluecan/history/readme-2026-10-13.md#what-the-r9-turned-out-to-send).
 
 The Y-TRAC Rev list is 27 items, and the mapping above now names a frame for **23 of
 them**. Those 23 do not cost 23 messages: Yamaha packs them, and they land in **nine

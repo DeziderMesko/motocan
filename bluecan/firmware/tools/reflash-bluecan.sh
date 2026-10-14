@@ -13,7 +13,7 @@
 # Why this exists next to reflash.sh: that script builds sketches from this repo's
 # firmware/ directory and produces a .uf2. This one takes a sketch directory that is
 # not ours, and otherwise performs the same usb-attach dance around the ESP32-S3's
-# mid-upload identity switch. See ../../wsl-setup.md for what that dance is for.
+# mid-upload identity switch. See ../../history/wsl-setup.md for what that dance is for.
 #
 # Reading the board afterwards: ./tools/bench.py 10 works as a plain serial reader for
 # any sketch -- what matters is that it asserts DTR, which the ESP32-S3's USB CDC gates

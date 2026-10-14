@@ -22,7 +22,7 @@ git -C ~/projects/racechrono-canbus log --oneline fb945fc..HEAD
 
 That third review also changed how this repository is laid out, which is the part worth
 carrying forward: current state in [README.md](../bluecan/README.md), history here, values in
-[numbers.md](../bluecan/numbers.md), and [check-numbers.sh](../bluecan/firmware/tools/check-numbers.sh) to find
+[numbers.md](../bluecan/history/numbers.md), and [check-numbers.sh](../bluecan/firmware/tools/check-numbers.sh) to find
 the copies when one of them moves.
 
 It is also the one that says why this table should keep including motocan:

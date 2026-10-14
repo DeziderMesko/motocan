@@ -3,16 +3,16 @@
 #
 #   ./tools/soak.sh [minutes] [outdir]        # default 30 minutes
 #
-# The short tests in ../bench-link.md prove the link works. They cannot distinguish
+# The short tests in ../history/bench-link.md prove the link works. They cannot distinguish
 # "works" from "works until it doesn't", and the failure modes that only appear over
 # time are exactly the ones that would ruin a real logging session: a heap leak, a
 # watchdog reset, a queue that slowly falls behind, or the gs_usb transmit path
-# wedging again the way it used to (see ../gs-usb-stall.md).
+# wedging again the way it used to (see ../history/gs-usb-stall.md).
 #
 # The traffic profile deliberately imitates the R9 rather than maximising load. The
 # ids and rates come from ../../../analysis/background/pre-bike-mapping.md and [S4] in it: engine speed, gear,
 # TPS/APS, brake pressure and wheel speeds are broadcast at 100 Hz, temperatures at
-# 1 Hz, and ../firmware.md quotes ~16 unique ids at ~1050 msg/s for the whole bus.
+# 1 Hz, and ../history/firmware.md quotes ~16 unique ids at ~1050 msg/s for the whole bus.
 # A saturated bus was already shown to work in a burst; what is untested is a
 # realistic bus for a long time, which is the case the device will actually meet.
 set -euo pipefail
@@ -60,7 +60,7 @@ echo ">> profile: $(printf '%s ' "${PROFILE[@]}")"
 # off matters most: writing a line per frame over USB CDC blocks loop() for up to 25 ms
 # when the host is slow to drain, which is a third of the RX queue's depth in time.
 # Display on because that is how the device will actually run, and because it is the
-# thing that broke the first time (../bench-link.md).
+# thing that broke the first time (../history/bench-link.md).
 # Five minutes of margin, and killed explicitly below rather than left to time out.
 # The logger outliving the load is not a nicety: if it stops first, the last frame
 # count in the log is older than the counter it gets compared against, and the report

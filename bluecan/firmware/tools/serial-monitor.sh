@@ -3,7 +3,7 @@
 #
 # WSL2 has no USB stack of its own, but it does have Windows interop, and .NET's
 # System.IO.Ports works fine from PowerShell. So we let Windows own the COM port
-# and just pipe it across. See ../../wsl-setup.md.
+# and just pipe it across. See ../../history/wsl-setup.md.
 #
 # Usage:  ./serial-monitor.sh [COMn] [baud]
 set -euo pipefail

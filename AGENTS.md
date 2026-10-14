@@ -16,7 +16,7 @@ that a second pair of hands does not undo the first.
    [analysis/R9_CANbus.md](analysis/R9_CANbus.md) for the wiring,
    [analysis/README.md](analysis/README.md) for the tools.
 
-`analysis/background/`, `journal/` and most of `bluecan/firmware.md` are history. They are
+`analysis/background/`, `journal/` and `bluecan/history/` are history. They are
 long, and they describe states that are over. Do not load them to get oriented, and do not
 take a number from them without checking it against `r9-signals.md`.
 

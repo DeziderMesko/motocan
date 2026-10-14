@@ -171,6 +171,6 @@ locked.
 
 Four ids with all nine channels, three as entered so far. Recording, the app asks for
 each at 50 ms, so about 61 frames a second cross the radio with four — 41 with three — out
-of the 506 on the bus — [numbers.md](numbers.md). The same four are what
+of the 506 on the bus — [numbers.md](history/numbers.md). The same four are what
 Bluecan decodes for its own LIVE page, which does not depend on any of this: it reads the
 frames ahead of the app's filter.

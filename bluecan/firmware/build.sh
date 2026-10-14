@@ -13,7 +13,7 @@
 # --flash is the fallback that needs no USB passthrough at all: the board's
 # TinyUF2 bootloader exposes a mass-storage drive (FTHRS3BOOT) that Windows
 # mounts and WSL sees under /mnt. Useful if passthrough misbehaves, which it can
-# during the ESP32-S3's reset-into-bootloader re-enumeration. See ../wsl-setup.md.
+# during the ESP32-S3's reset-into-bootloader re-enumeration. See ../history/wsl-setup.md.
 #
 # Both depend on the tinyuf2_noota partition scheme, which keeps the UF2
 # bootloader in its own partition at 0x2d0000. Do not switch to huge_app: it

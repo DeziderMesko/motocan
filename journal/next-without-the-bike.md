@@ -6,7 +6,7 @@
 > by them and are left as written: the bus rate everything is sized against (~1050 msg/s,
 > the R1's; the R9's connector carries 506 across 23 ids), and listen-only as the mode for
 > the bike (the connector needs an ACK, for the CANable and for Bluecan alike — see
-> [bluecan/README.md](../bluecan/README.md#what-the-r9-turned-out-to-send)). The bench facts
+> [bluecan/README.md](../bluecan/history/readme-2026-10-13.md#what-the-r9-turned-out-to-send)). The bench facts
 > are as good as they were.
 
 Hardware logging on the R9 is blocked on one part — a diagnostic-connector pigtail — and
@@ -23,7 +23,7 @@ to work out is worth not rediscovering and because standing down is not the same
 deciding against: either can be picked up unchanged if it is ever wanted. Nothing has
 been measured that unmade them.
 
-The per-device next steps live in [bluecan/README.md](../bluecan/README.md#next-steps) and the
+The per-device next steps live in [bluecan/README.md](../bluecan/history/readme-2026-10-13.md#next-steps) and the
 mapping test plan lives at the end of [pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md); this file is
 the level above both — what is worth doing next, and why.
 
@@ -56,7 +56,7 @@ allow-list would make it moot. It did.
 ## 1. The allow-list — **done, and it works**
 
 Code is in Bluecan at `racechrono-canbus` `trunk` (`74af3d7`), written up as
-[patch 14](../bluecan/firmware.md). `decoder_yamahar9` keeps a 32-slot allow-list filled from
+[patch 14](../bluecan/history/firmware.md). `decoder_yamahar9` keeps a 32-slot allow-list filled from
 RaceChrono's own requests and gates each id on the interval the app asked for.
 
 All three owed runs were taken on 2026-08-22, against a recording RaceChrono at a
@@ -78,7 +78,7 @@ depends on what it is doing: a **test connection** asks for `ALLOW all` because 
 every id to populate the channel editor's live-data row; a **recording session** sends
 `DENY all` and then one `ALLOW ID` per channel. Patch 14's premise was right the whole
 time. See
-[what the app sends](../bluecan/firmware.md#what-the-app-sends-depends-on-the-session--measured-2026-08-22).
+[what the app sends](../bluecan/history/firmware.md#what-the-app-sends-depends-on-the-session--measured-2026-08-22).
 
 None of this was visible until `cfb313e`: the lines that log the protocol were
 `verboseln` against a shipped level of `info`, so the test as written — *"serial must show
@@ -91,7 +91,7 @@ ceiling is real and where it was said to be. There is no reason to re-run it aga
 ## 2. The `DEBUG` build — **done**, and it was worse than it looked
 
 Both symptoms were one cause, and the cause is fixed:
-[patch 15](../bluecan/firmware.md#patch-15--logging-without-interrupts-off--applied-and-measured),
+[patch 15](../bluecan/history/firmware.md#patch-15--logging-without-interrupts-off--applied-and-measured),
 in Bluecan at `trunk` (`a89ebc4`).
 
 The suspect named here was the right line. `logger::log()` wrapped `Serial.write()` and
@@ -349,7 +349,7 @@ shows it.
 ## 7. The NeoPixel status light — **flashed, and two rows looked at**
 
 In Bluecan at `trunk`, written up as
-[patch 16](../bluecan/firmware.md#patch-16--the-neopixel-as-the-riders-status-light--applied).
+[patch 16](../bluecan/history/firmware.md#patch-16--the-neopixel-as-the-riders-status-light--applied).
 
 It shows the **chain**, never vehicle data: hue for where the chain is (booting /
 advertising / configuring / recording), a blip rate for frames actually moving, a
@@ -382,7 +382,7 @@ in force.
 ## 8. The supply voltage on the panel — **done, and the gauge taught it a lesson**
 
 In Bluecan at `trunk`, written up as
-[patch 17](../bluecan/firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read).
+[patch 17](../bluecan/history/firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read).
 The board has had a **MAX17048 fuel gauge** at I2C `0x36` the whole time and nothing was
 reading it. The BUS page's top row now ends with the BAT rail's voltage:
 
@@ -430,7 +430,7 @@ What is left needs **a LiPo in the jack**, and nothing else: build with
   gets out.
 - **`soak.sh` and `bench.py -c` are for `bluecan_bench`**, which ACKs. That is why the
   3.2 M-frame hour worked and a Bluecan run does not behave the same way.
-- **A measured number has one home**, [bluecan/numbers.md](../bluecan/numbers.md), and the
+- **A measured number has one home**, [bluecan/numbers.md](../bluecan/history/numbers.md), and the
   copies are found rather than remembered: `bluecan/firmware/tools/check-numbers.sh`
   prints every place in both repositories that quotes a canonical figure. Run it after any
   patch that moves one. This exists because six documents were found disagreeing with each
@@ -453,7 +453,7 @@ What is left needs **a LiPo in the jack**, and nothing else: build with
   out of it, and the range the next one starts from.
 - **Re-attach after every flash** (`./tools/usb-attach.sh 1-3`). The ten-second limit on
   reads that used to belong here is gone with
-  [patch 15](../bluecan/firmware.md#patch-15--logging-without-interrupts-off--applied-and-measured):
+  [patch 15](../bluecan/history/firmware.md#patch-15--logging-without-interrupts-off--applied-and-measured):
   a console can be held open indefinitely now. Opening the port does not reset the board,
   so cumulative counters survive across reads — but note that a *reboot* leaves
   `Display draw: worst` at ~251 ms either way, so that field cannot be used to tell one
@@ -466,4 +466,4 @@ What is left needs **a LiPo in the jack**, and nothing else: build with
   the board is in — the panel's `flt ALL` / `flt 3` field is the only instrument that
   does — so a census or a `ble-load.py` run taken afterwards measures a filtered bus and
   reads as a quiet one. Why it is left that way, and what it would cost to change, is in
-  [patch 14](../bluecan/firmware.md#three-things-deliberately-not-done).
+  [patch 14](../bluecan/history/firmware.md#three-things-deliberately-not-done).

@@ -1,6 +1,6 @@
 // bluecan bring-up sketch
 //
-// Step 1 of the plan in ../../firmware.md: prove the toolchain, the board, the TFT
+// Step 1 of the plan in ../../history/firmware.md: prove the toolchain, the board, the TFT
 // and the ESP32-S3 TWAI controller *before* any BLE or RaceChrono code exists.
 //
 // The CAN self-test runs the controller in NO_ACK mode and transmits self-reception

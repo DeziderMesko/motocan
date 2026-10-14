@@ -1,13 +1,17 @@
 # Firmware
 
+> Moved here from `bluecan/firmware.md` on 2026-10-14, unchanged but for its links. Where
+> it says README.md is what is true now, that is [the old README](readme-2026-10-13.md);
+> the current description of the device is [../README.md](../README.md).
+
 **This file is the history.** One section per patch: what was wrong, what changed, what it
 measured, and what the measurement was worth. It is meant to be read backwards from a
 question, not forwards.
 
-Two files sit beside it and are not this one. [README.md](README.md) is what is true about
+Two files sit beside it and are not this one. [README.md](readme-2026-10-13.md) is what is true about
 the device *now*; [numbers.md](numbers.md) holds the current value of every measured
 figure, one home each, so that a number which moves is edited in one place and the copies
-are found with [check-numbers.sh](firmware/tools/check-numbers.sh) rather than remembered.
+are found with [check-numbers.sh](../firmware/tools/check-numbers.sh) rather than remembered.
 A patch here keeps the figure it measured — that is the record — but when a later patch
 supersedes it, say so in the older section instead of leaving two live claims.
 
@@ -105,7 +109,7 @@ no downside, since the device never needs to transmit.
 This lives in the controller setup in `src/canbus/controller.cpp`.
 
 **The behaviour is already validated on the bench**, independently of any of the
-upstream code: [bluecan_bench](firmware/bluecan_bench/) toggles the mode at runtime, and
+upstream code: [bluecan_bench](../firmware/bluecan_bench/) toggles the mode at runtime, and
 the CANable falls to ERROR-PASSIVE the instant the Feather stops ACKing, then recovers
 when it starts again. See [bench-link.md](bench-link.md). So this patch is a port of a
 known-good behaviour rather than a change to be tested on the bike.
@@ -119,7 +123,7 @@ has to be followed by its opposite, a deliberate normal mode with the TX pin con
 entered only after the bit rate is proved in listen-only. That is
 [patch 18](#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench). The reasoning
 and the CANable's version of the same step are in
-[the README](README.md#what-the-r9-turned-out-to-send). The "~1050 msg/s" quoted for the
+[the README](readme-2026-10-13.md#what-the-r9-turned-out-to-send). The "~1050 msg/s" quoted for the
 R9 throughout the patches below is the R1-family estimate; measured, the R9's connector
 carries 506.
 
@@ -303,7 +307,7 @@ and GND immediately after boot — it should read ~3.3 V.
 Also an open question until now. The ISR drops two classes of frame before anything is
 queued: extended (29-bit) frames, and remote-transmission requests. Neither left a trace.
 
-Every ID in [pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md) is 11-bit (0x20A…0x2A0), so the
+Every ID in [pre-bike-mapping.md](../../analysis/background/pre-bike-mapping.md) is 11-bit (0x20A…0x2A0), so the
 extended path is probably never taken on the R9 — but the census cannot say so. A sniffer
 that discards a class of traffic without counting it can only report the absence of what
 it chose to look at, which is not the same claim. `_ef_count` and `_rt_count` turn "no
@@ -547,7 +551,7 @@ window does not appear to decide the outcome either way.
 
 Open question 1 asked whether the link's ~200 msg/s ceiling was Bluetooth LE's limit or
 ours, and asked for a before-measurement rather than a raised priority on faith.
-[tools/ble-load.py](firmware/tools/ble-load.py) was that measurement. The answer is that
+[tools/ble-load.py](../firmware/tools/ble-load.py) was that measurement. The answer is that
 the ceiling was ours, and most of it.
 
 The core 0 task that drains the frame queue into `notify()` ran at `tskIDLE_PRIORITY`.
@@ -697,7 +701,7 @@ a success of its own when the host accepts a frame, and `NOTIFY_TX` reports anot
 the controller transmits it. Going straight at the host leaves only the second, so a
 healthy link now reads **1:1**, and the number means one thing: frames that reached the
 air. The label changed from `notified:` to `transmitted:` to say so, and
-[tools/ble-load.py](firmware/tools/ble-load.py) reads it as `tx/frame`.
+[tools/ble-load.py](../firmware/tools/ble-load.py) reads it as `tx/frame`.
 
 ### What it bought
 
@@ -751,7 +755,7 @@ and never used, under a comment saying so; and `decoder_yamahar9::allow_id()` ig
 `id` argument entirely, because [patch 3](#patch-3--decoder-and-filtering--applied) made
 any allow request mean "forward everything". That was the right call when the device was
 a sniffer and nothing about the bus was known. It is the wrong one now that
-[the device is a telemetry link](README.md#sniffing-is-the-canables-job-not-this-one).
+[the device is a telemetry link](readme-2026-10-13.md#sniffing-is-the-canables-job-not-this-one).
 
 The point is not that the filter saves the radio work — it is that **it makes the radio's
 ceiling stop mattering.** The link starts refusing frames somewhere around 590 msg/s and
@@ -819,7 +823,7 @@ false` and its filled slots until it is rebooted or reflashed, so a census, a
 `ble-load.py` run or a soak taken afterwards silently measures a filtered bus. The panel's
 `flt` field is the only instrument that says which state the board is in. **Reboot before
 any bench measurement that follows a phone session** — also written down in
-[next-without-the-bike.md](../journal/next-without-the-bike.md#bench-facts-that-cost-time-to-rediscover).
+[next-without-the-bike.md](../../journal/next-without-the-bike.md#bench-facts-that-cost-time-to-rediscover).
 
 ### Ordering, and what the panel gained
 
@@ -1106,7 +1110,7 @@ they are right. **~590 msg/s clean and ~718 at 0.6% loss are the figures most of
 project's reasoning rests on**, including the case for the allow-list, and they were
 taken under a fault that resets cumulative counters without saying so. A ramp is cheap
 and needs only the phone that
-[item 1 of the without-the-bike list](../journal/next-without-the-bike.md) already requires, so
+[item 1 of the without-the-bike list](../../journal/next-without-the-bike.md) already requires, so
 re-run it with patch 15 in before building anything further on the ceiling.
 
 **Open question 4, answered.** With the fix in, the queue's high-water mark over a
@@ -1132,15 +1136,15 @@ works at a glance, gloved, in daylight, from wherever the board ends up strapped
 **What it must not show is vehicle data.** No shift light, no lean-angle bar, no coolant
 warning. This firmware forwards raw frames and never decodes a signal — decoding is
 RaceChrono's job, app-side, which is exactly why an unfinished
-[pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md) never blocks the firmware. An RPM light would
+[pre-bike-mapping.md](../../analysis/background/pre-bike-mapping.md) never blocks the firmware. An RPM light would
 need a 🟢 row, a decoder in the firmware and a scale to trust, which is the sniffer role
-that [was settled the other way](README.md#sniffing-is-the-canables-job-not-this-one).
+that [was settled the other way](readme-2026-10-13.md#sniffing-is-the-canables-job-not-this-one).
 The pixel's subject is the **chain** — bus → queue → radio → phone — and the chain is
 something this firmware already knows everything about.
 
 ### Hardware, and where it is allowed to be written
 
-Data is GPIO33, power is gated by GPIO21 ([hardware.md](hardware.md#pin-map)); both are
+Data is GPIO33, power is gated by GPIO21 ([hardware.md](hardware-2026-10-13.md#pin-map)); both are
 already spoken for by the pixel and free for nothing else. One WS2812 is 24 bits at
 800 kHz — **~30 µs per update** through the core's `rgbLedWrite()`, which after its first
 call is an `rmtInit()` that early-returns plus a blocking `rmtWrite()`. The first call
@@ -1200,7 +1204,7 @@ rather than one because a single tick is hard to tell from a slow heartbeat, and
 it from a slow heartbeat is the entire point of the rung.
 
 Confirmed from the console rather than guessed at:
-[`tools/led-state.py`](firmware/tools/led-state.py) read `yellow (subscribed, flt ALL --
+[`tools/led-state.py`](../firmware/tools/led-state.py) read `yellow (subscribed, flt ALL --
 configuring) FLATLINE -- no frames 2 s+` while the board sat there looking dark.
 
 ### The light reports itself
@@ -1216,7 +1220,7 @@ Status light: blue breathe   (nothing subscribed)
 Status light: off -- D0 is on the dark position
 ```
 
-[`tools/led-state.py`](firmware/tools/led-state.py) holds the console open, filters to
+[`tools/led-state.py`](../firmware/tools/led-state.py) holds the console open, filters to
 those lines and can generate the traffic to move them:
 
 ```bash
@@ -1271,7 +1275,7 @@ reaches into the NimBLE server instead of reading an atomic, off the fast path.
 `TFT + pixel → pixel only → dark`, and `_lit` became `_light`. Pixel-only is the riding
 position: the repaint and the backlight are the two things worth switching off, and the
 status light is the one thing worth keeping. It also keeps D0 honest as
-[the cheapest A/B on the board](README.md#picking-this-back-up) — the pixel costs 30 µs,
+[the cheapest A/B on the board](readme-2026-10-13.md#picking-this-back-up) — the pixel costs 30 µs,
 so the middle position isolates the panel's cost and nothing else. `Display page:` in the
 `DEBUG` stats reports all three.
 
@@ -1318,7 +1322,7 @@ rate the charge is moving at.
 The gauge watches the **BAT rail**: the 2-pin JST jack and the charger's output, which
 are the same node. So it reads the battery's voltage when one is fitted, and the
 charger's own output when one is not — which is the case on the bike today, since
-[power is solved as USB 3 A](hardware.md#power) and the cell is optional.
+[power is solved as USB 3 A](hardware-2026-10-13.md#power) and the cell is optional.
 
 It cannot see the 5 V from the bike's USB outlet at all. This board brings VBUS out to a
 pad and to nothing else: there is no divider onto an ADC pin, and no variant `#define`
@@ -1452,9 +1456,9 @@ In Bluecan at `trunk`, commit `f5ef901`: `CONFIG_CANBUS_ACK` in
 it the one change that had to land before the device touched an R9. The R9 then turned out
 to need the opposite: its diagnostic connector is a pair with only the ECU on it, and with
 nothing acknowledging, the ECU resends one frame about 3 800 times a second and 2 ids of 23
-get through ([what the R9 turned out to send](README.md#what-the-r9-turned-out-to-send)).
+get through ([what the R9 turned out to send](readme-2026-10-13.md#what-the-r9-turned-out-to-send)).
 This patch is that opposite, built the way the CANable's version was
-([can-up-ack.sh](../analysis/tools/can-up-ack.sh)): listen first, acknowledge only on
+([can-up-ack.sh](../../analysis/tools/can-up-ack.sh)): listen first, acknowledge only on
 evidence, never send a frame, and get off the bus when it looks wrong.
 
 ### What it does
@@ -1530,7 +1534,7 @@ Three things the runs said that the design had not:
 ### What changes on the bench
 
 Bluecan acknowledges the CANable now, a fraction of a second into the first traffic after
-a boot. Everything in this file and in [README.md](README.md) about nothing acknowledging
+a boot. Everything in this file and in [README.md](readme-2026-10-13.md) about nothing acknowledging
 the CANable, the flood of duplicates, and `--one-shot` being needed to get distinct frames
 out describes the board **before this patch** or in the listen-only moment before the
 switch. After it, the bus is an ordinary acknowledged one and `--one-shot` is not needed.
@@ -1555,14 +1559,14 @@ In Bluecan at `trunk`, three commits: `bd0d51a` for the decoder (`src/canbus/r9.
 Until now this firmware forwarded raw frames and understood none of them, on purpose:
 RaceChrono decodes app-side, so an unfinished mapping never blocked the device. That is
 still how the phone gets its data and nothing here touches it. What changes is the panel.
-With [three captures read](../analysis/r9-signals.md), the device can show what the bike
+With [three captures read](../../analysis/r9-signals.md), the device can show what the bike
 is sending in the bike's own terms, to be held up against the dash at a standstill —
 which is the check a raw-frame page cannot give.
 
 ### The decoder
 
 `r9.hpp` is ten pure functions over four frames, written by hand from
-[r9.dbc](../analysis/r9.dbc): engine speed, gear, TCS and the mode field from `0x27C`; the
+[r9.dbc](../../analysis/r9.dbc): engine speed, gear, TCS and the mode field from `0x27C`; the
 two temperatures from `0x512`; the grip and the measured throttle valve from `0x758`; the
 commanded valve from `0x759`. Integer results in the units the panel prints — rpm, tenths
 of a degree, tenths of a percent.
@@ -1573,7 +1577,7 @@ the engine running are left out by decision; the fields with no name are left ou
 
 A second hand-written copy of the DBC's equations is a thing that drifts, and the panel
 is where a wrong one would be believed. So
-[tools/r9-decode-check.py](firmware/tools/r9-decode-check.py) compiles the firmware's own
+[tools/r9-decode-check.py](../firmware/tools/r9-decode-check.py) compiles the firmware's own
 header on the host and decodes every distinct payload in the captures both ways:
 
 | Capture | Distinct payloads | Worst difference from the DBC |
@@ -1610,7 +1614,7 @@ panel was considered and left for the day a measurement asks for it.
 ### Measured, 2026-10-13
 
 There is no bike on the bench, but there is its traffic: twenty seconds of
-[the third capture](../analysis/captures/session-2026-10-11_200550/README.md) — 9 861
+[the third capture](../../analysis/captures/session-2026-10-11_200550/README.md) — 9 861
 frames, all 23 ids, ending just after the highest engine speed in it — replayed through
 the CANable with `canplayer`. It is also the first time
 [patch 18](#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench)
@@ -1650,7 +1654,7 @@ Valve commanded  14.5 %
 Four lines at text size 2 and one at size 1. Labels are yellow, capitalised, at fixed
 columns and drawn once; each value is white and padded to a fixed width. `Gear` reads `N`,
 `1`–`6`, and `-` between gears. `Mode` is the number the bike sends and nothing more — it
-follows the ride mode, and [what it is](../analysis/open-questions.md) is still open. The
+follows the ride mode, and [what it is](../../analysis/open-questions.md) is still open. The
 two bits that change with the engine running are not on it, by decision.
 
 **A value that has stopped arriving turns to grey dashes** — after half a second for
@@ -1675,7 +1679,7 @@ the one that holds either way.
 ### The page, measured and looked at
 
 The same replay, with the page on the glass, and then a longer one in a loop: 150 s of
-gear changes from [the first capture](../analysis/captures/session-2026-10-11_115626/README.md),
+gear changes from [the first capture](../../analysis/captures/session-2026-10-11_115626/README.md),
 which holds `0x27C` and little else, followed by the 20 s above.
 
 | | |
@@ -1704,7 +1708,7 @@ through `canplayer` on this machine is good for values and no good for timing.
 
 The same evening, with the replay looping and RaceChrono Pro recording a session on eight
 channels over three PIDs — `0x27C`, `0x512` and `0x758`
-([racechrono-channels.md](racechrono-channels.md)). The commanded valve on `0x759` had not
+([racechrono-channels.md](../racechrono-channels.md)). The commanded valve on `0x759` had not
 been entered, which made it the missing channel the check needs.
 
 | | |
@@ -1746,7 +1750,7 @@ Written down in the order they would hurt. The two that headed this list became 
    [patch 12](#patch-12--the-drain-tasks-priority--applied) moved it to **~590 msg/s
    clean, ~718 at 0.6% loss**. What is left of the question is narrower and lives inside
    NimBLE — the mbuf pool, which is baked into the Arduino core's precompiled libraries
-   and is [deliberately not being touched](../journal/next-without-the-bike.md#explicitly-not-doing):
+   and is [deliberately not being touched](../../journal/next-without-the-bike.md#explicitly-not-doing):
    the allow-list made it moot.
 
 4. ~~**A `DEBUG` build with nobody reading the console appears to stall core 0.**~~ —
@@ -1764,7 +1768,7 @@ Written down in the order they would hurt. The two that headed this list became 
 
 None of the upstream projects drive a display; this is new code, and it lives in Bluecan
 as `src/display/`. It is a port of the display task from
-[bluecan_bench](firmware/bluecan_bench/), which is where both of its rules were measured
+[bluecan_bench](../firmware/bluecan_bench/), which is where both of its rules were measured
 rather than guessed.
 
 Hard rule: **the TFT must never be updated from the CAN path.** SPI writes to the ST7789
@@ -1840,7 +1844,7 @@ the backlight and the repaint with it, which makes it the cheapest experiment on
 board: everything else keeps running, so any difference in the frame counters afterwards
 is the display's cost and nothing else. Note **D0 is inverted** relative to the other
 two — as the BOOT strapping pin it is pulled HIGH and reads LOW when pressed. See
-[hardware.md](hardware.md).
+[hardware.md](hardware-2026-10-13.md).
 
 ### What feeds it
 
@@ -1865,11 +1869,11 @@ length, byte order and a conversion equation are all entered per channel in
 RaceChrono Pro. The firmware just streams raw frames.
 
 **The R9's channels, as the app accepted them, are in
-[racechrono-channels.md](racechrono-channels.md).** What follows is the history of getting
+[racechrono-channels.md](../racechrono-channels.md).** What follows is the history of getting
 there.
 
 The practical consequence for this project: the empty and 🟡 rows in
-[pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md) do not block the device. Build it, capture
+[pre-bike-mapping.md](../../analysis/background/pre-bike-mapping.md) do not block the device. Build it, capture
 raw traffic, correlate afterwards, and enter equations in the app as they get
 confirmed. Where the mapping lists two conflicting formulas for the same signal (RPM,
 TPS), both can be set up as separate channels and compared against the dash reading
@@ -1954,7 +1958,7 @@ distinguished it from a dead link.
    thing that would justify honouring RaceChrono's per-id notify interval, which the
    firmware currently parses and ignores.
 
-   **Measured.** [tools/ble-load.py](firmware/tools/ble-load.py) drives the ramp: it
+   **Measured.** [tools/ble-load.py](../firmware/tools/ble-load.py) drives the ramp: it
    bounces `can0`, runs `cangen` at a given gap, and reads the board's cumulative
    counters before and after each burst. With the phone connected and subscribed:
 
@@ -1985,7 +1989,7 @@ distinguished it from a dead link.
 
    That premise is retired: sniffing belongs to the CANable and this device carries
    telemetry, so what has to fit down the link is an allow-list of a few ids rather than
-   a whole bus. See [the bluecan README](README.md#sniffing-is-the-canables-job-not-this-one).
+   a whole bus. See [the bluecan README](readme-2026-10-13.md#sniffing-is-the-canables-job-not-this-one).
 
    Two things this does *not* say. First, it is not a verdict on Bluetooth LE: at a 15 ms
    interval there are 67 connection events a second, so even 460 notifications is seven
@@ -2077,7 +2081,7 @@ distinguished it from a dead link.
 
    Getting `bytesToUint(raw, 0, 2)` to sweep 0…1000 is the pass condition, and it was
    met. Afterwards, a wrong reading on the bike is the CAN mapping's fault and nothing
-   else's — which is the whole point, since [pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md)
+   else's — which is the whole point, since [pre-bike-mapping.md](../../analysis/background/pre-bike-mapping.md)
    has no 🟢 rows to check against yet.
 
    The script bounces `can0` when it goes error-passive. That is not a fault: the
@@ -2088,7 +2092,7 @@ distinguished it from a dead link.
 
 1. Flash a bare TWAI loopback/self-test sketch — proves the board, the controller and
    the transceiver wiring before any of the RaceChrono complexity is in play.
-   **Done**: [firmware/bluecan_bringup](firmware/bluecan_bringup/) reaches `CAN READY`
+   **Done**: [firmware/bluecan_bringup](../firmware/bluecan_bringup/) reaches `CAN READY`
    both over a bare jumper between A0 and A1, which isolates the MCU from any wiring
    mistake, and through the SN65HVD230. `Rs` needed no attention on this module —
    Kamami tied it down and does not expose the pin, so the usual floating-`Rs` standby
@@ -2097,7 +2101,7 @@ distinguished it from a dead link.
    passes its acceptance test.
 3. Join the two over the twisted pair and prove frames cross — **done**: both directions,
    mutual ACK, 10000 of 10000 frames at a saturated 4078/s, and listen-only demonstrated.
-   See [bench-link.md](bench-link.md). [bluecan_bench](firmware/bluecan_bench/) is the
+   See [bench-link.md](bench-link.md). [bluecan_bench](../firmware/bluecan_bench/) is the
    sketch, and it is also the harness for everything below.
 4. Fork joeroback, apply patches 1–13, confirm frames reach RaceChrono over BLE.
    **CAN half done**: Bluecan exists, patches 1–3 are in, patch 4 came out of running
@@ -2119,11 +2123,11 @@ distinguished it from a dead link.
    buttons, ~420 µs an idle pass, no frames dropped. See [Display layer](#display-layer).
 6. Define a channel in RaceChrono against a synthetic signal and sweep it, to validate
    the equation-entry workflow end to end. The signal exists now —
-   [tools/sweep.sh](firmware/tools/sweep.sh) — and the procedure is written up under
+   [tools/sweep.sh](../firmware/tools/sweep.sh) — and the procedure is written up under
    [The phone session](#the-phone-session--run-and-it-works).
 7. *(blocked on pigtail)* Connect to the bike and work the priority list in
-   [pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md).
+   [pre-bike-mapping.md](../../analysis/background/pre-bike-mapping.md).
 
 ## Code review log
 
-Moved to [journal/bluecan-code-review-log.md](../journal/bluecan-code-review-log.md).
+Moved to [journal/bluecan-code-review-log.md](../../journal/bluecan-code-review-log.md).

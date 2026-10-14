@@ -1,5 +1,9 @@
 # The numbers
 
+> Moved here from `bluecan/numbers.md` on 2026-10-14, unchanged but for its links.
+> `firmware/tools/check-numbers.sh` reads its pattern list from here. The figures a
+> builder needs are also in [../usage.md](../usage.md#limits).
+
 **Every measured figure in bluecan, with one home each.** If a number about this device
 is worth quoting, its current value is here and the story behind it is in the patch or
 the run this table points at.
@@ -27,18 +31,18 @@ Two rules keep it from happening again:
    figure becomes checkable by being written down here.
 
 History belongs in [firmware.md](firmware.md) (per patch) and [bench-link.md](bench-link.md)
-(per run). Current state belongs in [README.md](README.md). This file is the values.
+(per run). Current state belongs in [README.md](readme-2026-10-13.md). This file is the values.
 
 ## The bus
 
 | Figure | Value | Where it comes from |
 |---|---|---|
-| R9, diagnostic connector, **measured** | **506 frames/s** across **23** arbitration ids, engine off or running | three captures on 2026-10-11 — [r9-signals.md](../analysis/r9-signals.md#what-the-r9-sends-as-of-2026-10-11) |
-| What telemetry needs, **measured** | **4 ids, 141 frames/s** on the bus; **61** over the radio at the 50 ms per id the app asks for | [how many frames this actually is](../analysis/background/pre-bike-mapping.md#how-many-frames-this-actually-is) |
-| Without an ACK | **2 ids**, one frame resent about 3 800 times a second | [the first capture](../analysis/captures/session-2026-10-11_115626/README.md#the-first-capture-2026-10-11) — the device has to acknowledge, see [README.md](README.md#what-the-r9-turned-out-to-send) |
+| R9, diagnostic connector, **measured** | **506 frames/s** across **23** arbitration ids, engine off or running | three captures on 2026-10-11 — [r9-signals.md](../../analysis/r9-signals.md#what-the-r9-sends-as-of-2026-10-11) |
+| What telemetry needs, **measured** | **4 ids, 141 frames/s** on the bus; **61** over the radio at the 50 ms per id the app asks for | [how many frames this actually is](../../analysis/background/pre-bike-mapping.md#how-many-frames-this-actually-is) |
+| Without an ACK | **2 ids**, one frame resent about 3 800 times a second | [the first capture](../../analysis/captures/session-2026-10-11_115626/README.md#the-first-capture-2026-10-11) — the device has to acknowledge, see [README.md](readme-2026-10-13.md#what-the-r9-turned-out-to-send) |
 | Acknowledging, on the bench | switches after **32** intact frames over **200 ms**; **199–202 msg/s** received with TEC and REC at 0 on both nodes; trips at REC **32**, looked for every **10 ms** | [patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |
 | R1-family bus rate, once assumed for the R9 | **~1050 msg/s** across **~16** arbitration ids | documented for the 2015+ R1, never measured here. *Not the R9's figure*: every "R9's ~1050" in the patch history was this estimate, and the device was sized against it |
-| What telemetry was estimated to need | **9 ids, ~170 msg/s** at the 50 ms per id the app asks for | the pre-capture arithmetic, kept in [how many frames this actually is](../analysis/background/pre-bike-mapping.md#how-many-frames-this-actually-is) |
+| What telemetry was estimated to need | **9 ids, ~170 msg/s** at the 50 ms per id the app asks for | the pre-capture arithmetic, kept in [how many frames this actually is](../../analysis/background/pre-bike-mapping.md#how-many-frames-this-actually-is) |
 | Saturated 500 kbps bus | **~4200 frames/s** arithmetic ceiling; **4078/s** measured | [bench-link.md](bench-link.md) |
 | Bench bus, R9-shaped | ~850 msg/s across 16 ids | [the soak](bench-link.md#the-soak) |
 
@@ -46,7 +50,7 @@ History belongs in [firmware.md](firmware.md) (per patch) and [bench-link.md](be
 
 | Figure | Value | Where it comes from |
 |---|---|---|
-| Clean ceiling | **~590 msg/s** (re-run on the fixed firmware: clean to ~583, knee at 600–620) | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied), re-run in [item 1](../journal/next-without-the-bike.md#1-the-allow-list--done-and-it-works) |
+| Clean ceiling | **~590 msg/s** (re-run on the fixed firmware: clean to ~583, knee at 600–620) | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied), re-run in [item 1](../../journal/next-without-the-bike.md#1-the-allow-list--done-and-it-works) |
 | Refusals past it | 0.1% at 589, **0.6% at 718**, 7.8% at 840, 22% at 914 msg/s | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied) |
 | Ceiling before the priority fix | ~200 msg/s clean; 2.5% refused at 321, 6.5% at 476 | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied) |
 | Direct-to-host vs the wrapper | 0.35% vs 0.8% at ~590 msg/s, 12% vs 35% at ~846 — one interval, 15.00 ms | [patch 13](firmware.md#patch-13--the-frame-path-goes-straight-at-the-host--applied) |
@@ -94,7 +98,7 @@ everything downstream and the phone picks it afresh on every reconnect.
 |---|---|---|
 | `bluecan_bench`, one hour | **3 224 404 of 3 224 404** at ~850/s, 0 lost, no reset, heap flat | [the soak](bench-link.md#the-soak) |
 | Bluecan, no phone | **600 s at 919 msg/s**, 0 dropped, queue peak 21, census monotonic to 699 043 | [patch 15](firmware.md#patch-15--logging-without-interrupts-off--applied-and-measured) |
-| Bluecan, with a phone | **150 s at 476 msg/s** — still the longest, and what [item 3](../journal/next-without-the-bike.md) is about | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied) |
+| Bluecan, with a phone | **150 s at 476 msg/s** — still the longest, and what [item 3](../../journal/next-without-the-bike.md) is about | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied) |
 
 ## The board and its supply
 
@@ -102,7 +106,7 @@ everything downstream and the phone picks it afresh on every reconnect.
 |---|---|---|
 | BAT rail on the bench | **4.09 V**, no measurable cost to read | [patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read) |
 | With the JST jack empty | the gauge models the charger's rail as a cell: 4.10 V, 100.0%, "discharging" at 22%/hr | [patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read) |
-| Bike supply | USB, **3 A** — no step-down needed | [hardware.md](hardware.md) |
+| Bike supply | USB, **3 A** — no step-down needed | [hardware.md](hardware-2026-10-13.md) |
 | Program storage / DRAM | ~706 KB of 2883584 (24%), 104 KB of static RAM (31%) | `arduino-cli compile`, release build |
 
 ## The serial console
@@ -110,11 +114,11 @@ everything downstream and the phone picks it afresh on every reconnect.
 | Figure | Value | Where it comes from |
 |---|---|---|
 | How long it can be held open | **indefinitely** — 600 s under `bluecan-soak.py`. *Retired: "about ten seconds", which was the board panicking and rebooting on the write* | [patch 15](firmware.md#patch-15--logging-without-interrupts-off--applied-and-measured) |
-| What still applies | re-attach after every **flash**; a dead port and a board receiving nothing look identical | [README.md](README.md#picking-this-back-up) |
+| What still applies | re-attach after every **flash**; a dead port and a board receiving nothing look identical | [README.md](readme-2026-10-13.md#picking-this-back-up) |
 
 ## The pattern list
 
-What [check-numbers.sh](firmware/tools/check-numbers.sh) greps for. One line per figure:
+What [check-numbers.sh](../firmware/tools/check-numbers.sh) greps for. One line per figure:
 a key, an extended regular expression, and what it is, separated by `::` —
 not `|`, which the regexes themselves use for alternation. Keys beginning `stale-` are
 retired values — a hit is not automatically wrong, since a document may deliberately

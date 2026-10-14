@@ -144,7 +144,7 @@ def main():
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         t0 = time.time()
         blocks = pump(ser, args.seconds, state)
-        gen.kill()          # -9: it wedges on a stopped TX queue, see ../../README.md
+        gen.kill()          # -9: it wedges on a stopped TX queue, see ../../history/readme-2026-10-13.md
         gen.wait()
         elapsed = time.time() - t0
         tx1 = tx_packets(args.iface)

@@ -1,5 +1,7 @@
 # Solved: the gs_usb 3-frame stall is an adapter firmware bug, not usbip
 
+> Moved here from `bluecan/gs-usb-stall.md` on 2026-10-14, unchanged but for its links.
+
 A standalone write-up, readable without the rest of this repository. Originally an open
 problem report ("gs_usb stalls after 3 frames over usbip/WSL2"); the root cause was
 localized to the adapter's firmware, the firmware was replaced, and the acceptance test
@@ -219,14 +221,14 @@ by 200 and `candump` seeing 200 frames, on a single channel open, with no `ENOBU
 
 ## Tooling in this repository
 
-- [firmware/tools/usb-attach.sh](firmware/tools/usb-attach.sh) — attach project devices
+- [firmware/tools/usb-attach.sh](../firmware/tools/usb-attach.sh) — attach project devices
   from WSL, no admin needed
-- [firmware/tools/can-up.sh](firmware/tools/can-up.sh) — bring `can0` up; note that
+- [firmware/tools/can-up.sh](../firmware/tools/can-up.sh) — bring `can0` up; note that
   SocketCAN control modes are **sticky**, so this script always spells out the `off`
   states. A `--normal` that only omits `loopback on` silently leaves loopback in force,
   which invalidated one round of testing here. `--one-shot` is a flag rather than a mode —
   it combines with the others — but is spelled out the same way for the same reason.
-- [firmware/tools/can-loopback-test.sh](firmware/tools/can-loopback-test.sh) — the
+- [firmware/tools/can-loopback-test.sh](../firmware/tools/can-loopback-test.sh) — the
   reproduction above, as one command
 
 ## Diagnostic techniques worth remembering

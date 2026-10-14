@@ -9,11 +9,11 @@
 # Why: the same figures used to live in four documents each, so a patch that changed
 # reality needed four edits and usually got two. A whole-tree review on 2026-08-22 found
 # six survivors of that -- documents contradicting each other about the same board. The
-# fix is one home per number (../numbers.md) plus this, run after any patch that moves
+# fix is one home per number (../history/numbers.md) plus this, run after any patch that moves
 # one: it prints every file that still quotes the old value, so the edit list is read off
 # the screen instead of remembered.
 #
-# The patterns live in ../numbers.md, next to the values they belong to -- one home, not
+# The patterns live in ../history/numbers.md, next to the values they belong to -- one home, not
 # two. Lines in a fenced block shaped `key :: extended-regex :: description`. The
 # separator is :: rather than | because the regexes use | for alternation.
 #
@@ -22,7 +22,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-NUMBERS="../numbers.md"
+NUMBERS="../history/numbers.md"
 BLUECAN="${BLUECAN:-$HOME/projects/racechrono-canbus}"
 
 [[ -f "$NUMBERS" ]] || { echo "pattern list not found at $NUMBERS" >&2; exit 2; }
@@ -119,4 +119,4 @@ done
 
 printf '\n-- %d figures, %d quotes.\n' "$total_keys" "$total_hits"
 echo "   A figure quoted in more than one or two places is a figure that will go stale;"
-echo "   link to bluecan/numbers.md from the others instead."
+echo "   link to bluecan/history/numbers.md from the others instead."

@@ -1,5 +1,8 @@
 # Development environment (Windows + WSL2)
 
+> Moved here from `bluecan/wsl-setup.md` on 2026-10-14, unchanged but for its links. How
+> to build and flash today, WSL2 included, is [../build.md](../build.md).
+
 Development happens inside WSL2 (Ubuntu 24.04) on a Windows host. The repository,
 the toolchain and the build all live on the Linux side; only the USB endpoint is
 inherently Windows-owned.
@@ -138,7 +141,7 @@ Kept because it costs nothing and is immune to every problem above: the Feather'
 TinyUF2 bootloader exposes a `FTHRS3BOOT` mass-storage volume that Windows mounts and
 WSL reaches under `/mnt`. Copying a `.uf2` there flashes it. Serial can likewise be
 read without passthrough by letting Windows hold the COM port and piping it across
-through interop — see [firmware/tools/serial-monitor.sh](firmware/tools/serial-monitor.sh).
+through interop — see [firmware/tools/serial-monitor.sh](../firmware/tools/serial-monitor.sh).
 
 ## Toolchain (installed, no root required)
 
@@ -226,7 +229,7 @@ makes host-side reset impossible here: USB is native to the SoC, so there is no
 USB-serial bridge whose DTR/RTS lines are wired to EN. On almost any other ESP32 board
 asserting DTR would reboot it. Here it cannot.
 
-[firmware/tools/bench.py](firmware/tools/bench.py) does the right thing and explains why
+[firmware/tools/bench.py](../firmware/tools/bench.py) does the right thing and explains why
 in its docstring; anything else reading `/dev/ttyACM0` directly needs to do the same.
 
 ### Driving the bench sketch
@@ -264,9 +267,9 @@ port:
 
 ## CANable v2.0 Pro
 
-The bench counterpart (see [hardware.md](hardware.md)). Once attached through usbipd in
+The bench counterpart (see [hardware.md](hardware-2026-10-13.md)). Once attached through usbipd in
 candleLight mode it is a normal Linux CAN interface. `can-utils` is installed, and
-[firmware/tools/can-up.sh](firmware/tools/can-up.sh) is the way to bring the interface up
+[firmware/tools/can-up.sh](../firmware/tools/can-up.sh) is the way to bring the interface up
 rather than a bare `ip link`: SocketCAN control modes are **sticky**, so an `ip link set
 can0 up` that names no mode silently keeps whatever was set last — a loopback flag left
 over from an earlier run already invalidated one round of testing here.
@@ -286,7 +289,7 @@ and is nothing of the sort.
 
 The adapter has a second USB identity worth knowing about: `0483:df11`, the STM32 ROM
 bootloader. It is reached deliberately with `dfu-util -d 1d50:606f -e` for firmware
-updates, and accidentally whenever the 5 V rail dips (see [hardware.md](hardware.md)).
+updates, and accidentally whenever the 5 V rail dips (see [hardware.md](hardware-2026-10-13.md)).
 Both identities are bound in usbipd and both are known to `usb-attach.sh`, so recovering
 or reflashing needs only an `attach`, never an administrator PowerShell.
 
@@ -306,7 +309,7 @@ Working end to end:
   `/dev/ttyACM0` present in WSL
 - serial upload from WSL via `./build.sh <sketch> --upload`
 - serial capture from WSL (pyserial on `/dev/ttyACM0`, or
-  [firmware/tools/serial-monitor.sh](firmware/tools/serial-monitor.sh))
+  [firmware/tools/serial-monitor.sh](../firmware/tools/serial-monitor.sh))
 - the bring-up sketch flashed and running: reports `core 1`, so the Arduino task is
   pinned where the CAN work needs it
 - the TFT, confirmed visually — title, per-check OK/FAIL lines and the button row all

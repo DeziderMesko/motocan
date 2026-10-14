@@ -1,14 +1,17 @@
 # The bench link: two nodes, one bus
 
+> Moved here from `bluecan/bench-link.md` on 2026-10-14, unchanged but for its links. How
+> to run the bench today is [../bench.md](../bench.md).
+
 The first tests in which a CAN frame left one device and arrived at another. Everything
-before this was a single node talking to itself — [bluecan_bringup](firmware/bluecan_bringup/)
+before this was a single node talking to itself — [bluecan_bringup](../firmware/bluecan_bringup/)
 reaches `CAN READY` by asking the controller to receive its own transmission, which
 proves the MCU, the toolchain and the KAmod's own driver-to-receiver path, and proves
 nothing whatsoever about `CAN H` / `CAN L`.
 
 Rig: the Feather's KAmod and the CANable 2.0 Pro joined by a twisted pair, CAN-H to
 CAN-H and CAN-L to CAN-L, 120 Ω at each end — the KAmod's `120R` jumper and the
-CANable's own terminator. See [hardware.md](hardware.md).
+CANable's own terminator. See [hardware.md](hardware-2026-10-13.md).
 
 ## Why ACK is the measurement that matters
 
@@ -35,7 +38,7 @@ can state ERROR-PASSIVE (berr-counter tx 128 rx 0)
 
 ## Results
 
-Feather running [bluecan_bench](firmware/bluecan_bench/), CANable at 500 kbps in normal
+Feather running [bluecan_bench](../firmware/bluecan_bench/), CANable at 500 kbps in normal
 mode. Frame counts are the Feather's own, read off its serial status line.
 
 | # | Test | Result |
@@ -113,9 +116,9 @@ watchdog reset, a receive queue slowly falling behind, the gs_usb transmit path 
 the way it [used to](gs-usb-stall.md) — are all invisible in a frame count taken after
 two seconds.
 
-[tools/soak.sh](firmware/tools/soak.sh) runs the long version. The traffic profile
+[tools/soak.sh](../firmware/tools/soak.sh) runs the long version. The traffic profile
 deliberately imitates the R9 instead of maximising load: sixteen ids at the rates
-[pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md)'s [S4] gives — engine speed, gear, TPS/APS,
+[pre-bike-mapping.md](../../analysis/background/pre-bike-mapping.md)'s [S4] gives — engine speed, gear, TPS/APS,
 brake pressure and wheel speeds at 100 Hz, temperatures at 1 Hz — for ~850 frames/s in
 total, which is what [firmware.md](firmware.md) expects of the real bus. A *saturated*
 bus was already shown to survive a burst (test 6). A *realistic* bus over a long run was
@@ -163,7 +166,7 @@ CANable's 3224404 transmitted. Not one frame lost.
 
 Fixed by scheduling the progress loop against an absolute deadline, giving the logger
 five minutes of margin and stopping it explicitly *after* the counters are read, with
-the bus quiet in between so nothing is in flight. [soak-report.py](firmware/tools/soak-report.py)
+the bus quiet in between so nothing is in flight. [soak-report.py](../firmware/tools/soak-report.py)
 now checks that the log spans the run before believing any frame count, and marks the
 delivery checks `SKIP` rather than `FAIL` when it does not. A harness that cries wolf
 over a clean result is worse than no harness.
@@ -233,12 +236,12 @@ board is not on a USB cable.
 emits nothing, which is indistinguishable from a crashed sketch. Asserting DTR is safe
 on *this* board specifically — USB is native to the SoC, there is no USB-serial bridge
 whose modem lines are wired to EN, so unlike almost every other ESP32 board the host
-cannot reset it that way. [tools/bench.py](firmware/tools/bench.py) does it and says why.
+cannot reset it that way. [tools/bench.py](../firmware/tools/bench.py) does it and says why.
 
 **`cangen -g 0` reports `write: No buffer space available` after about twenty frames.**
 That is SocketCAN's default `txqueuelen` of 10, not the adapter stalling — an easy
 thing to misread as a return of the [gs_usb stall](gs-usb-stall.md).
-[tools/can-up.sh](firmware/tools/can-up.sh) now raises it to 1000.
+[tools/can-up.sh](../firmware/tools/can-up.sh) now raises it to 1000.
 
 ## Still not proven
 

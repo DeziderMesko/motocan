@@ -26,7 +26,7 @@ not: under traffic M only ever grows, so any fall in it is a restart. That is wh
 watches, along with the queue peak and the drop and offered totals, which are cumulative
 for the same reason and fall the same way.
 
-See ../firmware.md, patch 15, for the fault this was written to prove was gone.
+See ../history/firmware.md, patch 15, for the fault this was written to prove was gone.
 """
 import argparse
 import re

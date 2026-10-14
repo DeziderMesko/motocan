@@ -2,8 +2,8 @@
 
 The first time Bluecan meets the R9. Everything it does has been shown on the bench
 against a replay of the bike's own captures
-([patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench),
-[patch 19](firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench));
+([patch 18](history/firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench),
+[patch 19](history/firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench));
 this is the list of what only the bike can show. At a standstill throughout. Riding with
 it is a separate decision and is not on this page.
 

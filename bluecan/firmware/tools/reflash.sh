@@ -6,7 +6,7 @@
 # Why this exists. esptool resets the board into ROM download mode to flash it, and
 # on this board USB is native to the SoC, so that reset is a USB *disconnect*: the
 # device leaves as 239a:8123 and comes back as 303a:1001. usbipd attaches a device,
-# not a port, so the newly-arrived identity is bound (see ../../wsl-setup.md) but not
+# not a port, so the newly-arrived identity is bound (see ../../history/wsl-setup.md) but not
 # attached, /dev/ttyACM0 vanishes mid-operation, and the upload dies with
 # "Could not open /dev/ttyACM0". Then it happens again in reverse when the freshly
 # flashed sketch boots.

@@ -1,6 +1,6 @@
 // bluecan bench sketch
 //
-// Step 2 of the plan in ../../firmware.md: the first firmware that puts the
+// Step 2 of the plan in ../../history/firmware.md: the first firmware that puts the
 // Feather on a bus with a *second node* on it. Everything before this was one
 // node talking to itself -- ../bluecan_bringup proved the MCU, the toolchain and
 // the KAmod, but it installs the TWAI driver, runs one self-reception frame and
@@ -33,7 +33,7 @@
 // set rather than toggle -- lower case on, upper case off -- so a script never depends
 // on the state it inherited. Send '?' for the list.
 //
-// D0's listen-only toggle is not a convenience. It is patch 2 from ../../firmware.md
+// D0's listen-only toggle is not a convenience. It is patch 2 from ../../history/firmware.md
 // -- the mode the device MUST be in before it ever touches the R9 -- and this is the
 // cheapest place to prove it works: in listen-only the Feather stops ACKing, so the
 // CANable should fall to ERROR-PASSIVE exactly as it does with no partner at all.
@@ -62,7 +62,7 @@ static bool        g_show      = true;   // TFT repaints
 
 // How long the slowest pass through loop() took in the last second, and how much
 // of that was the TFT. The RX queue is 64 frames deep, which at the ~1000 frames/s
-// ../../firmware.md quotes for an R1-family bus is only ~64 ms of slack -- so a
+// ../../history/firmware.md quotes for an R1-family bus is only ~64 ms of slack -- so a
 // single blocking pass longer than that drops frames with no bus error to show for
 // it. Worth measuring rather than reasoning about: the first bench run lost 1200 of
 // 2000 frames with tec/rec flat at zero, which says the loss was ours, not the bus's.
@@ -100,7 +100,7 @@ static uint8_t  g_last_rx_dlc = 0;
 static uint32_t g_bus_off_events = 0;
 
 // Which arbitration IDs have been seen, and how often. This is the whole point of
-// the device per ../../README.md -- "which CAN family does the R9 belong to" is
+// the device per ../../history/readme-2026-10-13.md -- "which CAN family does the R9 belong to" is
 // answered by the ID list, not by decoding anything -- so it goes in from the start
 // even though the bench partner only ever sends what we tell it to.
 static constexpr int ID_SLOTS = 24;
@@ -168,7 +168,7 @@ static bool can_start(twai_mode_t mode)
 
     twai_general_config_t g = TWAI_GENERAL_CONFIG_DEFAULT(CAN_TX_PIN, CAN_RX_PIN, mode);
     // The default queues are 5 deep. At 500 kbps a full bus is ~1000 frames/s and
-    // ../../firmware.md quotes ~1050 msg/s for the R1-family bus, so 5 slots is
+    // ../../history/firmware.md quotes ~1050 msg/s for the R1-family bus, so 5 slots is
     // about 5 ms of headroom -- less than one TFT repaint. 64 is still trivial RAM
     // and turns a dropped-frame bug into a non-event.
     g.rx_queue_len = 64;
@@ -360,7 +360,7 @@ static void draw_live()
     field(58, ST77XX_WHITE, c_last, sizeof c_last, buf);
 
     // The ID census: the first real question this device exists to answer, per
-    // ../../README.md -- which CAN family the R9 belongs to is read off the ID list,
+    // ../../history/readme-2026-10-13.md -- which CAN family the R9 belongs to is read off the ID list,
     // not off any decoded value.
     snprintf(buf, sizeof buf, "ids seen: %-3d%-12s", g_id_used, g_id_overflow ? " (+more)" : "");
     field(74, ST77XX_CYAN, c_hdr, sizeof c_hdr, buf);
@@ -384,7 +384,7 @@ static void draw_live()
 
 // The display gets its own task on core 0, at a priority below the Arduino loop.
 //
-// This is the hard rule from ../../firmware.md, and the bench measured exactly the
+// This is the hard rule from ../../history/firmware.md, and the bench measured exactly the
 // failure it exists to prevent: with draw_live() called from loop() on core 1, a
 // 2000-frame run at ~940 frames/s delivered 854 and dropped 1200, with the
 // controller's error counters flat at zero the whole time. Nothing was wrong on the

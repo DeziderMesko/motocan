@@ -35,7 +35,7 @@
 #
 # The Feather is listen-only, so nothing on this bench ACKs the CANable and it climbs to
 # ERROR-PASSIVE within a couple of dozen frames. That is listen-only working, not a
-# fault -- see ../bench-link.md -- and, measured rather than assumed, it is also not a
+# fault -- see ../history/bench-link.md -- and, measured rather than assumed, it is also not a
 # reason to do anything: an error-passive controller still transmits, and 60 of 60
 # frames at 10 Hz reach the Feather with the interface sitting in that state throughout.
 # Only BUS-OFF actually stops it, and this adapter cannot restart itself from bus-off

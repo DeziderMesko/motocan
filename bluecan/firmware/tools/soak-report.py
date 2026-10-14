@@ -101,7 +101,7 @@ def main():
     # can0's RX counter includes the local echo of its own transmissions, so what it
     # should have logged is everything it sent plus everything the Feather sent. This
     # is the same echo that makes loopback mode show every frame twice in candump --
-    # see ../wsl-setup.md -- and forgetting it makes the arithmetic look catastrophic.
+    # see ../history/wsl-setup.md -- and forgetting it makes the arithmetic look catastrophic.
         expected_can_rx = can_tx + tx_delta
         ok &= verdict(abs(can_rx - expected_can_rx) <= slack, 'Feather -> CANable',
                       f'{tx_delta} sent / {can_rx - can_tx} received  '
