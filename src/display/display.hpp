@@ -35,7 +35,7 @@ namespace ui
 /**
  * The on-board TFT. Singleton, like every other device here.
  *
- * Two hard rules, both bought with bench measurements (see motocan/bluecan/bench-link.md):
+ * Two hard rules, both bought with bench measurements (see motocan/bluecan/history/bench-link.md):
  *
  *   1. the panel is only ever touched from this module's own task, pinned to core 0.
  *      Repainting from the CAN path on core 1 destroyed 1200 of 2000 frames with every

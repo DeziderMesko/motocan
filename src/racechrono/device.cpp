@@ -105,7 +105,7 @@ void device::onDisconnect(BLEServer*)
     // exactly when the rider wants the link back. So the filter persists to reboot.
     //
     // The bench pays for that: after a phone session the board is still filtered, and
-    // only the panel's flt field says so. See motocan/bluecan/firmware.md, patch 14.
+    // only the panel's flt field says so. See motocan/bluecan/history/firmware.md, patch 14.
     //
     // once connection is made, BLE stops advertising, so on disconnect, start advertising again..
     infoln("Bluetooth LE client disconnected!");

@@ -75,7 +75,7 @@ constexpr uint32_t poll_ms = 25;
 /// bytes, not words: ESP-IDF's StackType_t is a byte. This panel runs in 4 KB with
 /// **1824 B** still free, measured on the board 2026-10-13 after every page had been
 /// visited -- 1912 B before the LIVE page, and the ~2.2 KB this once quoted was the
-/// bench sketch's simpler page. Current values live in motocan/bluecan/numbers.md.
+/// bench sketch's simpler page. Current values live in motocan/bluecan/history/numbers.md.
 constexpr uint32_t stack_size = 4096;
 StaticTask_t task_buffer;
 StackType_t task_stack[stack_size];
