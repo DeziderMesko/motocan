@@ -32,10 +32,7 @@
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
 
-/// define to build the decoder for the BMW g8x
-// #define CONFIG_CANBUS_DECODER_BMWG8X 1
-
-/// define to build the raw pass-through decoder for the Yamaha R9
+/// the decoder for the Yamaha R9
 #define CONFIG_CANBUS_DECODER_YAMAHAR9 1
 
 /// Let the controller acknowledge frames, once it has proved the bit rate by

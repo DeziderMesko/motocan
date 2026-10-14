@@ -1,3 +1,0 @@
-# Adding new Vehicles
-
-TODO

@@ -9,8 +9,8 @@
 # tools/0-setup.sh for the venv. After it, tools/1-selftest.sh should pass with no
 # hardware attached.
 #
-# It deliberately installs nothing for the bluecan half -- no arduino-cli, no ESP32 core,
-# and it does not clone the racechrono-canbus fork. This machine reads the bus and works
+# It deliberately installs nothing for the bluecan half -- no arduino-cli, no ESP32 core.
+# This machine reads the bus and works
 # out what the bytes mean; the device that streams them is built elsewhere.
 #
 # The repository is public since 2026-10-12, so the script can be fetched on its own:

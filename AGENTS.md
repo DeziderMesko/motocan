@@ -71,10 +71,11 @@ take a number from them without checking it against `r9-signals.md`.
   wall-clock, and under WSL2 the wall clock steps; do not measure a rate to better than a
   percent from them.
 - `analysis/css-skill/` is vendored at a pinned commit. Do not edit it.
-- Bluecan's firmware source is a separate repository,
-  [DeziderMesko/racechrono-canbus](https://github.com/DeziderMesko/racechrono-canbus),
-  branch `trunk`. `bluecan/firmware/` here holds only bench sketches and tools. Call the
-  firmware Bluecan.
+- Bluecan's firmware is in `bluecan/firmware/bluecan/`, brought in with its history on
+  2026-10-14 from what was a separate repository. `bluecan/firmware/` around it holds the
+  bench sketches and tools. Call the firmware Bluecan. Its story goes in
+  `bluecan/history/firmware.md`; a change in what it does also goes in the manual pages,
+  `bluecan/usage.md` and the others, which are kept free of history.
 - Prose is plain English in full sentences, written for someone who has not seen the
   conversation that produced it. Match the page you are editing.
 - After moving or renaming anything, check every relative link and anchor in the

@@ -35,7 +35,7 @@ namespace canbus
 /**
  * decoder for the Yamaha R9 (2026).
  *
- * Unlike decoder_bmwg8x this decoder has no static id table and no per-id rates of its
+ * Unlike upstream's BMW decoder this one has no static id table and no per-id rates of its
  * own: it was written before anything had been read off an R9, and what crosses the
  * radio is still the app's decision, not a table's. What it has instead is an allow-list
  * filled in at run time from RaceChrono's own requests: the app sends a deny-all and
@@ -43,9 +43,9 @@ namespace canbus
  * that id at. Both are honoured here.
  *
  * Honouring them is what makes the BLE link's ceiling stop mattering. The link starts
- * refusing frames somewhere around 590 msg/s against the R9's ~1050 (see
- * motocan/bluecan/README.md), but a handful of allowed ids at the intervals a phone
- * asks for is tens of messages a second, not a thousand. The ids the app never asked
+ * refusing frames somewhere around 590 msg/s (see motocan/bluecan/usage.md, Limits),
+ * but a handful of allowed ids at the intervals a phone asks for is tens of messages a
+ * second, not hundreds. The ids the app never asked
  * for are dropped in the CAN ISR, before they cost a queue slot or an mbuf.
  *
  * Two things are deliberately *not* done:
@@ -74,8 +74,8 @@ class decoder_yamahar9
 
     /// One allowed id. RaceChrono asks for the ids it has channels for, so this is
     /// sized off the bus rather than off the protocol: the R1-family bus carries about
-    /// sixteen arbitration ids in total (motocan/canbus-mapping.md), and a phone
-    /// cannot usefully ask for more ids than the bike broadcasts.
+    /// sixteen arbitration ids in total (motocan/analysis/background/pre-bike-mapping.md),
+    /// and a phone cannot usefully ask for more ids than the bike broadcasts.
     struct slot
     {
         uint32_t id;           ///< arbitration id, written by the BLE task

@@ -34,15 +34,12 @@ sudo usermod -aG dialout $USER
 
 ## Getting the source
 
-```bash
-git clone https://github.com/DeziderMesko/racechrono-canbus.git
-```
+The firmware is in [firmware/bluecan/](firmware/bluecan/) in this repository; its own
+[README](firmware/bluecan/README.md) describes the code.
 
-The default branch, `trunk`, is the one to build. Keep the directory named
-`racechrono-canbus`: Arduino requires a sketch's directory to have the same name as its
-`.ino` file. The tools in this folder look for the checkout at
-`~/projects/racechrono-canbus`, beside this repository; set `BLUECAN=/path/to/checkout` if
-it is somewhere else.
+```bash
+git clone https://github.com/DeziderMesko/motocan.git
+```
 
 ## Board settings
 
@@ -60,9 +57,22 @@ Board: **Adafruit Feather ESP32-S3 Reverse TFT**, FQBN
 
 ## Building
 
+From `bluecan/firmware/`:
+
 ```bash
-arduino-cli compile --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M" --build-path build/bluecan racechrono-canbus
+./build.sh bluecan
 ```
+
+It compiles with the settings above and writes `build/bluecan/bluecan.uf2` beside the
+binaries; `./build.sh bluecan --upload` also uploads it over USB. The same with
+`arduino-cli` alone, from the repository root:
+
+```bash
+arduino-cli compile --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M" --build-path build/bluecan bluecan/firmware/bluecan
+```
+
+In the Arduino IDE, open `bluecan/firmware/bluecan/bluecan.ino` and set the Tools menu as
+in the table above.
 
 A clean build takes about half a minute and ends with about 710 KB of program storage
 (24%) and 106 KB of static RAM (32%).
@@ -78,12 +88,14 @@ change of bus state. Add this to the compile command:
 --build-property "compiler.cpp.extra_flags=-DDEBUG"
 ```
 
+Under WSL2, `tools/reflash-bluecan.sh --debug` builds and uploads one in a step.
+
 A debug build waits 5 seconds at start-up before doing anything, so that a console can be
 attached in time. Use a release build on the bike.
 
 ## Build-time settings
 
-In `src/racechrono-canbus.hpp` of the firmware. The defaults are what the R9 and an
+In [firmware/bluecan/src/racechrono-canbus.hpp](firmware/bluecan/src/racechrono-canbus.hpp). The defaults are what the R9 and an
 Android phone need.
 
 | Setting | Default | What it does |
@@ -106,7 +118,7 @@ bootloader. That is normal, and it is what makes flashing under WSL2 need extra 
 ### Over USB, on Linux
 
 ```bash
-arduino-cli upload --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M" --input-dir build/bluecan --port /dev/ttyACM0 racechrono-canbus
+arduino-cli upload --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M" --input-dir build/bluecan --port /dev/ttyACM0 bluecan/firmware/bluecan
 ```
 
 The board resets into download mode by itself. If the upload cannot find it, put it there
@@ -114,10 +126,11 @@ by hand — hold **D0**, press and release **RESET**, release D0 — and run the
 
 ### By UF2, with no tools at all
 
-The board's bootloader can appear as a USB drive. Convert the build to a `.uf2`:
+The board's bootloader can appear as a USB drive. `./build.sh bluecan` has already made
+the `.uf2`; from a plain `arduino-cli` build, convert it:
 
 ```bash
-python3 bluecan/firmware/tools/uf2conv.py build/bluecan/racechrono-canbus.ino.bin --base 0x10000 --family 0xc47e5767 --convert --output bluecan.uf2
+python3 bluecan/firmware/tools/uf2conv.py build/bluecan/bluecan.ino.bin --base 0x10000 --family 0xc47e5767 --convert --output bluecan.uf2
 ```
 
 Then **double-tap RESET**. A drive named `FTHRS3BOOT` appears; copy `bluecan.uf2` onto it,

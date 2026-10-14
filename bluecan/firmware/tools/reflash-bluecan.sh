@@ -1,19 +1,12 @@
 #!/usr/bin/env bash
-# Compile and upload Bluecan, the reader firmware, which lives OUTSIDE this repo.
+# Compile and upload Bluecan, the reader firmware in ../bluecan/.
 #
 #   ./tools/reflash-bluecan.sh              # release build: silent on serial, BLE only
 #   ./tools/reflash-bluecan.sh --debug      # adds -DDEBUG: 5 s stats over serial
 #
-# Bluecan is a separate repository -- it is forked from an upstream RaceChrono
-# project and keeps that remote -- so it is checked out beside motocan rather than
-# inside it. Override with BLUECAN=/path/to/checkout.
-#
-#   https://github.com/DeziderMesko/racechrono-canbus   (branch trunk)
-#
-# Why this exists next to reflash.sh: that script builds sketches from this repo's
-# firmware/ directory and produces a .uf2. This one takes a sketch directory that is
-# not ours, and otherwise performs the same usb-attach dance around the ESP32-S3's
-# mid-upload identity switch. See ../../history/wsl-setup.md for what that dance is for.
+# Why this exists next to reflash.sh: that one goes through build.sh, which has no debug
+# build. This one takes --debug, and otherwise performs the same usb-attach dance around
+# the ESP32-S3's mid-upload identity switch under WSL2. See ../../build.md.
 #
 # Reading the board afterwards: ./tools/bench.py 10 works as a plain serial reader for
 # any sketch -- what matters is that it asserts DTR, which the ESP32-S3's USB CDC gates
@@ -22,18 +15,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-BLUECAN="${BLUECAN:-$HOME/projects/racechrono-canbus}"
-[[ -d "$BLUECAN" ]] || { echo "Bluecan checkout not found at $BLUECAN" >&2
-                      echo "  git clone https://github.com/DeziderMesko/racechrono-canbus \"$BLUECAN\"" >&2
-                      exit 1; }
+BLUECAN="bluecan"
 
 FQBN="esp32:esp32:adafruit_feather_esp32s3_reversetft"
 OPTS="PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M"
 
-BUILD="build/racechrono-canbus"
+BUILD="build/bluecan"
 EXTRA=()
 if [[ "${1:-}" == "--debug" ]]; then
-    BUILD="build/racechrono-canbus-debug"
+    BUILD="build/bluecan-debug"
     EXTRA=(--build-property "compiler.cpp.extra_flags=-DDEBUG")
     echo ">> DEBUG build"
 fi

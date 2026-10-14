@@ -3,6 +3,11 @@
 > Moved here from `bluecan/firmware.md` on 2026-10-14, unchanged but for its links. Where
 > it says README.md is what is true now, that is [the old README](readme-2026-10-13.md);
 > the current description of the device is [../README.md](../README.md).
+>
+> Also since 2026-10-14 the firmware itself is in this repository, in
+> [../firmware/bluecan/](../firmware/bluecan/), merged with its history: the commit hashes
+> quoted below resolve here, and `DeziderMesko/racechrono-canbus` is no longer where it is
+> worked on. `racechrono-canbus.ino` is now `bluecan.ino`.
 
 **This file is the history.** One section per patch: what was wrong, what changed, what it
 measured, and what the measurement was worth. It is meant to be read backwards from a

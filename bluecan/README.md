@@ -7,10 +7,10 @@ recorded lap session. Its own screen shows the main values decoded, and the stat
 bus and the Bluetooth link.
 
 It is an Adafruit ESP32-S3 Feather, a 3.3 V CAN transceiver and a diagnostic pigtail. The
-firmware is a fork of [joeroback/racechrono-canbus](https://github.com/joeroback/racechrono-canbus)
-and lives in its own repository,
-[DeziderMesko/racechrono-canbus](https://github.com/DeziderMesko/racechrono-canbus), branch
-`trunk`. This folder has the documentation, three bench sketches and the tools.
+signals it decodes were worked out in the rest of this repository, motocan, from captures
+of the R9's bus; Bluecan is the logger built on them. This folder has its documentation,
+its firmware in [firmware/bluecan/](firmware/bluecan/), three bench sketches and the
+tools.
 
 **Status, 2026-10-14.** It works on the bench: against a replay of the R9's own captured
 traffic, and with RaceChrono Pro on Android recording a session from it. **It has not yet
@@ -86,6 +86,7 @@ The parts, the wiring and the power are in [hardware.md](hardware.md).
 | [racechrono-channels.md](racechrono-channels.md) | The R9's channels as RaceChrono accepts them: PID, equation, which channel to map onto |
 | [at-the-bike.md](at-the-bike.md) | The checklist for the first time it is plugged into the R9 |
 | [bench.md](bench.md) | Testing without the bike: a USB-CAN adapter, generated and replayed traffic, the tools |
+| [firmware/bluecan/](firmware/bluecan/) | The firmware, and a README on how its code is laid out |
 | [firmware/](firmware/) | Bench sketches and the tools that [bench.md](bench.md) describes |
 | [history/](history/) | How it got here: every firmware patch and the measurements behind it. Not needed to build or use it |
 
@@ -99,8 +100,11 @@ the bench, not on a bike.
 
 Do not capture or set it up while riding. Everything here was done at a standstill.
 
-## Credits
+## Credits and licence
 
-The firmware is built on [joeroback/racechrono-canbus](https://github.com/joeroback/racechrono-canbus)
-(MIT licence). The protocol is specified in
+The firmware is built on Joe Roback's
+[joeroback/racechrono-canbus](https://github.com/joeroback/racechrono-canbus), a RaceChrono
+CAN reader for BMW cars, and keeps its structure. It is under the MIT licence, with his
+copyright and this project's: [firmware/bluecan/LICENSE](firmware/bluecan/LICENSE). The
+Bluetooth protocol is RaceChrono's, as specified in
 [aollin/racechrono-ble-diy-device](https://github.com/aollin/racechrono-ble-diy-device).

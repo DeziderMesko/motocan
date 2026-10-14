@@ -18,7 +18,6 @@ read against the DBC in one sitting.
 Needs cantools, which analysis/tools/0-setup.sh puts in analysis/.venv, and g++.
 """
 import lzma
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -30,8 +29,7 @@ except ImportError:
 
 HERE = Path(__file__).resolve().parent
 MOTOCAN = HERE.parents[2]
-# the same override reflash-bluecan.sh takes
-BLUECAN = Path(os.environ.get('BLUECAN', Path.home() / 'projects' / 'racechrono-canbus'))
+BLUECAN = HERE.parent / 'bluecan'
 DBC = MOTOCAN / 'analysis' / 'r9.dbc'
 BUILD = HERE.parent / 'build'
 

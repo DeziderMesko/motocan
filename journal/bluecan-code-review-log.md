@@ -12,12 +12,18 @@ the record belongs because the patch list it describes is here.
 | 2026-08-22 (23:13) | `b8bd163..171fe78` — 11 commits: patches 14, 15, 16 and 17 plus the display fixes | three findings, all fixed in `559f715` — the allow-list overflow counter surviving a `deny_all()`, `field()` indexing `_cache` unbounded, and the fuel gauge's charge rate overflowing an `int16_t` |
 | 2026-08-22 (Fable) | Bluecan's whole `src/` again, plus `559f715..fb945fc`, **plus the whole motocan tree** — the first review to cover the documentation | no live bug. Bluecan: `56f21b8` (the logger out of `install()`'s critical section, error counting, `esp_intr_alloc()` checked, `stop()` implemented, two fields made atomic) and `7b77c05` (three wrong README claims, the stale 280 µs). motocan: `10dd898` (the allow-list outliving a disconnect, root `build/`) and the commit carrying this line (six stale or contradicting doc claims) |
 
-**The next range is [`fb945fc..HEAD`](https://github.com/DeziderMesko/racechrono-canbus)
-in Bluecan**, and the review is worth running with the same effort level as the three
-above:
+**The next range is `fb945fc..HEAD` in Bluecan**, and the review is worth running with the
+same effort level as the three above. Since 2026-10-14 the firmware is in this repository,
+under `bluecan/firmware/bluecan/`, brought in by the merge `3312b19`. Its commits from
+before the move are that merge's second parent, at the old paths, and a path filter does
+not find them; the two halves of the range are therefore:
 
 ```bash
-git -C ~/projects/racechrono-canbus log --oneline fb945fc..HEAD
+git log --oneline fb945fc..3312b19^2
+```
+
+```bash
+git log --oneline 3312b19..HEAD -- bluecan/firmware/bluecan
 ```
 
 That third review also changed how this repository is laid out, which is the part worth

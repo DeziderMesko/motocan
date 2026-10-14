@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Find every place a canonical number is quoted, in both repositories.
+# Find every place a canonical number is quoted, anywhere in the repository.
 #
 #   ./tools/check-numbers.sh              # every figure, and where it is quoted
 #   ./tools/check-numbers.sh queue disp   # only figures whose key or description matches
@@ -23,7 +23,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 NUMBERS="../history/numbers.md"
-BLUECAN="${BLUECAN:-$HOME/projects/racechrono-canbus}"
 
 [[ -f "$NUMBERS" ]] || { echo "pattern list not found at $NUMBERS" >&2; exit 2; }
 
@@ -54,13 +53,11 @@ mapfile -t LINES < <(awk '
 # Where to search. The canonical file is excluded on purpose: it is meant to hold every
 # figure, so listing it would bury the copies that matter.
 ROOTS=(../..)
-[[ -d "$BLUECAN" ]] && ROOTS+=("$BLUECAN")
 
 EXCLUDES=(
     --exclude-dir=.git
     --exclude-dir=build
     --exclude-dir=node_modules
-    --exclude-dir=candump-parse
 --exclude-dir=css-skill      # vendored third-party analysis chain; its numbers are not ours
 --exclude-dir=.venv
     --exclude=numbers.md
@@ -111,7 +108,7 @@ for line in "${LINES[@]}"; do
 
     n="$(printf '%s\n' "$hits" | wc -l)"
     total_hits=$((total_hits + n))
-    printf '%s\n' "$hits" | sed 's|^\.\./\.\./|   motocan/|; s|^'"$BLUECAN"'/|   bluecan/|' \
+    printf '%s\n' "$hits" | sed 's|^\.\./\.\./|   motocan/|' \
         | cut -c1-140
 done
 

@@ -99,7 +99,7 @@ void decoder::allow_all(uint16_t interval_ms) noexcept
 {
     // The interval is deliberately dropped here. A decoder with a static id table
     // states its own per-id rates, measured against that vehicle's bus, and those are
-    // better information than a phone's request -- see decoder_bmwg8x. A decoder whose
+    // better information than a phone's request. A decoder whose
     // ids are not known ahead of time has nothing to fall back on and must honour it;
     // decoder_yamahar9 overrides this for exactly that reason.
     (void) interval_ms;

@@ -67,7 +67,7 @@ Two halves that meet at the CAN bus and nowhere else.
 | &nbsp;&nbsp;[tools/](analysis/tools/) | the capture session as one script, and the converters |
 | &nbsp;&nbsp;[R9_CANbus.md](analysis/R9_CANbus.md) | the bike's CAN wiring, from the service manual |
 | &nbsp;&nbsp;[background/](analysis/background/) | the research from before the bike was reached: other Yamahas, AiM's protocols |
-| [bluecan/](bluecan/) | **The device that streams them**: an ESP32-S3 Feather feeding [RaceChrono](https://racechrono.com/) over Bluetooth LE. Proven on the bench, including the acknowledging this connector needs; it has not been on the R9 yet |
+| [bluecan/](bluecan/) | **The logger built on them**: an ESP32-S3 Feather feeding [RaceChrono](https://racechrono.com/) over Bluetooth LE, with its firmware, documentation and tools. Proven on the bench, including the acknowledging this connector needs; it has not been on the R9 yet |
 | [journal/](journal/) | the author's working notes. Set aside, and may be removed |
 | [AGENTS.md](AGENTS.md) | the conventions, for a coding agent or a person about to change something |
 
