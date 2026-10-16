@@ -1460,7 +1460,7 @@ void display::page_live() noexcept
     y = content_y + 4 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "Grip");
     cell(y, big, left_col + 5, throttle_color, "%s", a);
-    cell(y, big, right_col, ST77XX_YELLOW, "Valve");
+    cell(y, big, right_col, ST77XX_YELLOW, "TPS");
     cell(y, big, right_col + 5, throttle_color, "%s", b);
 
     // --- 0x27C again
@@ -1509,8 +1509,8 @@ void display::page_live() noexcept
     cell(y, 1, 6, temps_color, "%s", a);
     cell(y, 1, 12, ST77XX_YELLOW, "Air");
     cell(y, 1, 16, temps_color, "%s", b);
-    cell(y, 1, 22, ST77XX_YELLOW, "Valve cmd");
-    cell(y, 1, 32, cmd ? ST77XX_WHITE : color_grey_dim, "%s", c);
+    cell(y, 1, 22, ST77XX_YELLOW, "TPS cmd");
+    cell(y, 1, 30, cmd ? ST77XX_WHITE : color_grey_dim, "%s", c);
 }
 
 void display::page_ids() noexcept

@@ -68,7 +68,7 @@ Then the LIVE page against the dash, which is what the page was built for:
 | 10 | Go through the ride modes | `PWR` follows the PWR number on the dash in each mode. On the Track display `Trk` appears beside it |
 | 11 | Compare the temperatures | `Water` within 2 °C of the dash; `Air` a degree or two above it |
 | 12 | Grip closed, then to the stop | `Grip` 0 %, then about 100 %. It reads 0 for the first twentieth of the travel |
-| 13 | Bottom row, small | `Valve cmd` shows a number, not dashes |
+| 13 | Bottom row, small | `TPS cmd` shows a number, not dashes |
 | 14 | `Rear` and `Front` | `0` with the wheels still. On a stand, a wheel turned by hand shows a few km/h on its own field |
 
 ## D. Engine running
@@ -80,7 +80,7 @@ a running engine, so the BUS page comes first.
 |---|---|---|
 | 1 | BUS page | still `ACK`, `rec 0`, `drop 0`, `err` not climbing |
 | 2 | LIVE `RPM` against the tachometer | agrees at idle and at a steady 3 000–4 000 |
-| 3 | LIVE `Valve` at a warm idle | about 8 % — the zero is provisional, and this is the figure it was set from |
+| 3 | LIVE `TPS` at a warm idle | about 8 % — the zero is provisional, and this is the figure it was set from |
 | 4 | LIVE `Water` as it warms | follows the dash |
 | 5 | Stop the engine, key off | every value on LIVE turns to grey dashes within half a second, the temperatures within three |
 | 6 | Key on again | the values come back; BUS reads `ACK` |

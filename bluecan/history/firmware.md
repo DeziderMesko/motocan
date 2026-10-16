@@ -1823,6 +1823,18 @@ five captures. Not uploaded to the board then; it went up with patch 23 the same
 
 Uploaded on the second attempt, as usual under WSL2. The panel has not been looked at yet.
 
+## Patch 24 — `TPS` for `Valve` on the LIVE page — **applied, not uploaded**
+
+2026-10-16, asked for by the rider, who found `Valve` too vague on the glass.
+
+- The LIVE page labels the measured throttle valve `TPS`, and the commanded one on the
+  small line `TPS cmd`. TPS, the throttle position sensor, is what Yamaha's YCC-T calls the
+  valve's sensor, against APS for the grip; `Grip` keeps its name. The decoding is
+  unchanged, and so is the code's own naming (`valve_tenths()`, `id_valve_cmd`).
+- The big `TPS` value stays at `right_col + 5`, so its digits stay under `Rear`'s. The
+  small `TPS cmd` value moves from column 32 to 30, one space after the shorter label, as
+  `Water` and `Air` have.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

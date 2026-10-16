@@ -57,9 +57,9 @@ The page name is in the footer.
 bluecan advertising
 Gear 3     RPM  8450
 Front  97  Rear  97
-Grip  42%  Valve  38%
+Grip  42%  TPS   38%
 TCS 7      PWR 2 Trk
-Water  76C  Air  17C  Valve cmd  14.5%
+Water  76C  Air  17C  TPS cmd  14.5%
 ```
 
 | Field | Shows | From |
@@ -70,9 +70,9 @@ Water  76C  Air  17C  Valve cmd  14.5%
 | `TCS` | the traction control setting, as on the dash | `0x27C` |
 | `PWR` | the PWR setting, 1–4, as on the dash. `Trk` beside it while the dash is on its Track display. Which mode is selected is not on the bus, only the settings it makes | `0x27C`; `Trk` from `0x76E`, 2 Hz |
 | `Grip` | throttle grip, %. Reads 0 for the first twentieth of its travel | `0x758`, 20 Hz |
-| `Valve` | throttle valve as measured, %. Its zero is provisional: a warm idle reads about 8% | `0x758` |
+| `TPS` | throttle valve as measured, %, the throttle position sensor in Yamaha's naming. Its zero is provisional: a warm idle reads about 8% | `0x758` |
 | `Water`, `Air` | coolant and intake air temperature, °C, on the small line. The dash shows the air temperature 1–2 °C lower | `0x512`, 1 Hz |
-| `Valve cmd` | throttle valve as the engine control unit commands it, %, on the small line | `0x759`, 20 Hz |
+| `TPS cmd` | throttle valve as the engine control unit commands it, %, on the small line | `0x759`, 20 Hz |
 
 **A value that stops arriving turns to grey dashes**: after half a second for `0x27C`,
 `0x756`, `0x758`, `0x759` and `0x765`, after three seconds for `0x512`. `Trk` disappears
