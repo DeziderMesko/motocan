@@ -1405,15 +1405,16 @@ void display::page_live() noexcept
 
     const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
 
-    // the rider's order of 2026-10-16: engine speed, throttle, settings, wheels; the
-    // engine speed and PWR on the left. The values are right-aligned in both columns, the
-    // last digit in column 8 on the left and 18 on the right, with '%' or PWR's 'T' in the
-    // column after it, so the numbers stand under each other and not only the labels.
+    // the rider's order of 2026-10-16: engine speed, throttle, wheels, settings; the
+    // engine speed and PWR on the left. The values are right-aligned in both columns and
+    // end in column 9 on the left and 19 on the right, '%' included, so nothing sticks out
+    // past the others. PWR's number stays in column 8 whether its 'T' is there or not,
+    // so it does not jump when the dash changes display.
     int y = content_y + 0 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "RPM");
-    cell(y, big, left_col + 4, engine_color, "%s", b);
+    cell(y, big, left_col + 5, engine_color, "%s", b);
     cell(y, big, right_col, ST77XX_YELLOW, "Gear");
-    cell(y, big, right_col + 7, engine_color, "%s", a);
+    cell(y, big, right_col + 8, engine_color, "%s", a);
 
     // --- 0x758: the grip and the throttle valve, in whole percent
     const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
@@ -1436,13 +1437,6 @@ void display::page_live() noexcept
     cell(y, big, left_col + 6, throttle_color, "%s", a);
     cell(y, big, right_col, ST77XX_YELLOW, "TPS");
     cell(y, big, right_col + 5, throttle_color, "%s", b);
-
-    // --- 0x27C again
-    y = content_y + 4 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "PWR");
-    cell(y, big, left_col + 8, engine_color, "%s", pwr);
-    cell(y, big, right_col, ST77XX_YELLOW, "TCS");
-    cell(y, big, right_col + 6, engine_color, "%s", tcs);
 
     // --- 0x765 and 0x756: the wheel speeds, in whole km/h as the dash shows speed;
     // front on the left, the rider's choice of 2026-10-16
@@ -1468,11 +1462,18 @@ void display::page_live() noexcept
         snprintf(b, sizeof(b), " --");
     }
 
-    y = content_y + 6 * row_h;
+    y = content_y + 4 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "Front");
-    cell(y, big, left_col + 6, front ? ST77XX_WHITE : color_grey_dim, "%s", a);
+    cell(y, big, left_col + 7, front ? ST77XX_WHITE : color_grey_dim, "%s", a);
     cell(y, big, right_col, ST77XX_YELLOW, "Rear");
-    cell(y, big, right_col + 5, rear ? ST77XX_WHITE : color_grey_dim, "%s", b);
+    cell(y, big, right_col + 6, rear ? ST77XX_WHITE : color_grey_dim, "%s", b);
+
+    // --- 0x27C again
+    y = content_y + 6 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "PWR");
+    cell(y, big, left_col + 8, engine_color, "%s", pwr);
+    cell(y, big, right_col, ST77XX_YELLOW, "TCS");
+    cell(y, big, right_col + 7, engine_color, "%s", tcs);
 
     // --- the size-1 line: 0x512's two temperatures in whole degrees, and 0x759's
     // valve as commanded, with its tenth -- it leads the measured one by a sample and is

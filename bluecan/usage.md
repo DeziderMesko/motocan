@@ -55,10 +55,10 @@ The page name is in the footer.
 
 ```
 bluecan advertising
-RPM  8450  Gear   3
+RPM   8450 Gear    3
 Grip   42% TPS   38%
-PWR     2T TCS    7
-Front  97  Rear  97
+Front   97 Rear   97
+PWR     2T TCS     7
 Water  76C  Air  17C  TPS cmd  14.5%
 ```
 
@@ -68,9 +68,9 @@ Water  76C  Air  17C  TPS cmd  14.5%
 | `Gear` | `N`, `1`–`6`, `-` while between gears | `0x27C`, 100 Hz |
 | `Grip` | throttle grip, %. Reads 0 for the first twentieth of its travel | `0x758`, 20 Hz |
 | `TPS` | throttle valve as measured, %, the throttle position sensor in Yamaha's naming. Its zero is provisional: a warm idle reads about 8% | `0x758` |
+| `Front`, `Rear` | wheel speeds, whole km/h, the front on the left. The scale is held to a video of the rear wheel, not yet to the dash. On a stand with the rear driven, `Front` has been seen to show the rear's speed. Only twelve bits of `Front` are known, which end at 41 km/h. Above that it takes byte 0's high nibble as the top four bits, a guess put there to be tested: on a stand, while `Front` copies the rear, the two should agree past 41 km/h if it is right ([open question 10](../analysis/open-questions.md)) | `0x765`, 10 Hz; `0x756`, 20 Hz |
 | `PWR` | the PWR setting, 1–4, as on the dash. `T` right after the number while the dash is on its Track display. Which mode is selected is not on the bus, only the settings it makes | `0x27C`; `T` from `0x76E`, 2 Hz |
 | `TCS` | the traction control setting, as on the dash | `0x27C` |
-| `Front`, `Rear` | wheel speeds, whole km/h, the front on the left. The scale is held to a video of the rear wheel, not yet to the dash. On a stand with the rear driven, `Front` has been seen to show the rear's speed. Only twelve bits of `Front` are known, which end at 41 km/h. Above that it takes byte 0's high nibble as the top four bits, a guess put there to be tested: on a stand, while `Front` copies the rear, the two should agree past 41 km/h if it is right ([open question 10](../analysis/open-questions.md)) | `0x765`, 10 Hz; `0x756`, 20 Hz |
 | `Water`, `Air` | coolant and intake air temperature, °C, on the small line. The dash shows the air temperature 1–2 °C lower | `0x512`, 1 Hz |
 | `TPS cmd` | throttle valve as the engine control unit commands it, %, on the small line | `0x759`, 20 Hz |
 

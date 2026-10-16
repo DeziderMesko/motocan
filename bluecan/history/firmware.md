@@ -1863,6 +1863,19 @@ labels do.
   columns too.
 - The small line is unchanged: nothing above it shares its columns.
 
+## Patch 27 — the wheels above the settings, and nothing sticking out — **applied, not uploaded**
+
+2026-10-17, asked for by the rider after seeing patch 26's layout written out: the `%` and
+the `T` stood one column past every other value.
+
+- The last two big lines swap: `Front`/`Rear` comes third, `PWR`/`TCS` last.
+- Every value now ends in column 9 on the left and 19 on the right, its `%` included. The
+  numbers without a suffix moved one column right to meet them: `RPM` +5, `Front` +7;
+  `Gear` +8, `Rear` +6, `TCS` +7. `Grip`, `TPS` and `PWR` stay where patch 26 put them.
+- `PWR`'s number stays in column 8 with or without its `T`, rather than moving to column 9
+  when there is none, so it does not jump when the dash changes display. It is the one
+  digit not under the others while the dash is not on Track.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches
