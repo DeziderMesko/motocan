@@ -13,7 +13,7 @@ BO_ 636 R9_27C: 7 ECU
  SG_ TCS : 25|4@1+ (1,0) [0|15] "" Vector__XXX
  SG_ InGearRunning : 29|1@1+ (1,0) [0|1] "" Vector__XXX
  SG_ Gear : 32|3@1+ (1,0) [0|7] "" Vector__XXX
- SG_ ModeField : 38|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ PWR : 38|2@1+ (1,1) [1|4] "" Vector__XXX
  SG_ SetAfterFirstStart : 55|1@1+ (1,0) [0|1] "" Vector__XXX
 
 BO_ 899 R9_383: 8 ECU
@@ -51,7 +51,7 @@ BO_ 1901 R9_76D: 8 ECU
  SG_ CruiseSetMinus : 44|1@1+ (1,0) [0|1] "" Vector__XXX
 
 BO_ 1902 R9_76E: 8 ECU
- SG_ ModeField : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ PWR : 8|8@1+ (1,1) [1|256] "" Vector__XXX
  SG_ Display : 16|8@1+ (1,0) [0|255] "" Vector__XXX
 
 CM_ "Yamaha R9 (2026), diagnostic (YDT) connector, 500 kbps. Measured, not from Yamaha. The connector only carries these frames when the listening node acknowledges them. Evidence and everything not decoded: r9-signals.md beside this file.";
@@ -60,7 +60,7 @@ CM_ SG_ 636 RearWheelPulses "Rear wheel sensor pulses counted in this 10 ms fram
 CM_ SG_ 636 StartPulse "Set for about half a second as the starter turns. Not set when the start button is pressed with the start blocked.";
 CM_ SG_ 636 TCS "The TCS setting shown on the dash. Four bits: the bit above it is InGearRunning.";
 CM_ SG_ 636 InGearRunning "Set in gear with the engine running; not in gear with the engine off. What it means beyond that is not known.";
-CM_ SG_ 636 ModeField "The PWR setting less one: PWR = ModeField + 1. Four dash anchors, Track 1-4.";
+CM_ SG_ 636 PWR "The PWR setting, the number on the dash; the raw field is PWR less one, so the offset. Four dash anchors, Track 1-4. Not the ride mode: the mode's own number is not on this bus.";
 CM_ SG_ 636 SetAfterFirstStart "0 from key-on to the first start, 1 after it, 0 for a third of a second at each later start. Engine stops do not clear it. What it means is not known.";
 CM_ SG_ 899 Brake "Front or rear brake on.";
 CM_ SG_ 1878 RearSpeed_Hi "Rear wheel speed is split over three fields a DBC signal cannot join: raw = RearSpeed_Hi*256 + RearSpeed_Mid*16 + RearSpeed_Lo, km/h = raw/100. 700 counts per revolution a second against a video; the km/h is a fit to the tyre, no dash speed yet. Rises without the rear turning when the turning front is pushed again, so it is a processed value.";
@@ -79,10 +79,9 @@ CM_ SG_ 1880 ValveMeasured_Hi "Throttle valve (TPS), measured: raw = ValveMeasur
 CM_ SG_ 1880 ValveMeasured_Lo "See ValveMeasured_Hi.";
 CM_ SG_ 1881 ValveCommanded_Hi "Throttle valve, commanded: raw = ValveCommanded_Hi*16 + ValveCommanded_Lo, percent = raw/144.4*100. Leads the measured value by one sample.";
 CM_ SG_ 1881 ValveCommanded_Lo "See ValveCommanded_Hi.";
-CM_ SG_ 1902 ModeField "The same setting as ModeField in 0x27C: PWR less one.";
+CM_ SG_ 1902 PWR "The same setting as PWR in 0x27C, PWR less one in the raw byte.";
 CM_ SG_ 1902 Display "0x20 with the normal display, 0x10 with the Track display. One switch each way.";
 
 VAL_ 636 Gear 0 "N" 1 "1" 2 "2" 3 "3" 4 "4" 5 "5" 6 "6" 7 "between gears" ;
-VAL_ 636 ModeField 0 "PWR 1" 1 "PWR 2" 2 "PWR 3" 3 "PWR 4" ;
 VAL_ 1873 NeutralByte 0 "in gear" 96 "neutral" 112 "neutral" ;
 VAL_ 1902 Display 16 "track" 32 "normal" ;

@@ -42,7 +42,7 @@ def expected(db, can_id, payload):
     """What r9.dbc says this payload holds, in the firmware's units."""
     s = db.decode_message(can_id, payload, decode_choices=False)
     if can_id == 0x27C:
-        return {'rpm': s['EngineSpeed'], 'gear': s['Gear'], 'tcs': s['TCS'], 'pwr': s['ModeField'] + 1}
+        return {'rpm': s['EngineSpeed'], 'gear': s['Gear'], 'tcs': s['TCS'], 'pwr': s['PWR']}
     if can_id == 0x756:
         return {'rear': s['RearSpeed_Hi'] * 256 + s['RearSpeed_Mid'] * 16 + s['RearSpeed_Lo']}
     if can_id == 0x765:
