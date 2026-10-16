@@ -12,7 +12,7 @@ page is for working on the code.
 | `src/racechrono-canbus.hpp` | build-time settings and board pin definitions — see [build.md](../../build.md#build-time-settings) |
 | `src/canbus/controller.*` | the CAN controller, driven at register level: the receive interrupt, the frame queue, listen-only and acknowledging, the supervisor that trips it back to listen-only |
 | `src/canbus/decoder.*` | the base class for RaceChrono's filter requests |
-| `src/canbus/decoder_yamahar9.cpp` | the R9 decoder: the run-time allow-list the app fills, and the latest payload of the four ids the LIVE page decodes |
+| `src/canbus/decoder_yamahar9.cpp` | the R9 decoder: the run-time allow-list the app fills, and the latest payload of the seven ids the LIVE page decodes |
 | `src/canbus/r9.hpp` | the R9 signal equations for the LIVE page, written from [analysis/r9.dbc](../../../analysis/r9.dbc). Check them with [r9-decode-check.py](../tools/r9-decode-check.py) after changing either |
 | `src/canbus/frame.hpp` | one CAN frame, laid out so the notification to the phone is a pointer into it |
 | `src/racechrono/device.*` | the Bluetooth LE server: RaceChrono's service, the connection interval, the counters |

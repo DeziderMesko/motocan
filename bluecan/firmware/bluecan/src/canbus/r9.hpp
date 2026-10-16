@@ -119,7 +119,9 @@ constexpr uint16_t rear_kmh_x100(const uint8_t* d) noexcept
 }
 
 /// The front wheel, the same unit at a guess. On a stand with the rear driven it has
-/// been seen to carry the rear's value instead of its own.
+/// been seen to carry the rear's value instead of its own. Twelve bits as far as is
+/// known, which at 0.01 km/h ends at 40.95: nothing above 17 km/h has been seen, so
+/// whether more bits sit above them, and where, is not known.
 constexpr uint16_t front_kmh_x100(const uint8_t* d) noexcept
 {
     return static_cast<uint16_t>(((d[2] >> 4) << 8) | ((d[6] >> 4) << 4) | (d[3] & 0x0FU));

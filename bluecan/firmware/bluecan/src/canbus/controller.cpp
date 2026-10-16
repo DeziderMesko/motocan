@@ -268,9 +268,11 @@ bool controller::install() noexcept
     twai_ll_set_bus_timing(dev, brp, t_config.sjw, t_config.tseg_1, t_config.tseg_2, t_config.triple_sampling);
     twai_ll_set_acc_filter(dev, f_config.acceptance_code, f_config.acceptance_mask, f_config.single_filter);
     twai_ll_set_clkout(dev, 0);
-    // enable interrupts
-    // disable tx interrupts, as we are listen-only
-    // disable data overrun and wakeup interrupts (both have issues on ESP32)
+    // enable interrupts: 0xA7 is receive, transmit, error warning, error passive and
+    // bus error. Transmit is enabled but never fires, as no frame is ever sent.
+    // Arbitration lost (0x40) is left off and cannot happen for the same reason.
+    // Data overrun and wakeup are off (both have issues on ESP32), so a frame lost to
+    // a full receive FIFO is not counted anywhere.
     twai_ll_set_enabled_intrs(dev, 0xA7); //0xE7);
     (void) twai_ll_get_and_clear_intrs(dev);    // clear any latched interrupts
 
@@ -418,7 +420,10 @@ void controller::supervise() noexcept
         uint32_t errors = _er_count.load(std::memory_order_relaxed);
         uint32_t now = millis();
 
-        if (errors != _proof_errors)
+        // Until the first frame the window keeps sliding, so that its time is served
+        // on frames: dated from start(), a board powered before the key would have
+        // its 200 ms behind it and take the first 32 frames as the whole proof.
+        if (errors != _proof_errors || frames == _proof_frames)
         {
             _proof_frames = frames;
             _proof_errors = errors;

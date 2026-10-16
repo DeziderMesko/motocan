@@ -193,7 +193,11 @@ public:
 
             const uint32_t seq = l.seq.load(std::memory_order_relaxed);
 
-            l.seq.store(seq + 1U, std::memory_order_release);
+            l.seq.store(seq + 1U, std::memory_order_relaxed);
+            // A release store keeps earlier writes above it, not later ones below it:
+            // without this fence the data writes may be made visible before the odd
+            // count, and a reader would take a half-written frame for a whole one.
+            std::atomic_thread_fence(std::memory_order_release);
             // Zero-padded: 0x27C is seven bytes and 0x512 four, and r9.hpp only reads
             // the bytes a frame has, but a short frame must not leave the tail of a
             // longer one behind for anything that looks.
@@ -242,7 +246,11 @@ public:
                 }
                 const int64_t us = l.us;
 
-                if (l.seq.load(std::memory_order_acquire) == before)
+                // The mirror of the fence in observe(): an acquire load keeps later
+                // reads below it, not earlier ones above it, so without this the copy
+                // could be read after the check that is meant to vouch for it.
+                std::atomic_thread_fence(std::memory_order_acquire);
+                if (l.seq.load(std::memory_order_relaxed) == before)
                 {
                     for (uint8_t b = 0; b < 8; b++)
                     {

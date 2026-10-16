@@ -1776,6 +1776,36 @@ the 2 485 distinct `0x756` payloads, 520 of `0x765` and 18 of `0x76E` (counted p
 ways. Uploaded to the board the same evening; the panel has not been looked at yet, and
 nothing has been on the bike.
 
+## Patch 22 — a review's fixes: the latch's fences, the proof window, a comment — **applied and built, not uploaded**
+
+2026-10-16, from a review of the firmware and of the repository's notes the same evening.
+Nothing here was seen to go wrong; each is a place the code did not do what its comment
+said.
+
+- **The latch's sequence lock lacked its two fences.** `observe()` marked the slot busy with
+  a release store and then wrote the payload, and `latest()` copied the payload and then
+  re-read the count with an acquire load. A release store keeps earlier writes above it
+  and an acquire load keeps later reads below it, so neither held the payload where the
+  lock needs it: the compiler or the core may make the writes visible before the odd
+  count, or read the copy after the check. A fence after the first store and one before
+  the second load, as a sequence lock is written. The same code holds the engine speed's
+  two bytes together, which is what the lock is for.
+- **The bit-rate proof's 200 ms counted from `start()`, not from the first frame.** With
+  the board powered before the key, as it is from the bike's USB outlet, the time was
+  served before any frame arrived, and the first 32 frames alone were the proof —
+  [usage.md](../usage.md) says "32 frames intact, over at least 200 ms". The window now
+  slides until a frame arrives. On the bike this changes nothing that matters: the ECU
+  repeats its frames without end while nothing acknowledges, so 200 ms of them comes at
+  once.
+- **The interrupt mask's comment said transmit was disabled**; `0xA7` enables it. It can
+  never fire, since nothing is sent. The comment now says what is enabled, and that a
+  frame lost to a full receive FIFO is counted nowhere, the overrun interrupt being off.
+- `r9.hpp` says that the front wheel's field is twelve bits as far as is known, so ends at
+  40.95 km/h at 0.01 km/h a count.
+
+Built clean; [tools/r9-decode-check.py](../firmware/tools/r9-decode-check.py) passes on all
+five captures. Not uploaded to the board.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches
