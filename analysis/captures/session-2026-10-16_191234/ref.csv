@@ -1,0 +1,15 @@
+epoch;kind;label;value
+1792170915.619070373;anchor;display_track;1
+1792170935.383689164;anchor;ride_mode;6
+1792170948.230728441;anchor;ride_mode;7
+1792170959.169771001;anchor;ride_mode;8
+1792170971.948140906;anchor;ride_mode;9
+1792170984.130269989;anchor;ride_mode;6
+1792171034.488814083;event;rear_wheel_start;
+1792171047.253620419;event;rear_wheel_end;
+1792171092.139252126;event;note;front wheel hand
+1792171202.124032850;event;rear_wheel_start;
+1792171280.590498539;event;rear_wheel_end;
+1792171351.105029822;event;note;launch control
+1792171372.005734789;event;note;launch control off
+1792171425.812468290;event;note;out of track mode

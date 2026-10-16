@@ -1,0 +1,21 @@
+session 2026-10-16T19:12:34+02:00
+iface can0 @ 500000
+mode: ACK (normal), watchdog log in ack-watchdog.log
+census: 23 ids, ~506 msg/s
+27C 383 512 750 751 755 756 757 758 759 75F 760 761 762 763 764 765 769 76A 76B 76C 76D 76E 
+19:15:15  anchor  display_track      1
+19:15:35  anchor  ride_mode          6
+19:15:48  anchor  ride_mode          7
+19:15:59  anchor  ride_mode          8
+19:16:11  anchor  ride_mode          9
+19:16:24  anchor  ride_mode          6
+19:17:14  event   rear_wheel_start   
+19:17:27  event   rear_wheel_end     
+19:18:12  event   note               front wheel hand
+19:20:02  event   rear_wheel_start   
+19:21:20  event   rear_wheel_end     
+19:22:31  event   note               launch control
+19:22:52  event   note               launch control off
+19:23:45  event   note               out of track mode
+frames transmitted: 0
+   328502 frames, 14 marks, 666s

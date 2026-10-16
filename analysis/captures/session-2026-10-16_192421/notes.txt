@@ -1,0 +1,35 @@
+session 2026-10-16T19:24:21+02:00
+iface can0 @ 500000
+mode: ACK (normal), watchdog log in ack-watchdog.log
+census: 23 ids, ~506 msg/s
+27C 383 512 750 751 755 756 757 758 759 75F 760 761 762 763 764 765 769 76A 76B 76C 76D 76E 
+19:25:18  event   shift_lever_up_start 
+19:25:35  event   shift_lever_up_end 
+19:25:40  event   shift_lever_down_start 
+19:25:50  event   shift_lever_down_end 
+19:25:55  event   sidestand_start    
+19:26:05  event   sidestand_end      
+19:26:08  event   clutch_start       
+19:26:17  event   clutch_end         
+19:26:19  event   front_brake_start  
+19:26:28  event   front_brake_end    
+19:26:31  event   rear_brake_start   
+19:26:41  event   rear_brake_end     
+19:26:48  event   high_beam_start    
+19:27:01  event   high_beam_end      
+19:27:20  event   front_wheel_by_hand_start 
+19:27:29  event   front_wheel_by_hand_end 
+19:27:35  event   rear_wheel_by_hand_start 
+19:27:47  event   rear_wheel_by_hand_end 
+19:27:59  event   cruise_res_start   
+19:28:08  event   cruise_res_end     
+19:28:10  event   cruise_set_start   
+19:28:16  event   cruise_set_end     
+19:28:39  event   start_blocked_start 
+19:28:55  event   start_blocked_end  
+19:29:19  event   shift_lever_up_start 
+19:29:27  event   shift_lever_up_end 
+19:29:28  event   shift_lever_down_start 
+19:29:35  event   shift_lever_down_end 
+frames transmitted: 0
+   155309 frames, 28 marks, 315s
