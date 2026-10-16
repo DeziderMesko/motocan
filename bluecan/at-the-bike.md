@@ -20,7 +20,7 @@ did the first of those three and neither of the others.
 | | Check | Passes when |
 |---|---|---|
 | 1 | The release build is on the board | it boots to the LIVE page with grey dashes, header `bluecan advertising`. A `--debug` build works too, but pauses 5 s at boot |
-| 2 | **The KAmod's `120R` jumper is on** | a meter across `CAN H`/`CAN L` on the board, connected to nothing, reads about 120 Ω. The board acknowledges, so it is the bus's other end ([hardware.md](hardware.md#termination)) |
+| 2 | **The KAmod's `120R` jumper is on** | a meter across `CAN H`/`CAN L` on the board, connected to nothing, reads about 120 Ω. The bike's pair reads 120 Ω on its own, one terminator where a CAN bus has two and reads 60 Ω. It works with the jumper off too, but the board acknowledges, so it is the bus's other end and on is better ([hardware.md](hardware.md#termination)) |
 | 3 | The pigtail is wired `CAN H` to pin 2, `CAN L` to pin 5 | continuity from the KAmod's `CAN H` to the **middle cavity of the latch row**, and from `CAN L` to the middle cavity of the other row. The female half is the mirror image of the male; the middle cavities are the same on both, the outer ones are not |
 | 4 | The +12 V wire, pin 4, goes nowhere | cut back or insulated. The board is fed from USB |
 | 5 | The channels are in RaceChrono | [racechrono-channels.md](racechrono-channels.md); eight are entered, the commanded valve on PID 1881 is not. **Replace the TCS and PWR equations** with the ones corrected on 2026-10-16: the old TCS one reads 16 too high in gear with the engine running. The wheel speeds and the Track display are optional; each adds a PID |
@@ -39,7 +39,7 @@ wire pin 3 to the board's `GND`. Nothing in this repository has tried either on 
 | | Do | Passes when |
 |---|---|---|
 | 1 | Key off. Plug the pigtail into the red connector | |
-| 2 | Meter across the pair with the board attached, before powering it | **about 60 Ω**: the bike's 120 Ω, measured with the pigtail alone on 2026-10-10, beside the board's. About 120 Ω means the `120R` jumper is off. Open means those are not the CAN wires |
+| 2 | Meter across the pair with the board attached, before powering it | **about 60 Ω**: the bike's 120 Ω, measured with the pigtail alone on 2026-10-10, beside the board's. About 60 Ω is what a CAN bus should read. About 120 Ω means the `120R` jumper is off: it would work, but put it on. Open means those are not the CAN wires |
 | 3 | Power the board | LIVE page, dashes. **D1** to the BUS page: `CAN 500k LISTEN-ONLY RUN`, `rx 0` |
 
 Whether the R9's USB outlet is live with the key off is not written down anywhere here.

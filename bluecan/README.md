@@ -70,7 +70,9 @@ The parts, the wiring and the power are in [hardware.md](hardware.md).
 ## Getting it running
 
 1. **Wire it**: the transceiver to the Feather, the pigtail to the transceiver, and the
-   transceiver's terminating resistor **on** — [hardware.md](hardware.md#termination).
+   transceiver's terminating resistor **on**. The bike's pair has one terminator and reads
+   120 Ω; a CAN bus has two and reads 60 Ω. It works with only the bike's, but with
+   Bluecan's on it is as the standard has it — [hardware.md](hardware.md#termination).
 2. **Build and flash the firmware** — [build.md](build.md).
 3. **Add it to RaceChrono and enter the channels** — [usage.md](usage.md#connecting-racechrono)
    and [racechrono-channels.md](racechrono-channels.md).

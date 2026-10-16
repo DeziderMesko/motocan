@@ -60,18 +60,22 @@ A CAN bus has a 120 Ω resistor at each of its two ends. Whether Bluecan should 
 depends on where it is plugged in.
 
 - **On the R9, the `120R` jumper is on.** The diagnostic pair has the engine control unit
-  and nothing else on it, and reads about 120 Ω with the key off: one terminator, on the
-  bike's side. Bluecan acknowledges frames, which makes it the bus's other node and its
-  other end, where the second terminator belongs. The CANable ran both captures of
-  2026-10-16 this way, with its own terminator on, and saw no bus error. Until 2026-10-16
-  this page said off, reasoning from a bus terminated at both ends already; this one is
-  not.
+  and nothing else on it, and with the key off and nothing plugged in it reads about
+  120 Ω: one terminator, on the bike's side. A CAN bus has one at each end and reads
+  60 Ω; this one has only the first. **It works without the second**: the three captures
+  of 2026-10-11 ran with the CANable's terminator off and saw no bus error. But Bluecan
+  acknowledges frames, which makes it the bus's other node and its other end, and with
+  its terminator on the bus is terminated as the standard has it, so on is the better
+  setting. The CANable ran both captures of 2026-10-16 that way, also without an error.
+  Until 2026-10-16 this page said off, reasoning from a bus terminated at both ends
+  already; this one is not.
 - **On a two-node bench**, it is on as well: Bluecan is then one end of the bus and the
   other adapter the other end. See [bench.md](bench.md).
 
 To check: with the KAmod connected to nothing, a meter across `CAN H` and `CAN L` reads
 open with the jumper off and 120 Ω with it on. Plugged into the bike with the key off, the
-pair should read about 60 Ω; about 120 Ω means the jumper is off.
+pair should read about 60 Ω, as a CAN bus should. About 120 Ω means the jumper is off: the
+bus still works that way, but it is terminated at one end only.
 
 ## The R9's diagnostic connector
 

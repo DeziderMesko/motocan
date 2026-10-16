@@ -16,7 +16,9 @@ seat; the service manual calls it the YDT coupler.
 *The pigtail after metering, from the wire side, latch up: `H` on CAN High with ground
 beside it, `+12V` at the opposite corner.*
 
-500 kbps. About 120 Ω across the pair with the key off: one terminator, not two. The pair
+500 kbps. About 120 Ω across the pair with the key off: one terminator, not the two of a
+standard CAN bus, which would read 60 Ω. It works like that; an acknowledging adapter has
+its own terminator on all the same, as [below](#how-the-pins-were-found). The pair
 has only the ECU on it ([R9_CANbus.md](R9_CANbus.md)), so the ECU's frames go unanswered
 unless the adapter acknowledges them — see the
 [first](captures/session-2026-10-11_115626/README.md) and
@@ -103,9 +105,12 @@ Why there is one and not two is not known: a bus this short can be built with a 
 resistor, and a second one may sit in a unit that only joins the bus when powered. The
 60 Ω figure was the textbook case and never a measurement. It changes one number at the
 bike — with the adapter attached, 60 Ω is now the reading that means its own terminator
-was left on — and nothing else. *2026-10-16: for an adapter that acknowledges, the
-terminator is now on by decision, and 60 Ω is the reading that is right; see
-[stand-session.md](stand-session.md). 120 Ω with the adapter attached means it is off.*
+was left on — and nothing else. *2026-10-16: the bus works with the one terminator — the
+captures of 2026-10-11 ran with the adapter's off and saw no bus error — but a CAN bus is
+standardly terminated at both ends, 60 Ω, and an adapter that acknowledges is this bus's
+other end. So its terminator is now on by decision, and 60 Ω is the reading that is right;
+see [stand-session.md](stand-session.md). 120 Ω with the adapter attached means it is
+off.*
 
 **And which wire is which, the same day:** key on, engine off, against ground, CAN High
 reads 3.2 V and CAN Low 1.7 V. High above 2.5 V and Low below it, symmetric about 2.45 V,

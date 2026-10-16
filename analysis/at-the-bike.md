@@ -83,10 +83,14 @@ the pigtail itself is marked in pen with what the meter found
   connected to nothing, a meter across its `CANH`/`CANL` reads about 120 Ω when it is on
   and open circuit when it is off.
 
-  *2026-10-16: on, for every session with `--ack`.* An adapter that acknowledges is the
-  bus's other node and its other end, where the second terminator belongs; both captures
-  of that day ran with it on and without a bus error. With the adapter wired on and the
-  key off, about 60 Ω is then right. See [stand-session.md](stand-session.md).
+  *2026-10-16: on, for every session with `--ack`.* With the key off and nothing plugged
+  in, the bike's pair reads about 120 Ω: one terminator, where a CAN bus has one at each
+  end and reads 60 Ω. It works without the second — the captures of 2026-10-11 ran with
+  the terminator off and saw no bus error — but an adapter that acknowledges is the bus's
+  other node and its other end, where the second terminator belongs, so on is the better
+  setting. Both captures of 2026-10-16 ran with it on, also without a bus error. With the
+  adapter wired on and the key off, about 60 Ω is then right. See
+  [stand-session.md](stand-session.md).
 
 ## C. At the bike
 
@@ -162,7 +166,8 @@ cd ~/captures && ~/projects/motocan/analysis/tools/2-session.sh --ack
 ```
 
 Everything in C still applies — key off to plug in, the terminator off, the +12 V wire
-insulated. What changes at step 4:
+insulated. *(2026-10-16: the terminator on, and 60 Ω at the meter, for the reason in
+part B.)* What changes at step 4:
 
 1. It comes up **listen-only first**, asks for the ignition, and listens for 3 s. Fewer
    than 20 frames and it stops there: the bit rate is unproven, and an adapter that ACKs
