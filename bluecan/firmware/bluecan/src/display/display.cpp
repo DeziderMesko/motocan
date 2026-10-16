@@ -1388,7 +1388,7 @@ void display::page_live() noexcept
     if (engine)
     {
         const uint8_t g = r9::gear(d);
-        snprintf(a, sizeof(a), "%c", g == 0U ? 'N' : g == r9::gear_between ? '-' : static_cast<char>('0' + g));
+        snprintf(a, sizeof(a), " %c", g == 0U ? 'N' : g == r9::gear_between ? '-' : static_cast<char>('0' + g));
         snprintf(b, sizeof(b), "%5lu", (unsigned long)r9::rpm(d));
         snprintf(tcs, sizeof(tcs), "%2u", (unsigned)r9::tcs(d));
         const uint8_t p = r9::pwr(d);
@@ -1406,10 +1406,10 @@ void display::page_live() noexcept
     }
     else
     {
-        snprintf(a, sizeof(a), "-");
+        snprintf(a, sizeof(a), "--");
         snprintf(b, sizeof(b), "   --");
         snprintf(tcs, sizeof(tcs), "--");
-        snprintf(pwr, sizeof(pwr), " -");
+        snprintf(pwr, sizeof(pwr), "--");
     }
 
     const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
@@ -1422,7 +1422,7 @@ void display::page_live() noexcept
     cell(y, big, left_col, ST77XX_YELLOW, "RPM");
     cell(y, big, left_col + 5, engine_color, "%s", b);
     cell(y, big, right_col, ST77XX_YELLOW, "Gear");
-    cell(y, big, right_col + 8, engine_color, "%s", a);
+    cell(y, big, right_col + 7, engine_color, "%s", a);
 
     // --- 0x758: the grip and the throttle valve, in whole percent
     const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
