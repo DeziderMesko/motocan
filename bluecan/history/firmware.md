@@ -1849,6 +1849,20 @@ Uploaded on the second attempt, as usual under WSL2. The panel has not been look
   and the throttle and wheel blocks fill them again, so each line is drawn before the next
   block reuses them; `PWR` and `TCS` have their own buffers and come after the throttle.
 
+## Patch 26 — the LIVE page's values right-aligned, `T` for `Trk` — **applied, not uploaded**
+
+2026-10-16, asked for by the rider, so that the numbers stand under each other as the
+labels do.
+
+- On the big lines each value is right-aligned: its last digit is in column 8 on the left
+  and column 18 on the right, with `%` or PWR's `T` in the column after it. The offsets
+  from the labels are now `RPM` +4, `Grip` +6, `PWR` +8, `Front` +6; `Gear` +7, `TPS` +5,
+  `TCS` +6, `Rear` +5. TCS is printed `%2u` instead of `%-2u`.
+- On the Track display PWR's number is followed by `T` and nothing else; `Trk` with its
+  space was four columns, and is now one. The dashes of a stale value fall in the digit
+  columns too.
+- The small line is unchanged: nothing above it shares its columns.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

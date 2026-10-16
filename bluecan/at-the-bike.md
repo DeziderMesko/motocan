@@ -65,7 +65,7 @@ Then the LIVE page against the dash, which is what the page was built for:
 |---|---|---|
 | 8 | Neutral, then up through the gears and back | `Gear` reads `N`, `1`–`6`, with `-` between gears, matching the dash each time |
 | 9 | Change the TCS setting | `TCS` follows the number on the dash |
-| 10 | Go through the ride modes | `PWR` follows the PWR number on the dash in each mode. On the Track display `Trk` appears beside it |
+| 10 | Go through the ride modes | `PWR` follows the PWR number on the dash in each mode. On the Track display a `T` appears right after the number |
 | 11 | Compare the temperatures | `Water` within 2 °C of the dash; `Air` a degree or two above it |
 | 12 | Grip closed, then to the stop | `Grip` 0 %, then about 100 %. It reads 0 for the first twentieth of the travel |
 | 13 | Bottom row, small | `TPS cmd` shows a number, not dashes |

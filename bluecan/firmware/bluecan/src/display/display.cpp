@@ -1378,8 +1378,8 @@ void display::page_live() noexcept
     char a[8];
     char b[8];
 
-    // --- 0x27C: engine speed and gear, and further down PWR and TCS. Next to PWR,
-    // "Trk" while 0x76E says the dash is on its Track display. Which mode it is cannot
+    // --- 0x27C: engine speed and gear, and further down PWR and TCS. Right after PWR's
+    // number, "T" while 0x76E says the dash is on its Track display. Which mode it is cannot
     // be shown: the bus carries the settings a mode makes, not its number.
     const bool engine = CANDEC.latest(r9::id_engine, d, age) && age < stale_fast_ms;
     char tcs[8];
@@ -1390,28 +1390,30 @@ void display::page_live() noexcept
         const uint8_t g = r9::gear(d);
         snprintf(a, sizeof(a), "%c", g == 0U ? 'N' : g == r9::gear_between ? '-' : static_cast<char>('0' + g));
         snprintf(b, sizeof(b), "%5lu", (unsigned long)r9::rpm(d));
-        snprintf(tcs, sizeof(tcs), "%-2u", (unsigned)r9::tcs(d));
+        snprintf(tcs, sizeof(tcs), "%2u", (unsigned)r9::tcs(d));
         const uint8_t p = r9::pwr(d);
         const bool track = CANDEC.latest(r9::id_display, d, age) && age < stale_slow_ms && r9::track_display(d);
-        snprintf(pwr, sizeof(pwr), "%u%s", (unsigned)p, track ? " Trk" : "    ");
+        snprintf(pwr, sizeof(pwr), "%u%c", (unsigned)p, track ? 'T' : ' ');
     }
     else
     {
         snprintf(a, sizeof(a), "-");
         snprintf(b, sizeof(b), "   --");
         snprintf(tcs, sizeof(tcs), "--");
-        snprintf(pwr, sizeof(pwr), "-    ");
+        snprintf(pwr, sizeof(pwr), "- ");
     }
 
     const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
 
     // the rider's order of 2026-10-16: engine speed, throttle, settings, wheels; the
-    // engine speed and PWR on the left
+    // engine speed and PWR on the left. The values are right-aligned in both columns, the
+    // last digit in column 8 on the left and 18 on the right, with '%' or PWR's 'T' in the
+    // column after it, so the numbers stand under each other and not only the labels.
     int y = content_y + 0 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "RPM");
     cell(y, big, left_col + 4, engine_color, "%s", b);
     cell(y, big, right_col, ST77XX_YELLOW, "Gear");
-    cell(y, big, right_col + 5, engine_color, "%s", a);
+    cell(y, big, right_col + 7, engine_color, "%s", a);
 
     // --- 0x758: the grip and the throttle valve, in whole percent
     const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
@@ -1431,16 +1433,16 @@ void display::page_live() noexcept
 
     y = content_y + 2 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "Grip");
-    cell(y, big, left_col + 5, throttle_color, "%s", a);
+    cell(y, big, left_col + 6, throttle_color, "%s", a);
     cell(y, big, right_col, ST77XX_YELLOW, "TPS");
     cell(y, big, right_col + 5, throttle_color, "%s", b);
 
     // --- 0x27C again
     y = content_y + 4 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "PWR");
-    cell(y, big, left_col + 4, engine_color, "%s", pwr);
+    cell(y, big, left_col + 8, engine_color, "%s", pwr);
     cell(y, big, right_col, ST77XX_YELLOW, "TCS");
-    cell(y, big, right_col + 4, engine_color, "%s", tcs);
+    cell(y, big, right_col + 6, engine_color, "%s", tcs);
 
     // --- 0x765 and 0x756: the wheel speeds, in whole km/h as the dash shows speed;
     // front on the left, the rider's choice of 2026-10-16
