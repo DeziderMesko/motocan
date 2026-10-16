@@ -1,5 +1,12 @@
 # The stand session — the checklist
 
+> **Run on 2026-10-16**, in two captures:
+> [session-2026-10-16_191234](captures/session-2026-10-16_191234/README.md) and
+> [session-2026-10-16_192421](captures/session-2026-10-16_192421/README.md). The wheel
+> speeds were found and the 2-bit field named. Not done: step 3 (the push), the dash
+> speeds of step 6, steps 7 and 8, and extras I–N; H was done with the engine off. The
+> page is kept as it was used.
+
 One session with the rear wheel off the ground. It is after three things, and has a list
 of extras for whatever time and patience are left:
 

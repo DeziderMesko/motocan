@@ -1,13 +1,15 @@
 # captures/
 
-One folder per session at the bike. All three so far are from 2026-10-11, on the R9's
-diagnostic connector at 500 kbps, at a standstill.
+One folder per session at the bike, all on the R9's diagnostic connector at 500 kbps, at a
+standstill: three from 2026-10-11, two from 2026-10-16.
 
 | Session | What it was | What it found |
 |---|---|---|
 | [session-2026-10-11_115626](session-2026-10-11_115626/README.md) | listen-only; gears, TCS, ride modes, engine run | two ids only, one of them resent thousands of times a second because nothing acknowledged it; gear and TCS |
 | [session-2026-10-11_130905](session-2026-10-11_130905/README.md) | the adapter acknowledging; engine off | 23 ids; the throttle grip and the valve |
 | [session-2026-10-11_200550](session-2026-10-11_200550/README.md) | acknowledging; engine started, with a sound recording and a video of a lean-angle app | engine speed and its scale, both temperatures, grip against valve; lean and the rider-aid settings are not on this connector |
+| [session-2026-10-16_191234](session-2026-10-16_191234/README.md) | acknowledging, terminator on, both wheels on stands; the Track display and Track 1–4, each wheel by hand, the engine in first gear, with a video of the rear wheel and photos of the dash | the rear wheel's speed and its pulses, the front's speed, the 2-bit field is PWR − 1, a Track-display bit |
+| [session-2026-10-16_192421](session-2026-10-16_192421/README.md) | the same, straight after, engine off; each control bracketed | the brake, the two cruise buttons, a clutch-or-brake bit; the start bit is the starter, not the button |
 
 In each folder:
 

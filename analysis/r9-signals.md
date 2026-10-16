@@ -15,52 +15,74 @@ Bytes are numbered from 0. `hi` and `lo` are a byte's high and low nibble. A fie
 described by **when it changes**, and gets a name only once something independent — the
 dash, a sound recording, a second sensor — has agreed with it.
 
-## What the R9 sends, as of 2026-10-11
+## What the R9 sends, as of 2026-10-16
 
-The summary of the three captures, for whoever opens this page wanting the answer rather
+The summary of the five captures, for whoever opens this page wanting the answer rather
 than the argument. 23 ids on the diagnostic connector; bytes numbered from 0. The evidence
-for each row is in the three write-ups under [captures/](captures/).
+for each row is in the write-ups under [captures/](captures/). Where a row was corrected,
+the old wording is struck through and the date says when.
 
 | ID | Rate | What is in it | How sure |
 |---|---|---|---|
 | `0x27C` | 100 Hz | gear — byte 4, low 3 bits; `7` = between gears | confirmed, 12 anchors of 12 |
-| | | TCS — byte 3 `>> 1` | confirmed, 5 anchors of 5 |
-| | | byte 3, bit 0 — set for about half a second as the engine starts | seen at both starts captured and at no other time. That is when it changes, not what it means: the starter is a guess |
+| | | TCS — byte 3, `(b3 >> 1) & 0x0F` | confirmed, 9 anchors of 9 (four more in Track 1–4, 2026-10-16). ~~byte 3 `>> 1`~~: corrected 2026-10-16, because bit 5 above it is set in gear with the engine running, and `b3 >> 1` then reads 16 too high. AiM's DBC for the MT-09 has the field 4 bits wide |
+| | | byte 3, bit 0 — set for about half a second as the starter turns | seen at all four starts captured. **Not set when the start button was pressed with the start blocked** (second gear, sidestand down, 2026-10-16), so it follows the starter or the ECU's command to run it, not the button. Once, for 0.14 s, with the engine running (19:21:15.9 on 2026-10-16), unexplained |
+| | | byte 3, bit 5 — set in gear with the engine running | both times first gear went in with the engine running, 2026-10-16; not set in second gear with the engine off. Same frames as `0x765` byte 1 bit 0 |
 | | | engine speed — bytes 0–1, big-endian, `raw * 100 / 256` rpm (×0.390625): byte 0 is hundreds of rpm, byte 1 the fraction | the sound of the engine gave 0.3915 ± 1.5 % at idle; the hundreds sent separately in `0x750` give the exact form and hold to 3 400 rpm |
-| | | a 2-bit setting that goes with the ride mode — byte 4, top 2 bits; PWR at a guess | the value tracks the modes, the meaning is unknown. **Open**: custom 2 read `2` in the first capture and `1` in the two after it — see [the third capture](captures/session-2026-10-11_200550/README.md) |
-| | | byte 6, bit 7 — set while the engine runs | set within half a second of both starts seen, cleared at the one stop seen. That is when it changes, not what it means: nothing says the bit *is* "engine running" rather than something else that comes on with the engine |
-| | | byte 2 — `01` for a single frame, six times | only while the bike was being lifted off the stand and set back; unexplained |
+| | | **PWR − 1** — byte 4, top 2 bits | named 2026-10-16: PWR 1, 2, 3, 3 on the dash in Track 1–4, 0, 1, 2, 2 here, 4 anchors of 4, photographed ([the fourth capture](captures/session-2026-10-16_191234/README.md#track-14-and-what-the-2-bit-field-is)). By it sport is PWR 2, street 3, rain 4, custom 1 PWR 1, which is a reading of the field, not of the dash. ~~a 2-bit setting that goes with the ride mode; PWR at a guess~~. Custom 2 read `2` in the first capture and `1` in the two after it: a PWR change in custom 2 between them is now the likely reason |
+| | | byte 6, bit 7 — set at the first start after key-on; clears for a third of a second at each later start | corrected 2026-10-16: it stayed set after all three engine stops captured (2026-10-11 20:21:23.8, 2026-10-16 19:20:35.7 and 19:21:18.0) and cleared only at a restart. ~~set while the engine runs — set within half a second of both starts seen, cleared at the one stop seen~~; the stop on 2026-10-11 did not clear it either, the capture says so. When it clears at key-off has not been seen |
+| | | **rear wheel pulses** — byte 2, the count in each 10 ms frame, 0–2 | named 2026-10-16: 46.4 pulses for each revolution of the rear wheel by `0x756`, in three stretches; 46.2 against the video. Counts at speeds below where `0x756` shows anything. ~~`01` for a single frame, six times, while the bike was being lifted~~: that was the wheel turning a fraction |
 | `0x512` | 1 Hz | water temperature — byte 0, `raw*0.625 - 30` °C | confirmed, 6 anchors from 17 to 76 °C, within 2 °C of the dash |
 | | | air temperature — byte 1, same equation | found: after a cold soak it reads the same raw value as the water sensor, 76; the dash shows it a degree or two lower than the equation does (16 against 17.5) |
 | | | byte 3 — zero with the engine off, about 55 falling to 24 as it warms | unknown |
-| `0x751` | 100 Hz | neutral / in gear — byte 6, `0x60` / `0x00` | agrees with every change into and out of neutral |
-| | | byte 6 goes `0x60` → `0x70` half a minute after a start, in both sessions with one | unknown |
+| `0x751` | 100 Hz | neutral / in gear — byte 6, `0x60` / `0x00` | agrees with every change into and out of neutral at rest. **Not neutral alone** (2026-10-16): in first gear with the engine running it read `0x60`, `0x20` for 1.6 s as the clutch went out, then `0x60` again while the wheel was driven; in second gear, engine off, `0x40` and then `0x00`. Bits 5 and 6 are start permissions at a guess (neutral, clutch, sidestand) — see [the fifth capture](captures/session-2026-10-16_192421/README.md#the-blocked-start) |
+| | | byte 6 goes `0x60` → `0x70` half a minute after a start, in both sessions with one, and again 30 s after the restart on 2026-10-16 | unknown |
 | | | a noisy 12-bit value | does not follow lean — see [the third capture](captures/session-2026-10-11_200550/README.md) |
-| `0x76E` | 2 Hz | the same 2-bit setting as `0x27C` — byte 1 | changes at the same moments |
+| `0x76E` | 2 Hz | the same 2-bit setting as `0x27C` — byte 1: PWR − 1 | changes at the same moments |
+| | | byte 2 — `0x20` with the normal display, `0x10` with the Track display | one switch each way on 2026-10-16, in the frame the mode changed; `0x20` in every frame of the earlier captures. A candidate for the display setting |
+| `0x756` | 20 Hz | **rear wheel speed** — `b1 << 8 \| (b0 & 0xF0) \| b2 >> 4`, 0.01 km/h at a guess | 700 counts per revolution a second against a video of the wheel, sd 1.0 % in 24 windows; as 0.01 km/h that is a 1.946 m wheel, which the 180/55 ZR17 tyre is. Follows the rear when the rear alone turns. **But** it also rises, to 2.7–4 km/h, when the turning front is pushed a second time, with no rear pulse counted — three times in two captures — so it is a processed value, not the sensor ([the fourth capture](captures/session-2026-10-16_191234/README.md#two-things-that-do-not-fit-one-field-per-wheel)) |
+| | | byte 2 low nibble — `06` to `0B` through the start | see the unnamed fields |
+| `0x765` | 10 Hz | **front wheel speed** — `(b2 >> 4) << 8 \| (b6 >> 4) << 4 \| (b3 & 0x0F)`, the same unit as `0x756` at a guess | follows the front when the front alone turns, three pushes by hand, to 747. **But** from 19:20:47.6 to the stop of the second engine run on 2026-10-16 it carried exactly the value of the last `0x756` frame, 295 frames of 295, with the front wheel standing still; in the first run it had stayed at zero. ABS fail-safe at a guess. Its scale has only that copy to go on |
+| | | byte 1, bit 0 — set in gear with the engine running | the same frames as `0x27C` byte 3 bit 5 |
+| `0x383` | 2 Hz | **the brake** — byte 4, bit 3 | named 2026-10-16: front lever and rear pedal, each pulled twice, from the same frame to the same frame; twice more as the rear wheel was stopped in the engine run. The first change ever seen in `0x383` |
+| `0x76D` | 2 Hz | **cruise RES+** — byte 3, bit 0; **cruise SET−** — byte 5, bit 4 | two presses each, 2026-10-16, engine off. At 2 Hz a press shorter than half a second can fall between frames |
 | `0x758` | 20 Hz | **the grip** — 15 bits, `b7lo:b6lo:b5`, 256 or 512 at rest with the engine off, 0 with it running, 31 672 at the stop | one number, falls without a step back through a slow closing; stays put at idle while the two below move, so it is the grip; `% = raw / 31672 * 100` |
 | | | **the throttle valve** — 12 bits, `b0hi:b2`, 320 to about 2 310 | moves with the engine idling and the grip untouched: 368 at a cold idle, 176 warm; `% = raw / 16 / 144.4 * 100`, zero provisional |
 | `0x759` | 20 Hz | the throttle valve, 8 bits — `b0hi:b2hi`, 21 to 144 | the same: 24 cold, 12 warm; leads `0x758` by one sample, so the commanded value at a guess; `% = raw / 144.4 * 100` |
 | `0x750` | 100 Hz | throttle, coarse — byte 7 low nibble, 0–7; otherwise noise | certainly reacts; the noise does not follow lean |
 | | | engine speed in whole hundreds of rpm — `b4hi:b1hi`, the same number as `0x27C` byte 0; a second copy in `b4hi:b1lo` | equal in every frame with the engine running |
 | `0x755`, `0x764`, `0x765` | 20 / 10 / 10 Hz | throttle: flags and coarse steps | certainly react, not identified |
+| `0x755` | 20 Hz | byte 6, bit 0 — set with the clutch lever pulled or either brake applied | 6 of 6, engine off, 2026-10-16. But also set without a break from the restart to the stop of an engine run, with the wheel driven in first gear, so it is not the clutch switch |
 | `0x76A` | 2 Hz | ~~battery voltage~~ — **withdrawn**. Byte 2's low nibble is the top nibble of the water temperature's raw value | it steps exactly as `0x512` byte 0 crosses each multiple of 16, seven times, and byte 5's low nibble is the other half; "12.85 V" was a 22 °C engine |
 | | | air temperature again — high nibbles of bytes 0 and 2, the same raw value as `0x512` byte 1 | changes at the same moment |
 | | | bytes 5 and 7 flip by a count or a few bits | unknown |
-| `0x76D` | 2 Hz | single bits that flip now and then | unknown |
-| `0x756`, `0x757`, `0x75F`, `0x769`, `0x76C` | 2–20 Hz | not one bit changes with the engine off; alive with it running — see [the third capture](captures/session-2026-10-11_200550/README.md) | unknown |
-| `0x383`, `0x760`–`0x763`, `0x76B` | 2–10 Hz | not one bit changed in any session | unknown |
+| `0x76D` | 2 Hz | single bits that flip now and then; and the cruise buttons above | unknown |
+| `0x757`, `0x75F`, `0x769`, `0x76C` | 2–20 Hz | not one bit changes with the engine off; alive with it running — see [the third capture](captures/session-2026-10-11_200550/README.md). *`0x756` was in this row until 2026-10-16; its speed field moves with the engine off whenever the wheel turns* | unknown |
+| `0x760`–`0x763`, `0x76B` | 2–10 Hz | not one bit changed in any session. *`0x383` was in this row until 2026-10-16* | unknown |
 
 Looked for and not found:
 
 - **The ride mode as a number 1–5** is in none of them. Only the settings a mode carries
-  show: TCS and the 2-bit field.
+  show: TCS and the 2-bit field, which is PWR (2026-10-16).
 - **LIF, SCS and QS** showed in none of the 23, engine off or running: 8 LIF anchors, 7
-  SCS and 6 QS in [the third capture](captures/session-2026-10-11_200550/README.md), and not one bit moved at any of them.
+  SCS and 6 QS in [the third capture](captures/session-2026-10-11_200550/README.md), and not one bit moved at any of them. SCS and LIF changed once more between
+  Track 2 and Track 3 on 2026-10-16, and again nothing.
+- **The launch-control setting**: on and off once each, engine off, 2026-10-16. Nothing.
+- **The shift lever pressed without changing gear**: four brackets, engine off,
+  2026-10-16. The shift-sensor candidate in `0x751` read its resting three values
+  throughout, and nothing else moved.
+- **The sidestand, in neutral**, engine off: nothing. In first gear with the engine running
+  it cut the engine, and `0x751` byte 6 read `0x00` for 0.2 s as it did.
+- **The high beam**, engine off: nothing. Not tried with the engine running.
+- **The start button on its own**: with the start blocked, no field changed for it.
 - **Lean** is in none of them either, held against a 30 Hz reference from a phone on the
   bike. See [[the third capture](captures/session-2026-10-11_200550/README.md)](captures/session-2026-10-11_200550/README.md).
 - **The grip's forward travel** (the cruise-control cancel) moved nothing, three pushes.
 - **Battery voltage** has no candidate any more.
-- **Wheel speed** has not been tried with the adapter acknowledging.
+- ~~**Wheel speed** has not been tried with the adapter acknowledging.~~ Found 2026-10-16:
+  `0x756`, `0x765` and the pulses in `0x27C` byte 2, above.
+- **Two wheel-speed channels beyond these**: nothing else in the 23 ids moved with either
+  wheel turning by hand.
 
 ## Everything that changes and has no name
 
@@ -106,8 +128,8 @@ tried.
 | Where | What it does |
 |---|---|
 | `0x27C` b3 bit 0 | about half a second as the engine starts |
-| `0x27C` b6 bit 7 | set while the engine runs |
-| `0x27C` b2 bit 0 | single-frame pulses while the bike was lifted off the stand and set back |
+| `0x27C` b6 bit 7 | set while the engine runs. *Corrected 2026-10-16: set at the first start and not cleared by a stop; see the summary* |
+| `0x27C` b2 bit 0 | single-frame pulses while the bike was lifted off the stand and set back. *Named 2026-10-16: the rear wheel's pulses, see the summary* |
 | `0x751` b3, bits 1 and 3 | flip at the start and at the stop |
 | `0x751` b6 bit 4 | set 30 s after the start, cleared at the stop |
 | `0x751` b7 bit 2 | set once, a second after the stop |
@@ -129,7 +151,18 @@ tried.
 | `0x76A` b7, bits 2–3 | flip now and then |
 | `0x76D` b0, bits 6–7 | flip now and then |
 
-**Not one bit changed**: `0x383`, `0x760`, `0x761`, `0x762`, `0x763`, `0x76B`.
+**Not one bit changed**: ~~`0x383`~~ (its brake bit moved on 2026-10-16), `0x760`, `0x761`, `0x762`, `0x763`, `0x76B`.
+
+**Added from the captures of 2026-10-16**, both wheels on stands, the controls bracketed
+one by one ([fourth](captures/session-2026-10-16_191234/README.md),
+[fifth](captures/session-2026-10-16_192421/README.md)). The named ones are in the summary.
+
+| Where | What it does |
+|---|---|
+| `0x755` b6 hi | `F` with the engine off; went `F` → `0` and back six times in the second engine run, with the wheel driven in first gear |
+| `0x765` b7 bit 4 | on and off from 19:20:20 through both engine runs, held on through the ten seconds the engine was stalled between them, off from 19:21:10.5; never set before the first start or in the fifth capture |
+| `0x27C` b3 bit 0 | 0.14 s once, 2 s before a stop with the stop switch, the engine running |
+| `0x751` b6 bits 5–6 | not neutral alone; see the summary |
 
 The most unexplained traffic is in `0x750` and `0x764`, where almost the whole frame
 moves once the engine runs.

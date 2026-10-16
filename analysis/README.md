@@ -32,6 +32,7 @@ than how important they are.
 | [`tools/3-candump-to-webcan.py`](tools/3-candump-to-webcan.py) | convert a log the CSS scripts can read | only on its own, for a log captured some other way — step 2 runs it for you |
 | [`tools/4-lean-from-video.py`](tools/4-lean-from-video.py) | read a lean angle off a screen recording of a phone's level app | the video; OpenCV, so `0-setup.sh --with-vision` |
 | [`tools/5-rpm-from-audio.py`](tools/5-rpm-from-audio.py) | find the scale of an engine-speed field from a recording of the engine | the capture, the audio, and `ffmpeg` |
+| [`tools/6-wheel-from-video.py`](tools/6-wheel-from-video.py) | read a wheel's revolutions per second off a video of it turning, and hold `0x756` and the pulses in `0x27C` against them | the video, optionally the capture, and `ffmpeg` |
 
 [`tools/can-up-listen-only.sh`](tools/can-up-listen-only.sh) is not a step. It is the one
 privileged thing a session does, split out so `sudo` covers that line and nothing else,
