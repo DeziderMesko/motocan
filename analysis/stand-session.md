@@ -17,6 +17,17 @@ since it was written: the session runs with `--ack`, because without it this con
 gives two ids of 23. The adapter still transmits nothing, and the watchdog still takes it
 off the bus if it ever does.
 
+**One change from parts A and B: the CANable's terminator is ON this time** (decided
+2026-10-16). Part B says off, and why: an adapter that only listens joins a bus that is
+already terminated at both ends. Pair C turned out to be the ECU and the connector and
+nothing else, with one 120 Ω terminator on the bike's side, so an adapter that
+acknowledges is the bus's other node and its other end — where a second terminator would
+normally sit. Whether this bus is meant to have one there is not known; the three captures
+ran without it and with no errors. So the check in part B reads the other way round: with
+the adapter wired on and the key off, **about 60 Ω is right, and about 120 Ω means the
+terminator is still off.** Note `terminator on` with `m` at the start, so the capture says
+which way it was run.
+
 **Still not negotiable: nothing is captured while riding.** Pushing the bike by hand with
 the engine off is not riding.
 
