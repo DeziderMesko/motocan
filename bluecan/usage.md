@@ -67,7 +67,7 @@ Valve commanded  14.5 %
 | `Gear` | `N`, `1`–`6`, `-` while between gears | `0x27C`, 100 Hz |
 | `RPM` | engine speed | `0x27C` |
 | `TCS` | the traction control setting, as on the dash | `0x27C` |
-| `Mode` | a number that follows the ride mode: sport 1, street 2, rain 3, custom 1 0 | `0x27C` |
+| `Mode` | the PWR setting less one, as the bike sends it: PWR 1 shows `0`, PWR 4 shows `3` | `0x27C` |
 | `Grip` | throttle grip, %. Reads 0 for the first twentieth of its travel | `0x758`, 20 Hz |
 | `Valve` | throttle valve as measured, %. Its zero is provisional: a warm idle reads about 8% | `0x758` |
 | `Water`, `Air` | coolant and intake air temperature, °C. The dash shows the air temperature 1–2 °C lower | `0x512`, 1 Hz |

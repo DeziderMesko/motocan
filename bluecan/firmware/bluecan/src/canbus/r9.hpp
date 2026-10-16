@@ -69,15 +69,15 @@ constexpr uint8_t gear(const uint8_t* d) noexcept
     return d[4] & 0x07U;
 }
 
-/// the TCS setting, as the dash shows it
+/// the TCS setting, as the dash shows it. Bits 1-4 of byte 3: bit 5 above them is set
+/// in gear with the engine running, and without the mask TCS 1 reads 17 on the road.
 constexpr uint8_t tcs(const uint8_t* d) noexcept
 {
-    return d[3] >> 1;
+    return (d[3] >> 1) & 0x0FU;
 }
 
-/// The 2-bit setting that follows the ride mode: sport 1, street 2, rain 3, custom 1
-/// reads 0. What it is has not been settled -- PWR at a guess -- so it is passed on as
-/// the number it is.
+/// The PWR setting less one: PWR 1 reads 0, PWR 4 reads 3. Passed on as the number the
+/// bike sends, so it reads one less than the dash.
 constexpr uint8_t mode(const uint8_t* d) noexcept
 {
     return d[4] >> 6;

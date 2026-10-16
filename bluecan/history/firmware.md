@@ -1732,6 +1732,25 @@ filter has now run against the R9's own ids rather than a bench's.
 It has not been on the R9. That is the check the page exists for: every value on it
 against the dash.
 
+## Patch 20 — TCS is four bits, not seven — **applied, checked against the captures**
+
+2026-10-16. `r9::tcs()` read `d[3] >> 1`, which takes bits 1–7 of byte 3 as the setting.
+The captures of 2026-10-16 found bit 5 set in gear with the engine running
+([the fourth capture](../../analysis/captures/session-2026-10-16_191234/README.md)), and
+with it the panel's TCS read 16 too high: 17 where the dash shows 1. That is the state the
+bike is in for nearly all of a ride. None of the three captures the decoder was written
+against had the engine running in gear, so the check below passed on them.
+[r9.dbc](../../analysis/r9.dbc) now has the field as `25|4`, as AiM's DBC for the MT-09 has
+it, and `tcs()` is `(d[3] >> 1) & 0x0F`. The comments on the mode field say what it is now,
+the PWR setting less one; what the panel shows for it is unchanged.
+
+[tools/r9-decode-check.py](../firmware/tools/r9-decode-check.py) found it: against the
+corrected DBC the unpatched header gave 687 values in the first capture of 2026-10-16
+that differed, every one TCS 17 against 1. With the patch it passes on all five captures.
+The RaceChrono equation had the same fault and is corrected in
+[racechrono-channels.md](../racechrono-channels.md); the new one has not been typed into
+the app yet.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

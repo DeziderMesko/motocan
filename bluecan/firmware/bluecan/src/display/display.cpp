@@ -1438,8 +1438,8 @@ void display::page_live() noexcept
     cell(y, big, right_col, ST77XX_YELLOW, "Air");
     cell(y, big, right_col + 4, temps_color, "%s", b);
 
-    // --- 0x27C again. Mode is the number the bike sends and nothing more: it follows
-    // the ride mode, and what it is has not been settled.
+    // --- 0x27C again. Mode is the number the bike sends and nothing more: the PWR
+    // setting less one.
     y = content_y + 6 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "TCS");
     cell(y, big, left_col + 4, engine_color, "%s", tcs);

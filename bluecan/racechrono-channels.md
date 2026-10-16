@@ -7,7 +7,7 @@ four frames. The signals themselves, and how sure each one is, are on
 
 **Status, 2026-10-13.** Every equation here has been entered into RaceChrono Pro on
 Android and shown the right values, against a replay of the R9's own captures on the
-bench. None of it has been on the bike. Each was also computed outside the app on every
+bench — except TCS, corrected on 2026-10-16 and not yet entered; see its section. None of it has been on the bike. Each was also computed outside the app on every
 distinct payload in [the captures](../analysis/captures/) and agrees with the DBC.
 
 ## Where they go
@@ -55,14 +55,28 @@ if((bytesToUint(raw, 4, 1) & 7) == 7, NaN, bytesToUint(raw, 4, 1) & 7)
 TCS, the number on the dash:
 
 ```
-bytesToUint(raw, 3, 1) >> 1
+bitsToUintLe(raw, 25, 4)
 ```
 
-The mode field — sport `1`, street `2`, rain `3`, custom 1 `0`. It follows the ride mode;
-[what it is](../analysis/open-questions.md) is still open:
+That is bits 1–4 of byte 3. Until 2026-10-16 this page gave `bytesToUint(raw, 3, 1) >> 1`,
+which is right with the engine off and 16 too high in gear with the engine running: bit 5
+of the same byte is set then ([r9-signals.md](../analysis/r9-signals.md)). Every capture
+before 2026-10-16 had the engine off or in neutral, so the replay on the bench could not
+show it. **If the old equation is in the app, replace it.** The new one has not been
+typed into the app yet; it is the same function and form as the grip's, which the app
+accepts.
+
+The mode field, which is the PWR setting less one — PWR 1 reads `0`, PWR 4 reads `3`
+(named on 2026-10-16 from photos of the dash). As entered, the number the bike sends:
 
 ```
 bytesToUint(raw, 4, 1) >> 6
+```
+
+Or the number the dash shows, not yet tried in the app:
+
+```
+bitsToUintLe(raw, 38, 2) + 1
 ```
 
 ## PID 1298 — `0x512`, 1 Hz
