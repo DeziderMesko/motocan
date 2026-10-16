@@ -1378,7 +1378,7 @@ void display::page_live() noexcept
     char a[8];
     char b[8];
 
-    // --- 0x27C: gear and engine speed, and further down TCS and PWR. Next to PWR,
+    // --- 0x27C: engine speed and gear, and further down PWR and TCS. Next to PWR,
     // "Trk" while 0x76E says the dash is on its Track display. Which mode it is cannot
     // be shown: the bus carries the settings a mode makes, not its number.
     const bool engine = CANDEC.latest(r9::id_engine, d, age) && age < stale_fast_ms;
@@ -1405,11 +1405,42 @@ void display::page_live() noexcept
 
     const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
 
+    // the rider's order of 2026-10-16: engine speed, throttle, settings, wheels; the
+    // engine speed and PWR on the left
     int y = content_y + 0 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "Gear");
-    cell(y, big, left_col + 5, engine_color, "%s", a);
-    cell(y, big, right_col, ST77XX_YELLOW, "RPM");
-    cell(y, big, right_col + 4, engine_color, "%s", b);
+    cell(y, big, left_col, ST77XX_YELLOW, "RPM");
+    cell(y, big, left_col + 4, engine_color, "%s", b);
+    cell(y, big, right_col, ST77XX_YELLOW, "Gear");
+    cell(y, big, right_col + 5, engine_color, "%s", a);
+
+    // --- 0x758: the grip and the throttle valve, in whole percent
+    const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
+
+    if (throttle)
+    {
+        snprintf(a, sizeof(a), "%3u%%", (unsigned)((r9::grip_tenths(d) + 5U) / 10U));
+        snprintf(b, sizeof(b), "%3u%%", (unsigned)((r9::valve_tenths(d) + 5U) / 10U));
+    }
+    else
+    {
+        snprintf(a, sizeof(a), "  --");
+        snprintf(b, sizeof(b), "  --");
+    }
+
+    const uint16_t throttle_color = throttle ? ST77XX_WHITE : color_grey_dim;
+
+    y = content_y + 2 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "Grip");
+    cell(y, big, left_col + 5, throttle_color, "%s", a);
+    cell(y, big, right_col, ST77XX_YELLOW, "TPS");
+    cell(y, big, right_col + 5, throttle_color, "%s", b);
+
+    // --- 0x27C again
+    y = content_y + 4 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "PWR");
+    cell(y, big, left_col + 4, engine_color, "%s", pwr);
+    cell(y, big, right_col, ST77XX_YELLOW, "TCS");
+    cell(y, big, right_col + 4, engine_color, "%s", tcs);
 
     // --- 0x765 and 0x756: the wheel speeds, in whole km/h as the dash shows speed;
     // front on the left, the rider's choice of 2026-10-16
@@ -1435,40 +1466,11 @@ void display::page_live() noexcept
         snprintf(b, sizeof(b), " --");
     }
 
-    y = content_y + 2 * row_h;
+    y = content_y + 6 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "Front");
     cell(y, big, left_col + 6, front ? ST77XX_WHITE : color_grey_dim, "%s", a);
     cell(y, big, right_col, ST77XX_YELLOW, "Rear");
     cell(y, big, right_col + 5, rear ? ST77XX_WHITE : color_grey_dim, "%s", b);
-
-    // --- 0x758: the grip and the throttle valve, in whole percent
-    const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
-
-    if (throttle)
-    {
-        snprintf(a, sizeof(a), "%3u%%", (unsigned)((r9::grip_tenths(d) + 5U) / 10U));
-        snprintf(b, sizeof(b), "%3u%%", (unsigned)((r9::valve_tenths(d) + 5U) / 10U));
-    }
-    else
-    {
-        snprintf(a, sizeof(a), "  --");
-        snprintf(b, sizeof(b), "  --");
-    }
-
-    const uint16_t throttle_color = throttle ? ST77XX_WHITE : color_grey_dim;
-
-    y = content_y + 4 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "Grip");
-    cell(y, big, left_col + 5, throttle_color, "%s", a);
-    cell(y, big, right_col, ST77XX_YELLOW, "TPS");
-    cell(y, big, right_col + 5, throttle_color, "%s", b);
-
-    // --- 0x27C again
-    y = content_y + 6 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "TCS");
-    cell(y, big, left_col + 4, engine_color, "%s", tcs);
-    cell(y, big, right_col, ST77XX_YELLOW, "PWR");
-    cell(y, big, right_col + 4, engine_color, "%s", pwr);
 
     // --- the size-1 line: 0x512's two temperatures in whole degrees, and 0x759's
     // valve as commanded, with its tenth -- it leads the measured one by a sample and is

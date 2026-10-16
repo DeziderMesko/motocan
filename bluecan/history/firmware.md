@@ -1835,6 +1835,20 @@ Uploaded on the second attempt, as usual under WSL2. The panel has not been look
   small `TPS cmd` value moves from column 32 to 30, one space after the shorter label, as
   `Water` and `Air` have.
 
+## Patch 25 — the LIVE page's rows reordered, `RPM` and `PWR` on the left — **applied, not uploaded**
+
+2026-10-16, asked for by the rider, straight after patch 24.
+
+- The big lines now run `RPM`/`Gear`, `Grip`/`TPS`, `PWR`/`TCS`, `Front`/`Rear`. Before
+  they were `Gear`/`RPM`, `Front`/`Rear`, `Grip`/`Valve`, `TCS`/`PWR`. The small line under
+  them is unchanged.
+- Each value keeps the offset from its label that it had, and every left-hand value still
+  ends by column 8, so the gap before the right-hand column at 11 holds: `RPM`'s five
+  digits and `PWR`'s `2 Trk` are as wide as `Front`'s three digits after its longer label.
+- In the source the blocks are in screen order now. The engine block fills `a` and `b`,
+  and the throttle and wheel blocks fill them again, so each line is drawn before the next
+  block reuses them; `PWR` and `TCS` have their own buffers and come after the throttle.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches
