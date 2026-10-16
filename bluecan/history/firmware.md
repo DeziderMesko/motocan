@@ -1823,7 +1823,7 @@ five captures. Not uploaded to the board then; it went up with patch 23 the same
 
 Uploaded on the second attempt, as usual under WSL2. The panel has not been looked at yet.
 
-## Patch 24 — `TPS` for `Valve` on the LIVE page — **applied, not uploaded**
+## Patch 24 — `TPS` for `Valve` on the LIVE page — **applied, uploaded with patch 28**
 
 2026-10-16, asked for by the rider, who found `Valve` too vague on the glass.
 
@@ -1835,7 +1835,7 @@ Uploaded on the second attempt, as usual under WSL2. The panel has not been look
   small `TPS cmd` value moves from column 32 to 30, one space after the shorter label, as
   `Water` and `Air` have.
 
-## Patch 25 — the LIVE page's rows reordered, `RPM` and `PWR` on the left — **applied, not uploaded**
+## Patch 25 — the LIVE page's rows reordered, `RPM` and `PWR` on the left — **applied, uploaded with patch 28**
 
 2026-10-16, asked for by the rider, straight after patch 24.
 
@@ -1849,7 +1849,7 @@ Uploaded on the second attempt, as usual under WSL2. The panel has not been look
   and the throttle and wheel blocks fill them again, so each line is drawn before the next
   block reuses them; `PWR` and `TCS` have their own buffers and come after the throttle.
 
-## Patch 26 — the LIVE page's values right-aligned, `T` for `Trk` — **applied, not uploaded**
+## Patch 26 — the LIVE page's values right-aligned, `T` for `Trk` — **applied, uploaded with patch 28**
 
 2026-10-16, asked for by the rider, so that the numbers stand under each other as the
 labels do.
@@ -1863,7 +1863,7 @@ labels do.
   columns too.
 - The small line is unchanged: nothing above it shares its columns.
 
-## Patch 27 — the wheels above the settings, and nothing sticking out — **applied, not uploaded**
+## Patch 27 — the wheels above the settings, and nothing sticking out — **applied, uploaded with patch 28**
 
 2026-10-17, asked for by the rider after seeing patch 26's layout written out: the `%` and
 the `T` stood one column past every other value.
@@ -1875,16 +1875,19 @@ the `T` stood one column past every other value.
 - `PWR`'s number stays in column 8 with or without its `T`, rather than moving to column 9
   when there is none, so it does not jump when the dash changes display. It is the one
   digit not under the others while the dash is not on Track. *(2026-10-17: reversed by
-  [patch 28](#patch-28--pwrs-number-right-aligned-too--applied-not-uploaded); the rider
+  [patch 28](#patch-28--pwrs-number-right-aligned-too--applied-uploaded); the rider
   chose alignment over a still number.)*
 
-## Patch 28 — PWR's number right-aligned too — **applied, not uploaded**
+## Patch 28 — PWR's number right-aligned too — **applied, uploaded**
 
 2026-10-17, the rider's choice between the two ways patch 27 could have gone.
 
 - `PWR` is right-aligned like every other value: without the `T` its number is in column
   9, under the others; on the Track display it moves to column 8 and the `T` takes
   column 9. A stale `PWR` shows its dash in column 9.
+
+Uploaded together with patches 24–27 on 2026-10-17, on the second attempt as usual under
+WSL2. The panel has not been looked at yet.
 
 ## Open questions before the bike
 
