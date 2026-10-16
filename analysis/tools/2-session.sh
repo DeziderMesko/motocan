@@ -583,7 +583,8 @@ task_switches() {
      c  clutch lever                         k  sidestand (down, then up)
      f  front brake                          r  rear brake
      +  cruise RES+                          -  cruise SET-
-     h  high beam                            w  rear wheel turned by hand
+     h  high beam                            w  REAR wheel turned by hand
+     e  FRONT wheel turned by hand (front stand)
      p  start button, with the start blocked (in gear, clutch out)
 T
     local k name
@@ -591,19 +592,20 @@ T
         printf '\r  [%s frames, %s marks] switches> ' "$(frames)" "$(marks)"
         read -rsn1 k || return; echo
         case "$k" in
-            u|d|c|k|f|r|+|-|h|w|p)
+            u|d|c|k|f|r|+|-|h|w|e|p)
                 case "$k" in
                     u) name=shift_lever_up ;;   d) name=shift_lever_down ;;
                     c) name=clutch ;;           k) name=sidestand ;;
                     f) name=front_brake ;;      r) name=rear_brake ;;
                     +) name=cruise_res ;;       -) name=cruise_set ;;
-                    h) name=high_beam ;;        w) name=wheel_by_hand ;;
+                    h) name=high_beam ;;        w) name=rear_wheel_by_hand ;;
+                    e) name=front_wheel_by_hand ;;
                     p) name=start_blocked ;;
                 esac
                 sweep "$name" ;;
             .) [[ -n "$sweep_open" ]] && { echo "   close the sweep first"; continue; }; return 0 ;;
             x) undo ;;
-            *) echo "   u d c k f r + - h w p, or . to go back" ;;
+            *) echo "   u d c k f r + - h w e p, or . to go back" ;;
         esac
     done
 }

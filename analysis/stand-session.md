@@ -22,7 +22,10 @@ the engine off is not riding.
 
 ## Bring
 
-Rear stand. Laptop, charged, with sleep on lid-close and on idle turned off. CANable and
+Rear stand, and the front stand if you have one: with both wheels in the air each can be
+turned on its own, which is the cleanest way to tell the two apart. A phone that films,
+something to stand it on beside the rear wheel, and a mark on the tyre it can see — the
+yellow balancing dot on the sidewall, or a strip of bright tape on the rim. Laptop, charged, with sleep on lid-close and on idle turned off. CANable and
 its cable, the pigtail. Something to put the laptop on that is not the bike once the wheel
 is turning — a stool beside it, within reach of the keys and clear of the wheel and chain.
 
@@ -49,12 +52,25 @@ Then, in this order:
 | 2 | `6` ride mode | each of the five: select it, settle, press its key. Back in the main menu after **each one**, press `m` and type the PWR the dash shows, as `pwr 2` | names the 2-bit field. The note has to follow its mode, so do them in pairs: mode key, `.`, `m`, `6` |
 | 2b | `0` track | Display to **Track**, then `d`. Then `i`, and **sit still for 15 s**. Then each of Track 1–4: select it, settle, press its number; and for **every** setting the dash shows for that mode press `v` and type it as a name and a number — `pwr 2`, `tcs 1`, whatever is on the screen. Display back to normal, then `n`, then `i` again | what the four modes set — nine modes against a field of two bits says more about that field than five did — and whether the bus carries more with the Track display on. `d` prints what changed at the switch; `i` prints the ids that are new and the bytes that have started moving by themselves, there and then |
 | 3 | main menu | **Push.** Neutral, engine off, laptop carried or on the seat. `m` `push forward start`, walk it five metres at a steady pace, stop, `m` `push forward end`. Wait 3 s. The same backwards: `push back start`, `push back end` | both wheels turning at one speed: the only time the front turns at all |
-| 4 | — | Bike onto the stand. Laptop off the bike. Start the engine | |
+| 4 | — | Bike onto the stand — both stands, if you have the front one. Laptop off the bike. **Engine still off**, key on | |
+| 4a | `9`, keys `w` and `e` | neutral. Rear wheel by hand: key `w`, a few slow turns, then a brisk spin, let it run down, `w`. Then the **front** the same way with key `e` — front stand only | each wheel alone, with nothing else moving: whatever moves at `w` is the rear, at `e` the front. If neither shows anything, the speed was probably below what the ABS reports — the engine runs below give it more |
+| 4b | — | Start the filming: phone on its stand, side-on to the rear wheel, the mark in view, slow motion if the phone has it. Leave it running through steps 5–7. Then start the engine | the wheel's own revolutions, independent of the dash — see the note under this table |
 | 5 | main menu | `b`, and **sit still for 10 s** | re-learns the noise with the engine running, or every later mark lists the same engine bytes |
 | 6 | `4` wheel speed | `s`. First gear, clutch out, **no throttle** — let it idle in gear. Hold 5 s, read the dash speed, `v`, type it. Then two more steady speeds with a little throttle, each held 5 s before its `v`. Clutch in, rear brake until the wheel stops, `s` | the rear alone: whatever moves is the rear, whatever stays at zero is the front |
-| 7 | `4` wheel speed | the same in **second** and in **third**, idle in gear and one more speed each | one engine speed, three wheel speeds — the gearing checks the scale without the dash |
+| 7 | `4` wheel speed | the same in **second** and in **third**, idle in gear and one more speed each. **Optional if the video is good** | one engine speed, three wheel speeds — the gearing checks the scale without the dash, and the video already does |
 | 8 | `1` gear | N, and the gear key each time you change in steps 6–7, if you remember; it is a bonus | more gear anchors with the engine running |
 | 9 | — | Neutral, wheel stopped, engine off. `q` | |
+
+**The video.** Counting the mark's passes over the five seconds of a steady speed gives the
+rear wheel's revolutions per minute, with no dash and no gearing in between, and that is
+the scale of whatever field moves with it. It needs the mark visible every turn and a
+camera that does not move. An ordinary 30 fps video is fine at idle in first; above about
+30 km/h a wheel turns more than four times a second and the mark blurs or seems to stand
+still, which is what slow motion is for. The phone's clock and the laptop's differ, and
+that does not matter: each steady speed lasts five seconds, and the video and the bus are
+lined up by when the wheel starts and stops. Stop the filming after step 7, before the
+engine is stopped, and keep the file — the same as the lean video, it stays out of git and
+its hash goes into `SHA256SUMS`.
 
 Keep it slow: nothing here needs more than about 60 km/h on the dash, and a steady number
 held for five seconds is worth more than a high one. **Settle first, then press** — the
@@ -76,7 +92,7 @@ the key, wait 2 s, work the control and hold it 2 s, let go, wait 2 s, press the
 
 | | Where | Do | What it is a test for |
 |---|---|---|---|
-| A | `9`, key `w` | neutral; turn the rear wheel by hand, slowly for a few turns, then a brisk spin | whether `0x27C` byte 2 is a wheel pulse: single counts when slow, a steady value when spinning |
+| A | `9`, key `w` | *moved into the session as step 4a, with the front wheel beside it* | whether `0x27C` byte 2 is a wheel pulse: single counts when slow, a steady value when spinning |
 | B | `9`, keys `u` `d` | press the shift lever up, firmly, **without** changing gear; then down the same way | the shift sensor — the 12-bit value in `0x751` should fall one way and rise the other |
 | C | `9`, key `c` | pull the clutch and hold it | the clutch switch, never bracketed |
 | D | `9`, key `k` | first gear; sidestand down, hold, up | the sidestand switch, and the start-permission bits beside neutral |
@@ -117,12 +133,15 @@ session is over — `.` then `q`, and say so.
 
 ## Afterwards
 
-The session folder in `~/captures` is the result and git does not hold it yet. Leave it
+The session folder in `~/captures` is the result and git does not hold it yet. Put the
+video into its `other/` folder, as with the lean video. Leave it
 where it is and say it is there. What gets read out of it:
 
 - which bytes are zero through step 1, move together in step 3, and move alone in steps
   6–7 — that is rear against front;
-- the scale of each, from the dash anchors and from rpm × gearing in three gears;
+- which move at `w` and which at `e` in step 4a, if anything did;
+- the scale of each, from the wheel's revolutions in the video, from the dash anchors, and
+  from rpm × gearing if step 7 was done;
 - whether `0x27C` byte 2 is one of them;
 - the PWR notes against the 2-bit field, five pairs;
 - from step 2b: what `notes.txt` says after each `still check` — new ids, bytes newly
