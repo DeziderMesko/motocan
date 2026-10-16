@@ -20,10 +20,10 @@ did the first of those three and neither of the others.
 | | Check | Passes when |
 |---|---|---|
 | 1 | The release build is on the board | it boots to the LIVE page with grey dashes, header `bluecan advertising`. A `--debug` build works too, but pauses 5 s at boot |
-| 2 | **The KAmod's `120R` jumper is off** | a meter across `CAN H`/`CAN L` on the board, connected to nothing, reads open — not 120 Ω. It is on for the bench and was on for every test so far |
+| 2 | **The KAmod's `120R` jumper is on** | a meter across `CAN H`/`CAN L` on the board, connected to nothing, reads about 120 Ω. The board acknowledges, so it is the bus's other end ([hardware.md](hardware.md#termination)) |
 | 3 | The pigtail is wired `CAN H` to pin 2, `CAN L` to pin 5 | continuity from the KAmod's `CAN H` to the **middle cavity of the latch row**, and from `CAN L` to the middle cavity of the other row. The female half is the mirror image of the male; the middle cavities are the same on both, the outer ones are not |
 | 4 | The +12 V wire, pin 4, goes nowhere | cut back or insulated. The board is fed from USB |
-| 5 | The channels are in RaceChrono | [racechrono-channels.md](racechrono-channels.md); eight are entered, the commanded valve on PID 1881 is not |
+| 5 | The channels are in RaceChrono | [racechrono-channels.md](racechrono-channels.md); eight are entered, the commanded valve on PID 1881 is not. **Replace the TCS and PWR equations** with the ones corrected on 2026-10-16: the old TCS one reads 16 too high in gear with the engine running. The wheel speeds and the Track display are optional; each adds a PID |
 
 **Bring:** a multimeter, the phone, the RaceBox, a **data** USB cable — a charge-only one
 lights the board and cost three round trips on the bench. The laptop and the CANable if
@@ -39,7 +39,7 @@ wire pin 3 to the board's `GND`. Nothing in this repository has tried either on 
 | | Do | Passes when |
 |---|---|---|
 | 1 | Key off. Plug the pigtail into the red connector | |
-| 2 | Meter across the pair with the board attached, before powering it | **about 120 Ω**, as the pigtail alone read on 2026-10-10. About 60 Ω means the `120R` jumper is still on. Open means those are not the CAN wires |
+| 2 | Meter across the pair with the board attached, before powering it | **about 60 Ω**: the bike's 120 Ω, measured with the pigtail alone on 2026-10-10, beside the board's. About 120 Ω means the `120R` jumper is off. Open means those are not the CAN wires |
 | 3 | Power the board | LIVE page, dashes. **D1** to the BUS page: `CAN 500k LISTEN-ONLY RUN`, `rx 0` |
 
 Whether the R9's USB outlet is live with the key off is not written down anywhere here.
@@ -65,10 +65,11 @@ Then the LIVE page against the dash, which is what the page was built for:
 |---|---|---|
 | 8 | Neutral, then up through the gears and back | `Gear` reads `N`, `1`–`6`, with `-` between gears, matching the dash each time |
 | 9 | Change the TCS setting | `TCS` follows the number on the dash |
-| 10 | Go through the ride modes | `Mode` reads sport 1, street 2, rain 3, custom 1 as 0. **Write down what custom 2 reads, and the PWR number the dash shows in each mode** — that settles [open question 2](../analysis/open-questions.md) |
+| 10 | Go through the ride modes | `PWR` follows the PWR number on the dash in each mode. On the Track display `Trk` appears beside it |
 | 11 | Compare the temperatures | `Water` within 2 °C of the dash; `Air` a degree or two above it |
 | 12 | Grip closed, then to the stop | `Grip` 0 %, then about 100 %. It reads 0 for the first twentieth of the travel |
-| 13 | Bottom row | `Valve commanded` shows a number, not dashes |
+| 13 | Bottom row, small | `Valve cmd` shows a number, not dashes |
+| 14 | `Rear` and `Front` | `0` with the wheels still. On a stand, a wheel turned by hand shows a few km/h on its own field |
 
 ## D. Engine running
 
@@ -89,15 +90,15 @@ a running engine, so the BUS page comes first.
 | | Do | Passes when |
 |---|---|---|
 | 1 | Connect RaceChrono | header `connected`, then `SUB` with the interval; the light goes yellow |
-| 2 | Start recording, with the RaceBox locked | BUS reads **`flt 3`**, `lost 0`; the light goes green and blips |
-| 3 | Compare the app with LIVE | the same values. `Digital 1` is TCS, `Digital 2` PWR (the mode field less one, if the old equation is still in the app) |
+| 2 | Start recording, with the RaceBox locked | BUS reads **`flt 3`** — one for each PID with a channel, so more if the wheel speeds or the Track display were added — and `lost 0`; the light goes green and blips |
+| 3 | Compare the app with LIVE | the same values. `Digital 1` is TCS, `Digital 2` PWR |
 | 4 | **Look at the Time tile and the `Hz` figures** | both filled in, now that the GPS has a lock — they were empty on the bench without one, and the reason was never confirmed. About 20 Hz for the channels on PIDs 636 and 1880, 1 Hz for the temperatures |
 | 5 | Stop, and open the session | the CAN channels are in it, with data |
 
 ## Write down
 
 The BUS page's `err`, `rec`, `peak` and `drop` at the end. Anything on LIVE that disagreed
-with the dash, and by how much. Custom 2's mode value and the PWR numbers. What the Time
+with the dash, and by how much. What the Time
 tile and the rates did. Whether the outlet is live with the key off.
 
 ## When something is wrong

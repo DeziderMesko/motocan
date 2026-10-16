@@ -14,7 +14,7 @@ BO_ 636 R9_27C: 7 ECU
  SG_ InGearRunning : 29|1@1+ (1,0) [0|1] "" Vector__XXX
  SG_ Gear : 32|3@1+ (1,0) [0|7] "" Vector__XXX
  SG_ ModeField : 38|2@1+ (1,0) [0|3] "" Vector__XXX
- SG_ SetWhileRunning : 55|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ SetAfterFirstStart : 55|1@1+ (1,0) [0|1] "" Vector__XXX
 
 BO_ 899 R9_383: 8 ECU
  SG_ Brake : 35|1@1+ (1,0) [0|1] "" Vector__XXX
@@ -61,12 +61,12 @@ CM_ SG_ 636 StartPulse "Set for about half a second as the starter turns. Not se
 CM_ SG_ 636 TCS "The TCS setting shown on the dash. Four bits: the bit above it is InGearRunning.";
 CM_ SG_ 636 InGearRunning "Set in gear with the engine running; not in gear with the engine off. What it means beyond that is not known.";
 CM_ SG_ 636 ModeField "The PWR setting less one: PWR = ModeField + 1. Four dash anchors, Track 1-4.";
-CM_ SG_ 636 SetWhileRunning "0 from key-on to the first start, 1 after it, 0 for a third of a second at each later start. Engine stops do not clear it. What it means is not known.";
+CM_ SG_ 636 SetAfterFirstStart "0 from key-on to the first start, 1 after it, 0 for a third of a second at each later start. Engine stops do not clear it. What it means is not known.";
 CM_ SG_ 899 Brake "Front or rear brake on.";
 CM_ SG_ 1878 RearSpeed_Hi "Rear wheel speed is split over three fields a DBC signal cannot join: raw = RearSpeed_Hi*256 + RearSpeed_Mid*16 + RearSpeed_Lo, km/h = raw/100. 700 counts per revolution a second against a video; the km/h is a fit to the tyre, no dash speed yet. Rises without the rear turning when the turning front is pushed again, so it is a processed value.";
 CM_ SG_ 1878 RearSpeed_Mid "See RearSpeed_Hi.";
 CM_ SG_ 1878 RearSpeed_Lo "See RearSpeed_Hi.";
-CM_ SG_ 1893 FrontSpeed_Hi "Front wheel speed: raw = FrontSpeed_Hi*256 + FrontSpeed_Mid*16 + FrontSpeed_Lo, km/h = raw/100 at a guess, the same unit as the rear. On a stand with the rear driven it carried the rear's value.";
+CM_ SG_ 1893 FrontSpeed_Hi "Front wheel speed: raw = FrontSpeed_Hi*256 + FrontSpeed_Mid*16 + FrontSpeed_Lo, km/h = raw/100 at a guess, the same unit as the rear. On a stand with the rear driven it carried the rear's value. Twelve bits end at 40.95 km/h; nothing above 17 km/h has been seen, so any bits above them are not known.";
 CM_ SG_ 1893 FrontSpeed_Mid "See FrontSpeed_Hi.";
 CM_ SG_ 1893 FrontSpeed_Lo "See FrontSpeed_Hi.";
 CM_ SG_ 1901 CruiseResPlus "1 while the cruise RES+ button is held. The frame comes twice a second, so a short press can be missed.";

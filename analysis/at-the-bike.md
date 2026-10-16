@@ -14,7 +14,8 @@ is under [With `--ack`](#with---ack-the-adapter-acknowledges-frames) below. List
 this connector yields two ids of 23, so every session since has run with `--ack`, where
 the adapter acknowledges frames and still transmits none. The second rule stands. The
 checklist for the next session is
-[stand-session.md](stand-session.md); this page is kept as the first one was run.
+[stand-session.md](stand-session.md) (run 2026-10-16, with the CANable's terminator on);
+this page is kept as the first one was run.
 
 ## A. The laptop, at home, on a network
 
@@ -82,6 +83,11 @@ the pigtail itself is marked in pen with what the meter found
   connected to nothing, a meter across its `CANH`/`CANL` reads about 120 Ω when it is on
   and open circuit when it is off.
 
+  *2026-10-16: on, for every session with `--ack`.* An adapter that acknowledges is the
+  bus's other node and its other end, where the second terminator belongs; both captures
+  of that day ran with it on and without a bus error. With the adapter wired on and the
+  key off, about 60 Ω is then right. See [stand-session.md](stand-session.md).
+
 ## C. At the bike
 
 Bring: laptop, CANable with its USB cable, the pigtail, a multimeter. A rear stand if
@@ -94,7 +100,8 @@ there is one — the session is worth doing without it, and step 8 says what cha
    had been expected. With the adapter wired on it must read the same; **about 60 Ω now
    means the adapter's terminator is still on**. Open circuit means those are not the CAN
    cavities. The +12 V wire reads 12 V against battery negative — which
-   is how to tell it is the one to keep insulated.
+   is how to tell it is the one to keep insulated. *(2026-10-16: with `--ack` the
+   terminator is on, and about 60 Ω is the right reading — see part B.)*
 3. CANable into the laptop. Administrator PowerShell, and leave it open:
    ```
    usbipd attach --wsl --busid <BUSID> --auto-attach

@@ -116,7 +116,9 @@ Front wheel speed, km/h, the same unit at a guess:
 
 On a stand with the rear wheel driven by the engine, this carried the rear's speed while
 the front stood still. On the road both turn together, so that should not show; on a
-stand, do not read it as the front.
+stand, do not read it as the front. The field is twelve bits as far as is known, so this
+ends at 40.95 km/h, and nothing above 17 has been seen
+([open question 10](../analysis/open-questions.md)).
 
 ## PID 1902 — `0x76E`, 2 Hz
 

@@ -31,9 +31,9 @@ been connected to an R9.** The first time it is, follow [at-the-bike.md](at-the-
   acknowledges. Bluecan starts each boot listening only, begins acknowledging once it has
   received clean frames at the right bit rate, and goes back to listening only if the bus
   looks wrong. It never transmits a frame, a diagnostic request or a query.
-- **Shows the bike's values on its screen**: gear, engine speed, throttle grip, throttle
-  valve, water and air temperature, traction control setting and ride mode, decoded on the
-  board itself whether or not a phone is connected. Three more pages show the bus, the ids
+- **Shows the bike's values on its screen**: gear, engine speed, both wheel speeds,
+  throttle grip, throttle valve, water and air temperature, and the TCS and PWR settings,
+  decoded on the board itself whether or not a phone is connected. Three more pages show the bus, the ids
   on it and the last frames received.
 - **Shows the state of the link on an RGB LED** that can be read at a glance: booting,
   waiting for a phone, configuring, recording, frames stopped, something lost.
@@ -44,8 +44,9 @@ been connected to an R9.** The first time it is, follow [at-the-bike.md](at-the-
   nothing.
 - **It has no GPS.** RaceChrono needs its own position source, the phone's or an external
   receiver.
-- **It decodes only what has been worked out.** Wheel speed, brake pressure and lean angle
-  are not among the signals found on this connector so far. What is known is in the
+- **It decodes only what has been worked out.** Brake pressure and lean angle are not
+  among the signals found on this connector so far, nor is the ride mode itself, only the
+  settings it makes. What is known is in the
   [root README](../README.md#what-is-decoded-so-far).
 - **It is not isolated.** Its ground is the bike's ground. See
   [hardware.md](hardware.md#isolation-and-ground).
@@ -69,7 +70,7 @@ The parts, the wiring and the power are in [hardware.md](hardware.md).
 ## Getting it running
 
 1. **Wire it**: the transceiver to the Feather, the pigtail to the transceiver, and the
-   transceiver's terminating resistor **off** — [hardware.md](hardware.md).
+   transceiver's terminating resistor **on** — [hardware.md](hardware.md#termination).
 2. **Build and flash the firmware** — [build.md](build.md).
 3. **Add it to RaceChrono and enter the channels** — [usage.md](usage.md#connecting-racechrono)
    and [racechrono-channels.md](racechrono-channels.md).

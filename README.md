@@ -10,7 +10,7 @@ number against: the dash, a recording of the engine's sound, a second sensor.
 
 **Status, 2026-10-16:** nineteen fields decoded from five captures taken at a standstill,
 the two wheel speeds among them. The device that would stream all this to a phone works on
-the bench and cannot yet read this particular connector.
+the bench, acknowledging as this connector needs, and has not yet been plugged into it.
 
 ## What is decoded so far
 
@@ -28,7 +28,7 @@ only when the listening node acknowledges them. Bytes are numbered from 0; `b3` 
 | Neutral, at rest | `0x751` | 100 Hz | `b6` | `0x60` or `0x70` = neutral, `0x00` = in gear | agrees with every change into and out of neutral with the engine off. It reads `0x60` in first gear with the engine running, so for the gear, use `0x27C` |
 | Rear wheel speed | `0x756` | 20 Hz | `b1 << 8 \| (b0 & 0xF0) \| b2 >> 4` (16 bits) | `km/h = raw / 100` | 700 counts per revolution a second against a video of the wheel, sd 1 %; as 0.01 km/h that is a 1.946 m wheel, which the tyre is. No dash speed to hold it to yet |
 | Rear wheel pulses | `0x27C` | 100 Hz | `b2` | pulses in each 10 ms frame, 46.4 to a revolution | against the speed above in three stretches, and against the video |
-| Front wheel speed | `0x765` | 10 Hz | `(b2 >> 4) << 8 \| (b6 >> 4) << 4 \| (b3 & 0x0F)` (12 bits) | `km/h = raw / 100` at a guess | follows the front turned by hand. On the stand, with the rear driven, it copied the rear's value instead ([open question 8](analysis/open-questions.md)) |
+| Front wheel speed | `0x765` | 10 Hz | `(b2 >> 4) << 8 \| (b6 >> 4) << 4 \| (b3 & 0x0F)` (12 bits) | `km/h = raw / 100` at a guess | follows the front turned by hand. On the stand, with the rear driven, it copied the rear's value instead ([open question 8](analysis/open-questions.md)). Twelve bits end at 40.95 km/h; nothing over 17 has been seen, so any bits above are not known ([open question 10](analysis/open-questions.md)) |
 | Brake, front or rear | `0x383` | 2 Hz | `(b4 >> 3) & 0x01` | `1` while either brake is on | 4 pulls of 4, and twice as the wheel was stopped |
 | Cruise RES+ and SET− | `0x76D` | 2 Hz | `b3 & 0x01`, and `(b5 >> 4) & 0x01` | `1` while the button is held | 2 presses of each. At 2 Hz a short press can fall between frames |
 | Track display | `0x76E` | 2 Hz | `b2` | `0x10` with the Track display, `0x20` with the normal one | one switch each way |
@@ -54,7 +54,9 @@ candidates, graded by how well they fit, not findings.
   connector is on the one with nothing but the ECU on it
   ([analysis/R9_CANbus.md](analysis/R9_CANbus.md)).
 - **Next:** a dash speed or the gearing, to hold the wheel speeds' 0.01 km/h to something
-  more than the tyre's size, and why the front's field copied the rear's on the stand.
+  more than the tyre's size; why the front's field copied the rear's on the stand; the
+  front's bits above 40.95 km/h; and second gear with the engine running, which tests
+  whether `0x27C` bits 29–31 are a second gear field.
   The stand session that found them is
   [analysis/stand-session.md](analysis/stand-session.md).
 - **Open:** the throttle valve's zero, the unnamed fields, anything that needs the bike

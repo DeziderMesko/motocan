@@ -59,15 +59,19 @@ into the Feather's `3V` pin.
 A CAN bus has a 120 Ω resistor at each of its two ends. Whether Bluecan should add one
 depends on where it is plugged in.
 
-- **On the R9, the `120R` jumper must be off.** The bike's diagnostic pair already reads
-  about 120 Ω with the key off. A third resistor drops the bus impedance and degrades the
-  signal for the engine control unit as well as for Bluecan.
-- **On a two-node bench**, it should be on: Bluecan is then one end of the bus and the
+- **On the R9, the `120R` jumper is on.** The diagnostic pair has the engine control unit
+  and nothing else on it, and reads about 120 Ω with the key off: one terminator, on the
+  bike's side. Bluecan acknowledges frames, which makes it the bus's other node and its
+  other end, where the second terminator belongs. The CANable ran both captures of
+  2026-10-16 this way, with its own terminator on, and saw no bus error. Until 2026-10-16
+  this page said off, reasoning from a bus terminated at both ends already; this one is
+  not.
+- **On a two-node bench**, it is on as well: Bluecan is then one end of the bus and the
   other adapter the other end. See [bench.md](bench.md).
 
 To check: with the KAmod connected to nothing, a meter across `CAN H` and `CAN L` reads
 open with the jumper off and 120 Ω with it on. Plugged into the bike with the key off, the
-pair should read about 120 Ω; about 60 Ω means the jumper is still on.
+pair should read about 60 Ω; about 120 Ω means the jumper is off.
 
 ## The R9's diagnostic connector
 

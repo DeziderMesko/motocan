@@ -8,15 +8,16 @@ The state of what *has* been found is [r9-signals.md](r9-signals.md).
 | 1 | ~~**The two wheel speeds** — "Speed" and "Speed 2" in AiM's channel list for this platform. Never looked for with the adapter acknowledging. `0x27C` byte 2 is the working guess for one of them~~ **Found 2026-10-16**: the rear in `0x756`, the front in `0x765`, the rear's pulses in `0x27C` byte 2 ([the fourth capture](captures/session-2026-10-16_191234/README.md)). Left open: the unit, 0.01 km/h, rests on a video and the tyre's size, with no dash speed; the front's scale rests only on the stretch where it copied the rear; and see 8 | a dash speed held steady and noted, or the gearing from the manual; the bike pushed by hand, which turns both wheels at one speed |
 | 2 | ~~**What the 2-bit mode field is** — `0x27C` byte 4 top two bits, `0x76E` byte 1. It follows the ride mode; PWR is a guess. Custom 2 read `2` in the first capture and `1` in the two after it~~ **Closed 2026-10-16: PWR − 1**, 4 dash photos of 4 in Track 1–4 | — |
 | 3 | **The throttle valve's zero.** The top of the scale is measured; a warm idle reads about 8 %, and nothing has shown the valve fully closed | a closed-throttle deceleration, which is not available at a standstill |
-| 4 | **The fields that change and have no name** — about forty, listed in [r9-signals.md](r9-signals.md#everything-that-changes-and-has-no-name) | the candidates and their tests are in the section below and in [R9_CAN_unknowns_vs_manual.md](R9_CAN_unknowns_vs_manual.md); the tests are extras A–N of the stand session |
+| 4 | **The fields that change and have no name** — about forty, listed in [r9-signals.md](r9-signals.md#everything-that-changes-and-has-no-name) | the candidates and their tests are in the section below and in [R9_CAN_unknowns_vs_manual.md](R9_CAN_unknowns_vs_manual.md); the tests are extras A–N of the stand session. *2026-10-16: B–G were done, and H with the engine off; I–N were not* |
 | 5 | **Anything that needs the bike moving**: speed against a reference, brake switches under way, what the valve does against the grip when traction control steps in | nothing has been captured while riding, and that is a rule of this project so far, not an oversight |
 | 6 | **Bluecan has not read this connector yet.** This bus needs an acknowledging node, and the firmware acknowledges now — proved on the bench against the CANable, not on the bike | plugging it into the R9: [patch 18](../bluecan/history/firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |
 | 7 | ~~**The Track display and its four modes.** With the display set to Track the dash offers Track 1–4 beside the five modes. None of the captures had it on, so it is not known what those modes read in the mode field, what each of them sets, or whether the bus carries anything more with that display on~~ **Closed 2026-10-16**: the modes set PWR and TCS as any other mode does; SCS and LIF changed and showed nothing; the display itself is `0x76E` byte 2, `0x10` against `0x20`; no new ids | — |
 | 8 | **Why the wheel fields are not one sensor each.** With the rear driven on the stand, `0x765` took the exact value of `0x756` from 19:20:47.6 to the stop, the front standing still; 25 s earlier it had stayed at zero. And a second push of the turning front lifts `0x756` with no rear pulse. ABS fail-safe at a guess. The ABS lamp was lit before the run, as it is until a bike moves; whether it went out is not known | a photo of the dash during a stand run; the bike pushed by hand, so that both wheels agree; on a ride it may not matter, because the two wheels turn together |
 | 9 | **Is `0x27C` bits 29–31 a 3-bit gear?** Bit 29 is set in first gear with the engine running and was named as a flag. AiM's R1 file has `ECU_GEAR` there, 3 bits, beside the raw gear the R9 has at 32–34, and the rest of bytes 3–4 match that file bit for bit ([r9-signals.md](r9-signals.md#held-against-aims-dbc-files)) | second gear, and third if it is easy, with the engine running on the stand: bit 30 set and bit 29 clear in second, both in third |
+| 10 | **How far up the front wheel's field goes.** `(b2 >> 4) << 8 \| (b6 >> 4) << 4 \| (b3 & 0x0F)` is twelve bits, 40.95 km/h at 0.01 km/h a count, and the rear's is sixteen. The highest front value in any capture is 1 706, so a nibble above the twelve would have read zero throughout, as `b2` lo and `b3` hi did. Found 2026-10-16, reading Bluecan's decoder | the bike pushed or ridden past 41 km/h — which is riding, and not done; or on the stand with the rear driven, the stretch where `0x765` copied `0x756`, taken past 41 km/h in a higher gear: the copy would show the top bits |
 
-**Not on this connector, on the evidence:** lean angle, the SCS, LIF and quickshifter
-settings, the ride mode as a number, battery voltage, fuel used. The service manual says
+**Not on this connector, on the evidence:** lean angle, the SCS, LIF, quickshifter and
+launch-control settings, the ride mode as a number, battery voltage, fuel used. The service manual says
 why: the R9's ECU has three separate CAN pairs, the IMU and ABS unit are on another one, and
 the fuel sender is wired to the meter ([R9_CANbus.md](R9_CANbus.md)). Two ways to those
 signals exist and neither has been tried, by decision: asking the ECU with diagnostic
@@ -30,7 +31,8 @@ holds each entry to what the service manual says the ECU reads, drives and decid
 manual has no frame definitions; what it has is the vocabulary — the sensors on the ECU's
 pins, the YDT monitor items with their ranges, the control states named in the fail-safe
 columns. That page was written without the capture files and says so. This section is the
-other half: its candidates, and what the three captures already say about them.
+other half: its candidates, and what the three captures of 2026-10-11 already say about
+them, with later rows dated.
 
 **What the manual settles on its own**, with no capture needed:
 

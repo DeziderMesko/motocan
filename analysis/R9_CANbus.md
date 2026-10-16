@@ -182,7 +182,7 @@ In the ECU coupler drawing these wires sit at the left edge of the top two rows:
 
 ## 9. What the captures on pair C add (2026-10-11)
 
-Three captures were taken on the YDT connector on 2026-10-11. They are in [r9-signals.md](r9-signals.md); what they say about the wiring above:
+Three captures were taken on the YDT connector on 2026-10-11, and two more on 2026-10-16 with the same 23 ids. They are in [r9-signals.md](r9-signals.md); what they say about the wiring above:
 
 - **Pair C carries broadcast traffic, not only diagnostics.** 23 ids at 506 frames a second with the key on: `0x27C`, `0x383`, `0x512` and a block from `0x750` to `0x76E`. Engine speed, gear, TCS, the temperatures, the grip and the throttle valve are in it.
 - **Nothing on pair C acknowledges the ECU's frames.** With the adapter listen-only the ECU resent one frame about 3 800 times a second and only two ids got through; with the adapter acknowledging, all 23 arrived at their own rates. So whatever else is wired to W/Y – W/L, it was not taking part with the key on. That weighs **against** the deduction in sections 2 and 3 that the meter is active on pair C: an active node would have acknowledged.

@@ -2,7 +2,7 @@
 """Read a wheel's revolutions per second off a video of it turning, and hold a field against it.
 
     .venv/bin/python tools/6-wheel-from-video.py PXL_20261016_171946620.TS.mp4 \\
-        --start 1792171186.620 --from 62 --to 75.5 -o wheel-from-video.csv \\
+        --start 1792171186.620 --from 62 --to 76 -o wheel-from-video.csv \\
         --log captures/session-2026-10-16_191234/capture.log.xz
 
 Why this exists: the dash speed is one rounded number, read late, from a wheel nobody has
@@ -11,8 +11,8 @@ picture again every time the wheel has gone round once, so the frame lag at whic
 of the tyre's sidewall matches itself best is one revolution, and 30 frames a second
 divided by that lag is revolutions per second. No mark has to be tracked: the lettering on
 the sidewall makes one turn look different from a fraction of a turn. On 2026-10-16 that
-gave 0x756 at 700 counts per revolution per second, which is 0.01 km/h a count on a
-1.944 m wheel.
+gave 0x756 at 700.6 counts per revolution per second, which is 0.01 km/h a count on a
+1.946 m wheel.
 
 What it can and cannot tell you:
 

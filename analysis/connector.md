@@ -103,7 +103,9 @@ Why there is one and not two is not known: a bus this short can be built with a 
 resistor, and a second one may sit in a unit that only joins the bus when powered. The
 60 Ω figure was the textbook case and never a measurement. It changes one number at the
 bike — with the adapter attached, 60 Ω is now the reading that means its own terminator
-was left on — and nothing else.
+was left on — and nothing else. *2026-10-16: for an adapter that acknowledges, the
+terminator is now on by decision, and 60 Ω is the reading that is right; see
+[stand-session.md](stand-session.md). 120 Ω with the adapter attached means it is off.*
 
 **And which wire is which, the same day:** key on, engine off, against ground, CAN High
 reads 3.2 V and CAN Low 1.7 V. High above 2.5 V and Low below it, symmetric about 2.45 V,

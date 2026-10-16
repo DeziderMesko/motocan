@@ -17,7 +17,8 @@ advance. The diagnostic-connector pigtail that blocked the bike arrived on 2026-
 
 That session has since happened, three times over on 2026-10-11, and
 [r9-signals.md](r9-signals.md) holds what they found. The next one, with the rear
-wheel on a stand, is [stand-session.md](stand-session.md).
+wheel on a stand, is [stand-session.md](stand-session.md), run on 2026-10-16 in two
+more captures.
 
 ## The order of operations
 
