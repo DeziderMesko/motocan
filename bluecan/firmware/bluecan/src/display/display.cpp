@@ -1393,23 +1393,31 @@ void display::page_live() noexcept
         snprintf(tcs, sizeof(tcs), "%2u", (unsigned)r9::tcs(d));
         const uint8_t p = r9::pwr(d);
         const bool track = CANDEC.latest(r9::id_display, d, age) && age < stale_slow_ms && r9::track_display(d);
-        snprintf(pwr, sizeof(pwr), "%u%c", (unsigned)p, track ? 'T' : ' ');
+        // right-aligned like every other value: the number moves left a column to make
+        // room for the 'T', the rider's choice of 2026-10-17
+        if (track)
+        {
+            snprintf(pwr, sizeof(pwr), "%uT", (unsigned)p);
+        }
+        else
+        {
+            snprintf(pwr, sizeof(pwr), "%2u", (unsigned)p);
+        }
     }
     else
     {
         snprintf(a, sizeof(a), "-");
         snprintf(b, sizeof(b), "   --");
         snprintf(tcs, sizeof(tcs), "--");
-        snprintf(pwr, sizeof(pwr), "- ");
+        snprintf(pwr, sizeof(pwr), " -");
     }
 
     const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
 
     // the rider's order of 2026-10-16: engine speed, throttle, wheels, settings; the
     // engine speed and PWR on the left. The values are right-aligned in both columns and
-    // end in column 9 on the left and 19 on the right, '%' included, so nothing sticks out
-    // past the others. PWR's number stays in column 8 whether its 'T' is there or not,
-    // so it does not jump when the dash changes display.
+    // end in column 9 on the left and 19 on the right, '%' and PWR's 'T' included, so
+    // nothing sticks out past the others.
     int y = content_y + 0 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "RPM");
     cell(y, big, left_col + 5, engine_color, "%s", b);

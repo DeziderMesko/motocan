@@ -1874,7 +1874,17 @@ the `T` stood one column past every other value.
   `Gear` +8, `Rear` +6, `TCS` +7. `Grip`, `TPS` and `PWR` stay where patch 26 put them.
 - `PWR`'s number stays in column 8 with or without its `T`, rather than moving to column 9
   when there is none, so it does not jump when the dash changes display. It is the one
-  digit not under the others while the dash is not on Track.
+  digit not under the others while the dash is not on Track. *(2026-10-17: reversed by
+  [patch 28](#patch-28--pwrs-number-right-aligned-too--applied-not-uploaded); the rider
+  chose alignment over a still number.)*
+
+## Patch 28 — PWR's number right-aligned too — **applied, not uploaded**
+
+2026-10-17, the rider's choice between the two ways patch 27 could have gone.
+
+- `PWR` is right-aligned like every other value: without the `T` its number is in column
+  9, under the others; on the Track display it moves to column 8 and the `T` takes
+  column 9. A stale `PWR` shows its dash in column 9.
 
 ## Open questions before the bike
 
