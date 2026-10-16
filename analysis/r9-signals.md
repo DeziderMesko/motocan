@@ -27,14 +27,14 @@ the old wording is struck through and the date says when.
 | `0x27C` | 100 Hz | gear — byte 4, low 3 bits; `7` = between gears | confirmed, 12 anchors of 12 |
 | | | TCS — byte 3, `(b3 >> 1) & 0x0F` | confirmed, 9 anchors of 9 (four more in Track 1–4, 2026-10-16). ~~byte 3 `>> 1`~~: corrected 2026-10-16, because bit 5 above it is set in gear with the engine running, and `b3 >> 1` then reads 16 too high. AiM's DBC for the MT-09 has the field 4 bits wide |
 | | | byte 3, bit 0 — set for about half a second as the starter turns | seen at all four starts captured. **Not set when the start button was pressed with the start blocked** (second gear, sidestand down, 2026-10-16), so it follows the starter or the ECU's command to run it, not the button. Once, for 0.14 s, with the engine running (19:21:15.9 on 2026-10-16), unexplained |
-| | | byte 3, bit 5 — set in gear with the engine running | both times first gear went in with the engine running, 2026-10-16; not set in second gear with the engine off. Same frames as `0x765` byte 1 bit 0 |
+| | | byte 3, bit 5 — set in gear with the engine running | both times first gear went in with the engine running, 2026-10-16; not set in second gear with the engine off. Same frames as `0x765` byte 1 bit 0. **Candidate: the low bit of a 3-bit gear**, bits 29–31, which AiM's R1 file calls `ECU_GEAR` beside the raw gear at 32–34 — see [AiM's files](#held-against-aims-dbc-files). Only first gear has been seen with the engine running, and 1 is what that gear would read. Bits 6 and 7 have never been set |
 | | | engine speed — bytes 0–1, big-endian, `raw * 100 / 256` rpm (×0.390625): byte 0 is hundreds of rpm, byte 1 the fraction | the sound of the engine gave 0.3915 ± 1.5 % at idle; the hundreds sent separately in `0x750` give the exact form and hold to 3 400 rpm |
-| | | **PWR − 1** — byte 4, top 2 bits | named 2026-10-16: PWR 1, 2, 3, 3 on the dash in Track 1–4, 0, 1, 2, 2 here, 4 anchors of 4, photographed ([the fourth capture](captures/session-2026-10-16_191234/README.md#track-14-and-what-the-2-bit-field-is)). By it sport is PWR 2, street 3, rain 4, custom 1 PWR 1, which is a reading of the field, not of the dash. ~~a 2-bit setting that goes with the ride mode; PWR at a guess~~. Custom 2 read `2` in the first capture and `1` in the two after it: a PWR change in custom 2 between them is now the likely reason |
+| | | **PWR − 1** — byte 4, top 2 bits; AiM's R1 file has `ECU_POW_MODE` at the same bits | named 2026-10-16: PWR 1, 2, 3, 3 on the dash in Track 1–4, 0, 1, 2, 2 here, 4 anchors of 4, photographed ([the fourth capture](captures/session-2026-10-16_191234/README.md#track-14-and-what-the-2-bit-field-is)). By it sport is PWR 2, street 3, rain 4, custom 1 PWR 1, which is a reading of the field, not of the dash. ~~a 2-bit setting that goes with the ride mode; PWR at a guess~~. Custom 2 read `2` in the first capture and `1` in the two after it: a PWR change in custom 2 between them is now the likely reason |
 | | | byte 6, bit 7 — set at the first start after key-on; clears for a third of a second at each later start | corrected 2026-10-16: it stayed set after all three engine stops captured (2026-10-11 20:21:23.8, 2026-10-16 19:20:35.7 and 19:21:18.0) and cleared only at a restart. ~~set while the engine runs — set within half a second of both starts seen, cleared at the one stop seen~~; the stop on 2026-10-11 did not clear it either, the capture says so. When it clears at key-off has not been seen |
 | | | **rear wheel pulses** — byte 2, the count in each 10 ms frame, 0–2 | named 2026-10-16: 46.4 pulses for each revolution of the rear wheel by `0x756`, in three stretches; 46.2 against the video. Counts at speeds below where `0x756` shows anything. ~~`01` for a single frame, six times, while the bike was being lifted~~: that was the wheel turning a fraction |
 | `0x512` | 1 Hz | water temperature — byte 0, `raw*0.625 - 30` °C | confirmed, 6 anchors from 17 to 76 °C, within 2 °C of the dash |
 | | | air temperature — byte 1, same equation | found: after a cold soak it reads the same raw value as the water sensor, 76; the dash shows it a degree or two lower than the equation does (16 against 17.5) |
-| | | byte 3 — zero with the engine off, about 55 falling to 24 as it warms | unknown |
+| | | byte 3 — zero with the engine off, about 55 falling to 24 as it warms | unknown. Not the manifold pressure AiM's MT-09 file guesses for this frame: a pressure would read the atmosphere with the engine off, not zero. Byte 2 beside it is `00` in every frame of all five captures |
 | `0x751` | 100 Hz | neutral / in gear — byte 6, `0x60` / `0x00` | agrees with every change into and out of neutral at rest. **Not neutral alone** (2026-10-16): in first gear with the engine running it read `0x60`, `0x20` for 1.6 s as the clutch went out, then `0x60` again while the wheel was driven; in second gear, engine off, `0x40` and then `0x00`. Bits 5 and 6 are start permissions at a guess (neutral, clutch, sidestand) — see [the fifth capture](captures/session-2026-10-16_192421/README.md#the-blocked-start) |
 | | | byte 6 goes `0x60` → `0x70` half a minute after a start, in both sessions with one, and again 30 s after the restart on 2026-10-16 | unknown |
 | | | a noisy 12-bit value | does not follow lean — see [the third capture](captures/session-2026-10-11_200550/README.md) |
@@ -83,6 +83,60 @@ Looked for and not found:
   `0x756`, `0x765` and the pulses in `0x27C` byte 2, above.
 - **Two wheel-speed channels beyond these**: nothing else in the 23 ids moved with either
   wheel turning by hand.
+
+## Held against AiM's DBC files
+
+Written 2026-10-16, once the captures of that day had named enough to compare. The files
+are AiM's protocols for the MT-09 and for the 2015+ R1, copied in
+[sources/aim-yamaha/](sources/aim-yamaha/README.md). Neither is about the R9, and AiM's
+own guide sends Euro5 MT-09 owners to OBD-II requests rather than to its MT-09 broadcast
+protocol, which is why none of the MT-09 file's ids is on this connector. Everything in this
+section is a reading of AiM's files against the captures: it names candidates and tests,
+and nothing in the summary table above rests on it.
+
+**`0x27C` has the R1's `0x209` layout, bit for bit, in bytes 3 and 4.**
+
+| Bits | AiM, R1 `0x209` | R9 `0x27C`, measured |
+|---|---|---|
+| 24 | — | the starter bit |
+| 25–28 | `TCS_MODE`, 4 bits | TCS, 4 bits since 2026-10-16; it was read as 7 until bit 29 turned up |
+| 29–31 | `ECU_GEAR`, 3 bits | bit 29 set in first gear with the engine running; 30 and 31 never set |
+| 32–34 | `ECU_GEAR_RAW`, 3 bits | the gear, `7` between gears |
+| 38–39 | `ECU_POW_MODE`, 2 bits | PWR − 1 |
+
+Three fields of five land where the R1's are, and the TCS width came from this file before
+the captures showed why. That makes it likely that bits 29–31 are a second gear field, the
+one the ECU works with, set only with the engine running, and that the "raw" one is what
+the box's sensor says. The test is second gear with the engine running on the stand:
+bit 30 instead of bit 29, byte 3 `0x42` instead of `0x22` at TCS 1. AiM's own value table
+for `ECU_GEAR` has `10` = "-", which 3 bits cannot hold, so the file is not exact here
+either.
+
+**AiM's 16-bit fields are very likely big-endian, written down as little-endian.** The R1's
+engine speed is declared `8|16@1+`, bytes 1–2 low byte first. On the R9 the same quantity is
+bytes 0–1, high byte first, measured. A converter that writes a big-endian field as Intel
+with the start bit of its low byte produces exactly `8|16@1+`. Read that way, the R1's
+`0x260` loses its impossible ninth byte (its last field becomes bytes 6–7), and the MT-09's
+"maybe MAP" in its temperature frame becomes bytes 2–3. The "LE per [S6]" notes in
+[background/pre-bike-mapping.md](background/pre-bike-mapping.md) rest on the file's
+declaration and not on a measurement.
+
+**Wheel speed: the R1 file has 0.01 km/h for both wheels**, which is the unit the R9's
+`0x756` fits on its tyre. That is the only support the unit has besides the tyre's size.
+The MT-09 file's two speeds, ×0.0025 and ×0.6 km/h, differ by 240 times and the second
+reaches 39 000 km/h; on the R9 both wheels are in one unit. Neither file's plain 16-bit
+layout would decode the R9's fields, which are split over nibbles.
+
+**The throttle valve may be in degrees.** The R1's `ECU_THROTTLE` is 10 bits at 0.15° a
+count. If it is the R9's 12-bit valve without its two lowest bits, the valve is 0.0375° a
+count: fully open at 86.6°, a warm idle at 6.6°, 12° at rest with the engine off. Those are
+believable angles for a throttle plate. One coincidence of scale, no measurement; the
+percent in use stays. The R1's `ECU_TPS_HAND`, 0.145 % a count, maps onto nothing in the
+R9's grip field.
+
+**Engine speed**: the R1 file's ×0.4 is 2.4 % off the R9's exact 100/256, and the MT-09's
+0.391 is that number rounded. The MT-09 file's temperatures, ×0.625 − 30, are the R9's
+exactly; the R1 file's ×0.66 − 36 is not (17.5 °C against 14.2 at the cold anchor).
 
 ## Everything that changes and has no name
 
