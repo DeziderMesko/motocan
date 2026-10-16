@@ -56,7 +56,7 @@ The page name is in the footer.
 ```
 bluecan advertising
 Gear 3     RPM  8450
-Rear  97   Front  97
+Front  97  Rear  97
 Grip  42%  Valve  38%
 TCS 7      PWR 2 Trk
 Water  76C  Air  17C  Valve cmd  14.5%
@@ -66,7 +66,7 @@ Water  76C  Air  17C  Valve cmd  14.5%
 |---|---|---|
 | `Gear` | `N`, `1`–`6`, `-` while between gears | `0x27C`, 100 Hz |
 | `RPM` | engine speed | `0x27C` |
-| `Rear`, `Front` | wheel speeds, whole km/h. The scale is held to a video of the rear wheel, not yet to the dash. On a stand with the rear driven, `Front` has been seen to show the rear's speed. `Front` is decoded from twelve bits, which end at 41 km/h: above that it is not known what it shows | `0x756`, 20 Hz; `0x765`, 10 Hz |
+| `Front`, `Rear` | wheel speeds, whole km/h, the front on the left. The scale is held to a video of the rear wheel, not yet to the dash. On a stand with the rear driven, `Front` has been seen to show the rear's speed. Only twelve bits of `Front` are known, which end at 41 km/h. Above that it takes byte 0's high nibble as the top four bits, a guess put there to be tested: on a stand, while `Front` copies the rear, the two should agree past 41 km/h if it is right ([open question 10](../analysis/open-questions.md)) | `0x765`, 10 Hz; `0x756`, 20 Hz |
 | `TCS` | the traction control setting, as on the dash | `0x27C` |
 | `PWR` | the PWR setting, 1–4, as on the dash. `Trk` beside it while the dash is on its Track display. Which mode is selected is not on the bus, only the settings it makes | `0x27C`; `Trk` from `0x76E`, 2 Hz |
 | `Grip` | throttle grip, %. Reads 0 for the first twentieth of its travel | `0x758`, 20 Hz |

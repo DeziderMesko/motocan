@@ -1776,7 +1776,7 @@ the 2 485 distinct `0x756` payloads, 520 of `0x765` and 18 of `0x76E` (counted p
 ways. Uploaded to the board the same evening; the panel has not been looked at yet, and
 nothing has been on the bike.
 
-## Patch 22 — a review's fixes: the latch's fences, the proof window, a comment — **applied and built, not uploaded**
+## Patch 22 — a review's fixes: the latch's fences, the proof window, a comment — **applied, uploaded with patch 23**
 
 2026-10-16, from a review of the firmware and of the repository's notes the same evening.
 Nothing here was seen to go wrong; each is a place the code did not do what its comment
@@ -1804,7 +1804,24 @@ said.
   40.95 km/h at 0.01 km/h a count.
 
 Built clean; [tools/r9-decode-check.py](../firmware/tools/r9-decode-check.py) passes on all
-five captures. Not uploaded to the board.
+five captures. Not uploaded to the board then; it went up with patch 23 the same evening.
+
+## Patch 23 — the front wheel first, and a guessed top nibble for it — **applied, uploaded**
+
+2026-10-16, asked for by the rider.
+
+- The LIVE page shows `Front` on the left and `Rear` on the right.
+- `front_kmh_x100()` takes byte 0's high nibble of `0x765` as bits 12–15. **A guess**, made
+  to be tested: the front field's twelve known bits end at 40.95 km/h, and that nibble
+  is the first candidate for the rest, because it would make the high byte `b0` hi
+  followed by `b2` hi, the pairing `0x759` and `0x756` use
+  ([open question 10](../../analysis/open-questions.md)). It has read zero in every
+  capture, so below 41 km/h nothing changes, and
+  [r9-decode-check](../firmware/tools/r9-decode-check.py), which still passes on all five,
+  cannot see it. The DBC and the RaceChrono equation do not have it. The test is the stand:
+  while `0x765` copies `0x756`, the two numbers should stay equal past 41 km/h.
+
+Uploaded on the second attempt, as usual under WSL2. The panel has not been looked at yet.
 
 ## Open questions before the bike
 

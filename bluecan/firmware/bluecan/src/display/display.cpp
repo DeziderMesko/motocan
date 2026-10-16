@@ -1411,23 +1411,24 @@ void display::page_live() noexcept
     cell(y, big, right_col, ST77XX_YELLOW, "RPM");
     cell(y, big, right_col + 4, engine_color, "%s", b);
 
-    // --- 0x756 and 0x765: the wheel speeds, in whole km/h as the dash shows speed
-    const bool rear = CANDEC.latest(r9::id_rear, d, age) && age < stale_fast_ms;
+    // --- 0x765 and 0x756: the wheel speeds, in whole km/h as the dash shows speed;
+    // front on the left, the rider's choice of 2026-10-16
+    const bool front = CANDEC.latest(r9::id_front, d, age) && age < stale_fast_ms;
 
-    if (rear)
+    if (front)
     {
-        snprintf(a, sizeof(a), "%3u", (unsigned)((r9::rear_kmh_x100(d) + 50U) / 100U));
+        snprintf(a, sizeof(a), "%3u", (unsigned)((r9::front_kmh_x100(d) + 50U) / 100U));
     }
     else
     {
         snprintf(a, sizeof(a), " --");
     }
 
-    const bool front = CANDEC.latest(r9::id_front, d, age) && age < stale_fast_ms;
+    const bool rear = CANDEC.latest(r9::id_rear, d, age) && age < stale_fast_ms;
 
-    if (front)
+    if (rear)
     {
-        snprintf(b, sizeof(b), "%3u", (unsigned)((r9::front_kmh_x100(d) + 50U) / 100U));
+        snprintf(b, sizeof(b), "%3u", (unsigned)((r9::rear_kmh_x100(d) + 50U) / 100U));
     }
     else
     {
@@ -1435,10 +1436,10 @@ void display::page_live() noexcept
     }
 
     y = content_y + 2 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "Rear");
-    cell(y, big, left_col + 5, rear ? ST77XX_WHITE : color_grey_dim, "%s", a);
-    cell(y, big, right_col, ST77XX_YELLOW, "Front");
-    cell(y, big, right_col + 6, front ? ST77XX_WHITE : color_grey_dim, "%s", b);
+    cell(y, big, left_col, ST77XX_YELLOW, "Front");
+    cell(y, big, left_col + 6, front ? ST77XX_WHITE : color_grey_dim, "%s", a);
+    cell(y, big, right_col, ST77XX_YELLOW, "Rear");
+    cell(y, big, right_col + 5, rear ? ST77XX_WHITE : color_grey_dim, "%s", b);
 
     // --- 0x758: the grip and the throttle valve, in whole percent
     const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
