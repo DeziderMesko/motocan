@@ -46,10 +46,13 @@ namespace canbus
 namespace r9
 {
 
-constexpr uint32_t id_engine = 0x27C;     //!< engine speed, gear, TCS, the mode field; 100 Hz
+constexpr uint32_t id_engine = 0x27C;     //!< engine speed, gear, TCS, PWR; 100 Hz
 constexpr uint32_t id_temps = 0x512;      //!< water and air temperature; 1 Hz
+constexpr uint32_t id_rear = 0x756;       //!< rear wheel speed; 20 Hz
 constexpr uint32_t id_throttle = 0x758;   //!< the grip, and the throttle valve as measured; 20 Hz
 constexpr uint32_t id_valve_cmd = 0x759;  //!< the throttle valve as commanded; 20 Hz
+constexpr uint32_t id_front = 0x765;      //!< front wheel speed; 10 Hz
+constexpr uint32_t id_display = 0x76E;    //!< the dash's display setting, and PWR again; 2 Hz
 
 /// what gear() returns between gears
 constexpr uint8_t gear_between = 7U;
@@ -76,11 +79,12 @@ constexpr uint8_t tcs(const uint8_t* d) noexcept
     return (d[3] >> 1) & 0x0FU;
 }
 
-/// The PWR setting less one: PWR 1 reads 0, PWR 4 reads 3. Passed on as the number the
-/// bike sends, so it reads one less than the dash.
-constexpr uint8_t mode(const uint8_t* d) noexcept
+/// The PWR setting, 1-4, as the dash shows it. The top two bits of byte 4 carry it less
+/// one. It is not the ride mode: the mode's number is not on this bus, and two modes with
+/// the same settings send the same bytes.
+constexpr uint8_t pwr(const uint8_t* d) noexcept
 {
-    return d[4] >> 6;
+    return static_cast<uint8_t>((d[4] >> 6) + 1U);
 }
 
 // --- 0x512
@@ -101,6 +105,33 @@ constexpr int16_t water_tenths(const uint8_t* d) noexcept
 constexpr int16_t air_tenths(const uint8_t* d) noexcept
 {
     return temp_tenths(d[1]);
+}
+
+// --- 0x756 and 0x765
+
+/// A wheel speed in hundredths of a km/h, from the three nibble-aligned pieces Yamaha
+/// splits it into. The rear's scale is held to a video of the wheel: 700 counts per
+/// revolution a second, which as 0.01 km/h is a 1.946 m wheel, the size of the tyre.
+/// No dash speed has been noted against it yet.
+constexpr uint16_t rear_kmh_x100(const uint8_t* d) noexcept
+{
+    return static_cast<uint16_t>((static_cast<uint16_t>(d[1]) << 8) | (d[0] & 0xF0U) | (d[2] >> 4));
+}
+
+/// The front wheel, the same unit at a guess. On a stand with the rear driven it has
+/// been seen to carry the rear's value instead of its own.
+constexpr uint16_t front_kmh_x100(const uint8_t* d) noexcept
+{
+    return static_cast<uint16_t>(((d[2] >> 4) << 8) | ((d[6] >> 4) << 4) | (d[3] & 0x0FU));
+}
+
+// --- 0x76E
+
+/// true with the dash on its Track display, where the modes are Track 1-4. Byte 2 is
+/// 0x10 then and 0x20 on the normal display; one switch each way has been seen.
+constexpr bool track_display(const uint8_t* d) noexcept
+{
+    return d[2] == 0x10U;
 }
 
 // --- 0x758

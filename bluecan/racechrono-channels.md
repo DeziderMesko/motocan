@@ -1,13 +1,15 @@
 # RaceChrono channels for the R9
 
-What to type into RaceChrono so that it decodes what Bluecan streams. Nine channels from
-four frames. The signals themselves, and how sure each one is, are on
+What to type into RaceChrono so that it decodes what Bluecan streams. Twelve channels
+from seven frames. The signals themselves, and how sure each one is, are on
 [the front page](../README.md#what-is-decoded-so-far) and in
 [r9.dbc](../analysis/r9.dbc); this page is those equations in the form the app accepts.
 
 **Status, 2026-10-13.** Every equation here has been entered into RaceChrono Pro on
 Android and shown the right values, against a replay of the R9's own captures on the
-bench — except TCS, corrected on 2026-10-16 and not yet entered; see its section. None of it has been on the bike. Each was also computed outside the app on every
+bench — except what was added or corrected on 2026-10-16 and has not been entered yet:
+TCS, PWR, the two wheel speeds and the Track display. Those were computed outside the app
+on every frame of the two captures of that day and agree with the DBC. None of it has been on the bike. Each was also computed outside the app on every
 distinct payload in [the captures](../analysis/captures/) and agrees with the DBC.
 
 ## Where they go
@@ -66,18 +68,17 @@ show it. **If the old equation is in the app, replace it.** The new one has not 
 typed into the app yet; it is the same function and form as the grip's, which the app
 accepts.
 
-The mode field, which is the PWR setting less one — PWR 1 reads `0`, PWR 4 reads `3`
-(named on 2026-10-16 from photos of the dash). As entered, the number the bike sends:
-
-```
-bytesToUint(raw, 4, 1) >> 6
-```
-
-Or the number the dash shows, not yet tried in the app:
+PWR, 1–4, the number on the dash:
 
 ```
 bitsToUintLe(raw, 38, 2) + 1
 ```
+
+This replaces the "mode field" equation, `bytesToUint(raw, 4, 1) >> 6`, which gave the
+same thing less one. The field was named on 2026-10-16 from photos of the dash. It is PWR
+and not the ride mode: the mode's own number is not on this bus, and two modes with the
+same settings send the same bytes. The Track display below is the one thing about the mode
+that is.
 
 ## PID 1298 — `0x512`, 1 Hz
 
@@ -91,6 +92,39 @@ Intake air temperature, °C. The dash shows a degree or two less:
 
 ```
 bytesToUint(raw, 1, 1) * 0.625 - 30
+```
+
+## PID 1878 — `0x756`, 20 Hz
+
+Rear wheel speed, km/h:
+
+```
+(bitsToUintLe(raw, 8, 8) * 256 + bitsToUintLe(raw, 4, 4) * 16 + bitsToUintLe(raw, 20, 4)) / 100.0
+```
+
+The scale is held to a video of the wheel on a stand, not to the dash: 0.01 km/h a count
+makes the wheel 1.946 m round, which is what the tyre is. A steady speed read off the dash
+against this channel is the check still to do.
+
+## PID 1893 — `0x765`, 10 Hz
+
+Front wheel speed, km/h, the same unit at a guess:
+
+```
+(bitsToUintLe(raw, 20, 4) * 256 + bitsToUintLe(raw, 52, 4) * 16 + bitsToUintLe(raw, 24, 4)) / 100.0
+```
+
+On a stand with the rear wheel driven by the engine, this carried the rear's speed while
+the front stood still. On the road both turn together, so that should not show; on a
+stand, do not read it as the front.
+
+## PID 1902 — `0x76E`, 2 Hz
+
+`1` with the dash on its Track display, where the modes are Track 1–4, and `0` on the
+normal one:
+
+```
+if(bytesToUint(raw, 2, 1) == 16, 1, 0)
 ```
 
 ## PID 1880 — `0x758`, 20 Hz
@@ -137,7 +171,7 @@ names are the app's, read off its Live screen on 2026-10-13:
 | Engine RPM | engine speed | 636 |
 | Gear | gear | 636 |
 | **Digital 1** | **TCS** | 636 |
-| **Digital 2** | **the mode field** | 636 |
+| **Digital 2** | **PWR** (was the mode field, less one) | 636 |
 | Coolant temperature | water temperature | 1298 |
 | Air temperature | intake air temperature | 1298 |
 | Throttle position 1 | the throttle grip | 1880 |
@@ -147,9 +181,14 @@ That is eight channels on three PIDs. The ninth, the valve as commanded on PID 1
 its equation above and was not entered, so a recording session asks Bluecan for three ids
 and its BUS page reads `flt 3`.
 
-**TCS and the mode field have no channel of their own**, and went in as `Digital`.
+The three added on 2026-10-16 have no channel yet. The wheel speeds want whatever speed
+channels the app offers in that list, which was not looked at for this; the Track display
+would be `Digital 3`. Each adds a PID to what a recording session asks for.
+
+**TCS and PWR have no channel of their own**, and went in as `Digital`.
 Despite the name it is not a 0-or-1 channel: it shows the number the equation gives, so
-TCS reads 7 and the mode field 3.
+TCS reads 7 and PWR 4. (The replay below was with the old mode-field equation, which read
+3 for the same frame.)
 
 **Neither can be given a name.** The **Channel postfix** field is how two channels of the
 same kind are told apart in a session, but it is a choice from the app's own list — a
@@ -183,8 +222,9 @@ locked.
 
 ## What it costs the link
 
-Four ids with all nine channels, three as entered so far. Recording, the app asks for
-each at 50 ms, so about 61 frames a second cross the radio with four — 41 with three — out
-of the 506 on the bus — [numbers.md](history/numbers.md). The same four are what
-Bluecan decodes for its own LIVE page, which does not depend on any of this: it reads the
-frames ahead of the app's filter.
+Seven ids with all twelve channels, three as entered so far. Recording, the app asks for
+each at 50 ms, so about 61 frames a second cross the radio with the first four — 41 with
+three — out of the 506 on the bus — [numbers.md](history/numbers.md). The three added on
+2026-10-16 come slower than that: `0x756` at 20 a second, `0x765` at 10 and `0x76E` at 2,
+so all seven come to about 93. The same seven are what Bluecan decodes for its own LIVE
+page, which does not depend on any of this: it reads the frames ahead of the app's filter.

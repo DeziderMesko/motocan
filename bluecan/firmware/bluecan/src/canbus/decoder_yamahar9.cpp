@@ -60,7 +60,7 @@ namespace canbus
  *   writing this table from two contexts at once. Allow-all is the sniffer case
  *   anyway; the interval it carries is read, logged and then ignored.
  *
- * Four ids are known now (r9.hpp, from motocan/analysis/r9-signals.md), and the one thing
+ * Seven ids are known now (r9.hpp, from motocan/analysis/r9-signals.md), and the one thing
  * done with that knowledge here is to keep their latest payloads for the panel --
  * observe() and latest(). That is beside the allow-list, not part of it: it sees every
  * frame before the filter does, so the panel shows the bike whatever the phone asked
@@ -99,7 +99,7 @@ class decoder_yamahar9
         int64_t us;  ///< esp_timer_get_time() at arrival
     };
 
-    static constexpr size_t live_slots = 4;
+    static constexpr size_t live_slots = 7;
 
 public:
     static decoder_yamahar9& get() noexcept
@@ -177,8 +177,8 @@ public:
     /**
      * called from the CAN ISR for every standard data frame, before should_decode().
      *
-     * Four comparisons for the frames the panel does not decode, which is most of
-     * them; eight bytes and one systimer read for the ~141 a second that it does.
+     * Seven comparisons for the frames the panel does not decode, which is most of
+     * them; eight bytes and one systimer read for the ~173 a second that it does.
      */
     void observe(uint32_t id, const uint8_t* data, uint8_t dlc) noexcept override
     {
@@ -350,10 +350,14 @@ private:
         , _overflow(0U)
         , _live{}
     {
+        // in order of arrival rate, so the scan in observe() stops early most often
         _live[0].id = r9::id_engine;
-        _live[1].id = r9::id_temps;
-        _live[2].id = r9::id_throttle;
-        _live[3].id = r9::id_valve_cmd;
+        _live[1].id = r9::id_throttle;
+        _live[2].id = r9::id_valve_cmd;
+        _live[3].id = r9::id_rear;
+        _live[4].id = r9::id_front;
+        _live[5].id = r9::id_display;
+        _live[6].id = r9::id_temps;
     }
 
     /// written by the BLE task, read by the CAN ISR

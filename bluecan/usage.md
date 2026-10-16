@@ -56,25 +56,27 @@ The page name is in the footer.
 ```
 bluecan advertising
 Gear 3     RPM  8450
+Rear  97   Front  97
 Grip  42%  Valve  38%
-Water 76C  Air   17C
-TCS 7      Mode 3
-Valve commanded  14.5 %
+TCS 7      PWR 2 Trk
+Water  76C  Air  17C  Valve cmd  14.5%
 ```
 
 | Field | Shows | From |
 |---|---|---|
 | `Gear` | `N`, `1`–`6`, `-` while between gears | `0x27C`, 100 Hz |
 | `RPM` | engine speed | `0x27C` |
+| `Rear`, `Front` | wheel speeds, whole km/h. The scale is held to a video of the rear wheel, not yet to the dash. On a stand with the rear driven, `Front` has been seen to show the rear's speed | `0x756`, 20 Hz; `0x765`, 10 Hz |
 | `TCS` | the traction control setting, as on the dash | `0x27C` |
-| `Mode` | the PWR setting less one, as the bike sends it: PWR 1 shows `0`, PWR 4 shows `3` | `0x27C` |
+| `PWR` | the PWR setting, 1–4, as on the dash. `Trk` beside it while the dash is on its Track display. Which mode is selected is not on the bus, only the settings it makes | `0x27C`; `Trk` from `0x76E`, 2 Hz |
 | `Grip` | throttle grip, %. Reads 0 for the first twentieth of its travel | `0x758`, 20 Hz |
 | `Valve` | throttle valve as measured, %. Its zero is provisional: a warm idle reads about 8% | `0x758` |
-| `Water`, `Air` | coolant and intake air temperature, °C. The dash shows the air temperature 1–2 °C lower | `0x512`, 1 Hz |
-| `Valve commanded` | throttle valve as the engine control unit commands it, % | `0x759`, 20 Hz |
+| `Water`, `Air` | coolant and intake air temperature, °C, on the small line. The dash shows the air temperature 1–2 °C lower | `0x512`, 1 Hz |
+| `Valve cmd` | throttle valve as the engine control unit commands it, %, on the small line | `0x759`, 20 Hz |
 
 **A value that stops arriving turns to grey dashes**: after half a second for `0x27C`,
-`0x758` and `0x759`, after three seconds for `0x512`. With the key off, the whole page
+`0x756`, `0x758`, `0x759` and `0x765`, after three seconds for `0x512`. `Trk` disappears
+three seconds after `0x76E` stops. With the key off, the whole page
 goes to dashes.
 
 The page is decoded on the board, separately from what is sent to the phone, so it reads

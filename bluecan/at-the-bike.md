@@ -90,7 +90,7 @@ a running engine, so the BUS page comes first.
 |---|---|---|
 | 1 | Connect RaceChrono | header `connected`, then `SUB` with the interval; the light goes yellow |
 | 2 | Start recording, with the RaceBox locked | BUS reads **`flt 3`**, `lost 0`; the light goes green and blips |
-| 3 | Compare the app with LIVE | the same values. `Digital 1` is TCS, `Digital 2` the mode field |
+| 3 | Compare the app with LIVE | the same values. `Digital 1` is TCS, `Digital 2` PWR (the mode field less one, if the old equation is still in the app) |
 | 4 | **Look at the Time tile and the `Hz` figures** | both filled in, now that the GPS has a lock — they were empty on the bench without one, and the reason was never confirmed. About 20 Hz for the channels on PIDs 636 and 1880, 1 Hz for the temperatures |
 | 5 | Stop, and open the session | the CAN channels are in it, with data |
 

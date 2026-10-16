@@ -39,7 +39,8 @@ int main()
             --idp;
         }
         const uint32_t id = static_cast<uint32_t>(strtoul(idp, nullptr, 16));
-        if (id != r9::id_engine && id != r9::id_temps && id != r9::id_throttle && id != r9::id_valve_cmd)
+        if (id != r9::id_engine && id != r9::id_temps && id != r9::id_throttle && id != r9::id_valve_cmd
+            && id != r9::id_rear && id != r9::id_front && id != r9::id_display)
         {
             continue;
         }
@@ -67,9 +68,18 @@ int main()
         switch (id)
         {
         case r9::id_engine:
-            printf(" rpm=%u gear=%u tcs=%u mode=%u", static_cast<unsigned>(r9::rpm(d)),
+            printf(" rpm=%u gear=%u tcs=%u pwr=%u", static_cast<unsigned>(r9::rpm(d)),
                    static_cast<unsigned>(r9::gear(d)), static_cast<unsigned>(r9::tcs(d)),
-                   static_cast<unsigned>(r9::mode(d)));
+                   static_cast<unsigned>(r9::pwr(d)));
+            break;
+        case r9::id_rear:
+            printf(" rear=%u", static_cast<unsigned>(r9::rear_kmh_x100(d)));
+            break;
+        case r9::id_front:
+            printf(" front=%u", static_cast<unsigned>(r9::front_kmh_x100(d)));
+            break;
+        case r9::id_display:
+            printf(" track=%u", r9::track_display(d) ? 1U : 0U);
             break;
         case r9::id_temps:
             printf(" water=%d air=%d", static_cast<int>(r9::water_tenths(d)), static_cast<int>(r9::air_tenths(d)));

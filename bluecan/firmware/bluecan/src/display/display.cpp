@@ -444,9 +444,24 @@ void display::stats() noexcept
 
                 if (CANDEC.latest(r9::id_engine, d, age))
                 {
-                    infoln("          R9 0x27C: rpm %lu, gear %u, TCS %u, mode %u (%lu ms old)",
+                    infoln("          R9 0x27C: rpm %lu, gear %u, TCS %u, PWR %u (%lu ms old)",
                            (unsigned long)r9::rpm(d), (unsigned)r9::gear(d), (unsigned)r9::tcs(d),
-                           (unsigned)r9::mode(d), (unsigned long)age);
+                           (unsigned)r9::pwr(d), (unsigned long)age);
+                }
+                if (CANDEC.latest(r9::id_rear, d, age))
+                {
+                    infoln("          R9 0x756: rear %u hundredths km/h (%lu ms old)",
+                           (unsigned)r9::rear_kmh_x100(d), (unsigned long)age);
+                }
+                if (CANDEC.latest(r9::id_front, d, age))
+                {
+                    infoln("          R9 0x765: front %u hundredths km/h (%lu ms old)",
+                           (unsigned)r9::front_kmh_x100(d), (unsigned long)age);
+                }
+                if (CANDEC.latest(r9::id_display, d, age))
+                {
+                    infoln("          R9 0x76E: %s display (%lu ms old)",
+                           r9::track_display(d) ? "Track" : "normal", (unsigned long)age);
                 }
                 if (CANDEC.latest(r9::id_temps, d, age))
                 {
@@ -1342,13 +1357,14 @@ void display::page_live() noexcept
     // A frame older than this is shown as dashes rather than as its last value. A
     // number that has stopped arriving looks exactly like one that has stopped
     // changing, and with the key off that would leave the last engine speed standing
-    // on the glass. Half a second is 50 frames of 0x27C and 10 of 0x758 and 0x759;
-    // 0x512 comes once a second, so it gets three.
+    // on the glass. Half a second is 50 frames of 0x27C, 10 of 0x756, 0x758 and 0x759,
+    // and 5 of 0x765; 0x512 comes once a second and 0x76E twice, so they get three.
     constexpr uint32_t stale_fast_ms = 500;
     constexpr uint32_t stale_slow_ms = 3000;
 
     // Four lines at text size 2 -- twenty columns, two values a line -- on every
-    // second content row, and one line at size 1 under them. Labels sit at fixed
+    // second content row, and one line at size 1 under them: what changes as the bike
+    // moves is big, the temperatures and the commanded valve are small. Labels sit at fixed
     // columns and never change, so they are drawn once; each value is padded to a
     // fixed width so a shorter one cannot leave the tail of a longer one behind.
     // The right-hand label starts at column 11 rather than 10 so that a three-digit
@@ -1362,10 +1378,12 @@ void display::page_live() noexcept
     char a[8];
     char b[8];
 
-    // --- 0x27C: gear and engine speed, and further down TCS and the mode field
+    // --- 0x27C: gear and engine speed, and further down TCS and PWR. Next to PWR,
+    // "Trk" while 0x76E says the dash is on its Track display. Which mode it is cannot
+    // be shown: the bus carries the settings a mode makes, not its number.
     const bool engine = CANDEC.latest(r9::id_engine, d, age) && age < stale_fast_ms;
     char tcs[8];
-    char mode[8];
+    char pwr[8];
 
     if (engine)
     {
@@ -1373,14 +1391,16 @@ void display::page_live() noexcept
         snprintf(a, sizeof(a), "%c", g == 0U ? 'N' : g == r9::gear_between ? '-' : static_cast<char>('0' + g));
         snprintf(b, sizeof(b), "%5lu", (unsigned long)r9::rpm(d));
         snprintf(tcs, sizeof(tcs), "%-2u", (unsigned)r9::tcs(d));
-        snprintf(mode, sizeof(mode), "%u", (unsigned)r9::mode(d));
+        const uint8_t p = r9::pwr(d);
+        const bool track = CANDEC.latest(r9::id_display, d, age) && age < stale_slow_ms && r9::track_display(d);
+        snprintf(pwr, sizeof(pwr), "%u%s", (unsigned)p, track ? " Trk" : "    ");
     }
     else
     {
         snprintf(a, sizeof(a), "-");
         snprintf(b, sizeof(b), "   --");
         snprintf(tcs, sizeof(tcs), "--");
-        snprintf(mode, sizeof(mode), "-");
+        snprintf(pwr, sizeof(pwr), "-    ");
     }
 
     const uint16_t engine_color = engine ? ST77XX_WHITE : color_grey_dim;
@@ -1390,6 +1410,35 @@ void display::page_live() noexcept
     cell(y, big, left_col + 5, engine_color, "%s", a);
     cell(y, big, right_col, ST77XX_YELLOW, "RPM");
     cell(y, big, right_col + 4, engine_color, "%s", b);
+
+    // --- 0x756 and 0x765: the wheel speeds, in whole km/h as the dash shows speed
+    const bool rear = CANDEC.latest(r9::id_rear, d, age) && age < stale_fast_ms;
+
+    if (rear)
+    {
+        snprintf(a, sizeof(a), "%3u", (unsigned)((r9::rear_kmh_x100(d) + 50U) / 100U));
+    }
+    else
+    {
+        snprintf(a, sizeof(a), " --");
+    }
+
+    const bool front = CANDEC.latest(r9::id_front, d, age) && age < stale_fast_ms;
+
+    if (front)
+    {
+        snprintf(b, sizeof(b), "%3u", (unsigned)((r9::front_kmh_x100(d) + 50U) / 100U));
+    }
+    else
+    {
+        snprintf(b, sizeof(b), " --");
+    }
+
+    y = content_y + 2 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "Rear");
+    cell(y, big, left_col + 5, rear ? ST77XX_WHITE : color_grey_dim, "%s", a);
+    cell(y, big, right_col, ST77XX_YELLOW, "Front");
+    cell(y, big, right_col + 6, front ? ST77XX_WHITE : color_grey_dim, "%s", b);
 
     // --- 0x758: the grip and the throttle valve, in whole percent
     const bool throttle = CANDEC.latest(r9::id_throttle, d, age) && age < stale_fast_ms;
@@ -1407,13 +1456,22 @@ void display::page_live() noexcept
 
     const uint16_t throttle_color = throttle ? ST77XX_WHITE : color_grey_dim;
 
-    y = content_y + 2 * row_h;
+    y = content_y + 4 * row_h;
     cell(y, big, left_col, ST77XX_YELLOW, "Grip");
     cell(y, big, left_col + 5, throttle_color, "%s", a);
     cell(y, big, right_col, ST77XX_YELLOW, "Valve");
     cell(y, big, right_col + 5, throttle_color, "%s", b);
 
-    // --- 0x512: the two temperatures, in whole degrees
+    // --- 0x27C again
+    y = content_y + 6 * row_h;
+    cell(y, big, left_col, ST77XX_YELLOW, "TCS");
+    cell(y, big, left_col + 4, engine_color, "%s", tcs);
+    cell(y, big, right_col, ST77XX_YELLOW, "PWR");
+    cell(y, big, right_col + 4, engine_color, "%s", pwr);
+
+    // --- the size-1 line: 0x512's two temperatures in whole degrees, and 0x759's
+    // valve as commanded, with its tenth -- it leads the measured one by a sample and is
+    // only interesting next to it.
     const bool temps = CANDEC.latest(r9::id_temps, d, age) && age < stale_slow_ms;
 
     if (temps)
@@ -1426,45 +1484,32 @@ void display::page_live() noexcept
     }
     else
     {
-        snprintf(a, sizeof(a), "  --");
-        snprintf(b, sizeof(b), "  --");
+        snprintf(a, sizeof(a), " --C");
+        snprintf(b, sizeof(b), " --C");
     }
 
     const uint16_t temps_color = temps ? ST77XX_WHITE : color_grey_dim;
 
-    y = content_y + 4 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "Water");
-    cell(y, big, left_col + 6, temps_color, "%s", a);
-    cell(y, big, right_col, ST77XX_YELLOW, "Air");
-    cell(y, big, right_col + 4, temps_color, "%s", b);
-
-    // --- 0x27C again. Mode is the number the bike sends and nothing more: the PWR
-    // setting less one.
-    y = content_y + 6 * row_h;
-    cell(y, big, left_col, ST77XX_YELLOW, "TCS");
-    cell(y, big, left_col + 4, engine_color, "%s", tcs);
-    cell(y, big, right_col, ST77XX_YELLOW, "Mode");
-    cell(y, big, right_col + 5, engine_color, "%s", mode);
-
-    // --- 0x759: the valve as commanded, which leads the measured one by a sample.
-    // At size 1, with its tenth: it is the one value here that is only interesting
-    // next to another.
     const bool cmd = CANDEC.latest(r9::id_valve_cmd, d, age) && age < stale_fast_ms;
     char c[12];
 
     if (cmd)
     {
         const unsigned t = r9::valve_cmd_tenths(d);
-        snprintf(c, sizeof(c), "%3u.%u %%", t / 10U, t % 10U);
+        snprintf(c, sizeof(c), "%3u.%u%%", t / 10U, t % 10U);
     }
     else
     {
-        snprintf(c, sizeof(c), "   -- %%");
+        snprintf(c, sizeof(c), "  --  ");
     }
 
     y = content_y + 8 * row_h;
-    cell(y, 1, 0, ST77XX_YELLOW, "Valve commanded");
-    cell(y, 1, 16, cmd ? ST77XX_WHITE : color_grey_dim, "%s", c);
+    cell(y, 1, 0, ST77XX_YELLOW, "Water");
+    cell(y, 1, 6, temps_color, "%s", a);
+    cell(y, 1, 12, ST77XX_YELLOW, "Air");
+    cell(y, 1, 16, temps_color, "%s", b);
+    cell(y, 1, 22, ST77XX_YELLOW, "Valve cmd");
+    cell(y, 1, 32, cmd ? ST77XX_WHITE : color_grey_dim, "%s", c);
 }
 
 void display::page_ids() noexcept

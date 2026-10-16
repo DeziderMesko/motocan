@@ -1751,6 +1751,31 @@ The RaceChrono equation had the same fault and is corrected in
 [racechrono-channels.md](../racechrono-channels.md); the new one has not been typed into
 the app yet.
 
+## Patch 21 — the wheel speeds and PWR on the LIVE page — **applied, checked against the captures, uploaded**
+
+2026-10-16, the same evening as patch 20. The captures of that day named the wheel speeds
+(`0x756` rear, `0x765` front), the 2-bit mode field as PWR less one, and a byte in `0x76E`
+that tells the Track display from the normal one
+([r9-signals.md](../../analysis/r9-signals.md)). The panel now shows them.
+
+- `r9.hpp` gains `rear_kmh_x100()`, `front_kmh_x100()` and `track_display()`, and `mode()`
+  becomes `pwr()`, which adds the one: the panel shows PWR 1–4 as the dash does.
+- The latch keeps seven ids instead of four: `0x756`, `0x765` and `0x76E` join, ordered by
+  rate so the ISR's scan stops early most often. That is seven comparisons per frame
+  instead of four, and about 173 copies a second instead of 141.
+- The LIVE page: `Gear`/`RPM`, then `Rear`/`Front` in whole km/h, `Grip`/`Valve`,
+  `TCS`/`PWR`, and the temperatures and the commanded valve on the small line at the
+  bottom. `PWR` gets `Trk` beside it while `0x76E` says Track display. The rider asked for
+  the mode itself — SP, ST, RA, C1, C2, T1–T4 — and it cannot be had: the bus carries the
+  settings a mode makes, and two modes with the same settings send the same bytes.
+- The console's once-a-second dump prints the three new ids.
+
+[tools/r9-decode-check.py](../firmware/tools/r9-decode-check.py) checks the new functions
+too, against the DBC's three-piece fields, and passes on all five captures: every one of
+the 2 485 distinct `0x756` payloads, 520 of `0x765` and 18 of `0x76E` (counted per capture) decodes the same both
+ways. Uploaded to the board the same evening; the panel has not been looked at yet, and
+nothing has been on the bike.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

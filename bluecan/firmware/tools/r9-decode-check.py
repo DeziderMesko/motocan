@@ -10,8 +10,8 @@ panel is the one place a wrong one would be believed: it is what gets held up ag
 dash. So this compiles the firmware's own header on the host, runs the captures through
 it, and decodes the same payloads again with cantools from the DBC.
 
-The DBC cannot join the grip and the valve -- each is split over fields that are not
-adjacent -- so its comments carry those equations in words, and they are written out
+The DBC cannot join the grip, the valve or the wheel speeds -- each is split over fields
+that are not adjacent -- so its comments carry those equations in words, and they are written out
 again below. That is a third copy, and it is the reason this file is short enough to
 read against the DBC in one sitting.
 
@@ -42,7 +42,13 @@ def expected(db, can_id, payload):
     """What r9.dbc says this payload holds, in the firmware's units."""
     s = db.decode_message(can_id, payload, decode_choices=False)
     if can_id == 0x27C:
-        return {'rpm': s['EngineSpeed'], 'gear': s['Gear'], 'tcs': s['TCS'], 'mode': s['ModeField']}
+        return {'rpm': s['EngineSpeed'], 'gear': s['Gear'], 'tcs': s['TCS'], 'pwr': s['ModeField'] + 1}
+    if can_id == 0x756:
+        return {'rear': s['RearSpeed_Hi'] * 256 + s['RearSpeed_Mid'] * 16 + s['RearSpeed_Lo']}
+    if can_id == 0x765:
+        return {'front': s['FrontSpeed_Hi'] * 256 + s['FrontSpeed_Mid'] * 16 + s['FrontSpeed_Lo']}
+    if can_id == 0x76E:
+        return {'track': 1 if s['Display'] == 16 else 0}
     if can_id == 0x512:
         return {'water': s['WaterTemp'] * 10, 'air': s['AirTemp'] * 10}
     if can_id == 0x758:
