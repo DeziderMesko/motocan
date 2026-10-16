@@ -618,8 +618,10 @@ T
 task_track() {
     hdr "TRACK DISPLAY, TRACK 1-4"
     cat <<'T'
-   Start on the normal display, in a mode recorded before. Then:
-   display to Track, press d, press i and sit still. Then each Track
+   Start on the normal display, in a mode recorded before. Press i and
+   sit still: that clears the window, so what d prints next is the
+   switch and nothing older. Then display to Track, press d, press i
+   and sit still again. Then each Track
    mode: select it, settle, press its number -- and for every setting
    the dash shows for that mode, press v and type it. At the end the
    display back to normal, n, and i once more.
