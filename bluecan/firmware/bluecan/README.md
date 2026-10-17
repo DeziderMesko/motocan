@@ -66,7 +66,7 @@ a RaceChrono CAN reader for BMW G8x cars, taken at its last commit of 2023-10-01
 structure is still there: the register-level receive interrupt, the decoder per vehicle,
 the two-core split. The R9 decoder, the display, acknowledging, the allow-list, the
 battery gauge and most of the CAN and Bluetooth paths were written here. The BMW
-decoder, upstream's documentation and its log-parsing tool were removed on 2026-10-14.
+decoder, upstream's documentation and its log-parsing tool are removed.
 
 MIT licence, Joe Roback's copyright and this project's — see [LICENSE](LICENSE). The
 history of every change since the fork is in
