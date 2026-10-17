@@ -15,7 +15,9 @@ and agree with the DBC on every frame of all six captures.
 **2026-10-17: everything on this page except the Track display has been entered**, TCS,
 PWR, both wheel speeds and the valve as commanded among it. The app accepted every
 equation as typed, the 110-character front wheel's too. The values have not been seen in
-the app yet, against a replay or on the bike. The Track display was left out by choice. None of it has been on the bike. Each was also computed outside the app on every
+the app yet, against a replay or on the bike. *(Later on 2026-10-17: against a replay, the
+wheel speeds read about 3.6 times too fast in the app, because it takes speed in m/s;
+both equations now divide by 360.0. The corrected ones have not been entered yet.)* The Track display was left out by choice. None of it has been on the bike. Each was also computed outside the app on every
 distinct payload in [the captures](../analysis/captures/) and agrees with the DBC.
 
 ## Where they go
@@ -25,7 +27,7 @@ under *OBD-II channels*. Each channel is four things: the **Channel** to map ont
 **Channel postfix**), a **PID**, an **Equation**, and a *Source data* row that shows the
 live bytes for that PID when *Use live data* is ticked, with the result under *Solution*.
 
-Three things about the app that cost time here:
+Four things about the app that cost time here:
 
 - **The PID is entered in decimal.** `0x27C` is `636`.
 - **Long equations are refused**, with a complaint about the number of brackets, though
@@ -34,6 +36,11 @@ Three things about the app that cost time here:
   length or the operators was not settled; the short form below is the one that went in.
 - **Write `100.0`, not `100`.** Dividing two integers rounds down, so a percentage built
   from integers comes out as a whole number or as zero.
+- **A speed channel takes metres a second**, and the app converts it to km/h for
+  display. The bus counts 0.01 km/h, so the wheel speeds divide by 360.0, not 100.0.
+  Divided by 100.0 they read 3.6 times too fast: seen on 2026-10-17 against a replay of
+  [session-2026-10-17_123714](../analysis/captures/session-2026-10-17_123714/README.md),
+  where Bluecan's screen read right and the app did not.
 
 The functions are RaceChrono's own, documented at
 [racechrono.com/support/equations](https://racechrono.com/support/equations).
@@ -102,10 +109,10 @@ bytesToUint(raw, 1, 1) * 0.625 - 30
 
 ## PID 1878 — `0x756`, 20 Hz
 
-Rear wheel speed, km/h:
+Rear wheel speed, entered in m/s and shown by the app in km/h:
 
 ```
-(bitsToUintLe(raw, 28, 4) * 4096 + bitsToUintLe(raw, 4, 8) * 16 + bitsToUintLe(raw, 20, 4)) / 100.0
+(bitsToUintLe(raw, 28, 4) * 4096 + bitsToUintLe(raw, 4, 8) * 16 + bitsToUintLe(raw, 20, 4)) / 360.0
 ```
 
 `bitsToUintLe(raw, 4, 8)` takes byte 0's high nibble and byte 1's low one together, which
@@ -116,10 +123,10 @@ speedometer reads high.
 
 ## PID 1893 — `0x765`, 10 Hz
 
-Front wheel speed, km/h, the same unit:
+Front wheel speed, the same unit:
 
 ```
-(bitsToUintLe(raw,4,4)*4096+bitsToUintLe(raw,20,4)*256+bitsToUintLe(raw,52,4)*16+bitsToUintLe(raw,24,4))/100.0
+(bitsToUintLe(raw,4,4)*4096+bitsToUintLe(raw,20,4)*256+bitsToUintLe(raw,52,4)*16+bitsToUintLe(raw,24,4))/360.0
 ```
 
 Written without spaces because it is 110 characters even so, longer than any equation the
