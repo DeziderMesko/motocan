@@ -189,10 +189,13 @@ names are the app's, read off its Live screen on 2026-10-13:
 | Air temperature | intake air temperature | 1298 |
 | Throttle position 1 | the throttle grip | 1880 |
 | Throttle position 2 | the throttle valve as measured | 1880 |
+| Throttle position 3 | the throttle valve as commanded, 2026-10-17 | 1881 |
+| Wheel speed rear | rear wheel speed, 2026-10-17 | 1878 |
+| Wheel speed front | front wheel speed, 2026-10-17 | 1893 |
 
 That is eight channels on three PIDs, as of 2026-10-13. On 2026-10-17 three more went in:
-the valve as commanded on PID 1881 and the two wheel speeds on 1878 and 1893. Which of the
-app's channels they were mapped onto is not written down yet. A recording session now asks
+the valve as commanded on PID 1881 and the two wheel speeds on 1878 and 1893, mapped as in
+the table. A recording session now asks
 Bluecan for six ids, so its BUS page should read `flt 6`. The Track display, which would be
 `Digital 3`, was not entered.
 
