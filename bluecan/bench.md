@@ -97,6 +97,19 @@ never acknowledges. Against it, bring the interface up with `--one-shot`, or `ca
 stalls on its first frame and nothing new reaches the bus. A stalled `cangen` needs
 `kill -9`; `timeout` does not stop it.
 
+The same start shows on the BUS page as a jump in `err` and in `ble lost`, once. Until
+Bluecan acknowledges, every attempt of that first frame is a CAN error, which `err`
+counts. Meanwhile `canplayer` keeps filling the adapter's queue, and once the frames are
+acknowledged the adapter sends that backlog at the bus's full rate: about 115 frames in
+30 ms, far more than Bluetooth carries with `flt ALL`, so the stack refuses part of it.
+In one replay of `session-2026-10-17_123714` on 2026-10-17, against a freshly restarted
+Bluecan with the phone at 12.5 ms and `flt ALL`, this left `err 884` and `lost 297`. The
+adapter was error-passive for about half a second at the start and reported no error
+after it. It is the start, not a fault. On the bike `err` may count in the same moment
+([at-the-bike.md](at-the-bike.md)); the burst behind it, and so the `lost`, comes from
+`canplayer` queueing ahead of the adapter, which the bike's own nodes have not been seen
+to do.
+
 To see a trip: with Bluecan acknowledging, bring the adapter down and up again at
 250 kbps and send. The BUS page goes to `TRIP-REC` in red and the LED starts its red
 flash. A board that starts against a 250 kbps adapter never begins acknowledging.
