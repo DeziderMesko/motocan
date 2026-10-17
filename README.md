@@ -54,9 +54,10 @@ candidates, graded by how well they fit, not findings.
   voltage, fuel used. The R9's ECU has three separate CAN pairs and the diagnostic
   connector is on the one with nothing but the ECU on it
   ([analysis/R9_CANbus.md](analysis/R9_CANbus.md)).
-- **Next:** why the front's field takes the rear's on the stand; first gear, which turns
-  2.2 % faster against the wheel than the owner's manual's ratio says, held against the
-  manual's second and third; and two lamp bits, BC and the engine fault, each seen once.
+- **Next:** why the front's field takes the rear's on the stand; first gear with the
+  clutch fully out, since it turned 2.2 % faster against the wheel than the owner's
+  manual says, where second and third agree to 0.1 %; and two lamp bits, BC and the
+  engine fault, each seen once.
   The stand session that found the wheels is
   [analysis/stand-session.md](analysis/stand-session.md).
 - **Open:** the throttle valve's zero, the unnamed fields, anything that needs the bike

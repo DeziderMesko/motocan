@@ -133,10 +133,27 @@ The last column divides out the primary and secondary ratios from the service ma
 4.5174, leaving what the gear itself would be. **First gear does not fit the owner's
 manual's 36/14, 2.571**: the bus says 2.2 % more. The video of 2026-10-16 said 11.93, 0.5 %
 from the bus, so it is not the video that was off, as was assumed on 2026-10-17 before this
-capture. Second and third are to be held to the owner's manual; they are not in the
-repository. If those agree, the difference is first gear's alone: either its ratio is not
-36/14 on this bike, or the clutch slipped by 2 % with the wheel unloaded in first and not
-in second or third.
+capture.
+
+**Second and third agree with the owner's manual to 0.1 %.** Its table, as the rider read
+it on 2026-10-17: 36/14 = 2.571, 37/19 = 1.947, 34/21 = 1.619, 29/21 = 1.381,
+25/21 = 1.190, 28/27 = 1.037. The bus gives 1.945 and 1.619–1.620 for second and third.
+So the 2.2 % is first gear's alone, and the likely reason is in `0x751` byte 6:
+
+| Stretch | `0x751` b6, bits 5–6 |
+|---|---|
+| first gear, 2026-10-16 19:20:49.0–19:21:02 | `60` |
+| second gear, 12:40:46.3–12:40:53.2 | `20` |
+| third gear, 12:40:54.6–12:41:26.5 | `20` |
+
+In second and third, `60` came back exactly when the clutch was pulled, for the shift at
+12:40:53.2 and before the stop at 12:41:26.5, and `20` when it went out. In first on
+2026-10-16 it read `20` for only 1.6 s after the clutch went out, and then `60` while the
+wheel was driven. Read this way, the clutch lever was held partly in through the first-gear
+stretch and the clutch slipped by 2 %. Second by second the ratio there was 12.04 for the
+first three seconds and 11.80–11.94 after, which is what a clutch taking up would do. A
+guess, with a test: first gear again with the lever let fully out, where byte 6 reads `20`,
+should give 11.616.
 
 ## Second and third gear: `0x27C` bits 29–31 are the gear
 
@@ -247,7 +264,9 @@ the rest are on the next page of the menu, not photographed):
 The first capture's five states, read as (TCS, PWR) by the fields as they are now named,
 were (3, 2), (5, 3), (7, 4), (4, 1) and (4, 3). The first four are sport, street, rain and
 custom 1 exactly, as the field had predicted on 2026-10-16. The fifth fits none of the five
-as they are now; custom 2, now (3, 2), is the only one it could have been.
+as they are now; custom 2, now (3, 2), is the only one it could have been. The custom modes can be
+changed, and in that first capture the modes were being changed to see whether the bus
+showed it (the rider, 2026-10-17), so a custom 2 set differently then is no surprise.
 
 The mode during both runs was custom 2: the photo at 12:41:10.974 shows PWR 2, TCS 3,
 SCS 3, LIF 3, EBM 2, and third gear, and the fields read TCS 3, PWR 2 and gear 3. Browsing
@@ -278,8 +297,8 @@ second, and a dash that lags would read low.
 
 ## Next
 
-- Second and third gear's ratios from the owner's manual, against 1.945 and 1.619 above,
-  to decide whether first gear's 2.2 % is the gear or the clutch.
+- First gear with the engine running and the clutch lever let fully out, `0x751` byte 6
+  reading `20`: 11.616 would make first gear's 2.2 % the clutch.
 - Whether the BC and engine-lamp candidates repeat: the same run on the stand would set
   them again, and a key cycle should clear the first and not the second. Clearing the
   stored fault is a dealer's job or a diagnostic tool's, which this project does not use.
