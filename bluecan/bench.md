@@ -97,18 +97,22 @@ never acknowledges. Against it, bring the interface up with `--one-shot`, or `ca
 stalls on its first frame and nothing new reaches the bus. A stalled `cangen` needs
 `kill -9`; `timeout` does not stop it.
 
-The same start shows on the BUS page as a jump in `err` and in `ble lost`, once. Until
-Bluecan acknowledges, every attempt of that first frame is a CAN error, which `err`
-counts. Meanwhile `canplayer` keeps filling the adapter's queue, and once the frames are
-acknowledged the adapter sends that backlog at the bus's full rate: about 115 frames in
-30 ms, far more than Bluetooth carries with `flt ALL`, so the stack refuses part of it.
-In one replay of `session-2026-10-17_123714` on 2026-10-17, against a freshly restarted
-Bluecan with the phone at 12.5 ms and `flt ALL`, this left `err 884` and `lost 297`. The
-adapter was error-passive for about half a second at the start and reported no error
-after it. It is the start, not a fault. On the bike `err` may count in the same moment
-([at-the-bike.md](at-the-bike.md)); the burst behind it, and so the `lost`, comes from
-`canplayer` queueing ahead of the adapter, which the bike's own nodes have not been seen
-to do.
+The same start shows on the BUS page as a jump in `err` and in `ble lost`, once, and `rx`
+ends a few hundred frames above what was sent. Until Bluecan acknowledges, the adapter
+repeats its first frame back to back. The first attempts end in an error flag, which
+`err` counts. After about sixteen the adapter is error-passive, its error flag is
+recessive, and from then on Bluecan receives every repeat as a valid frame: a copy of the
+same frame at the bus's full rate, for the 200 ms Bluecan takes to prove the bit rate.
+With `flt ALL` they all go to Bluetooth, which refuses most of them.
+
+Measured on 2026-10-17 against a freshly restarted Bluecan, the phone at 12.5 ms and
+`flt ALL`, replaying the six ids RaceChrono has channels for from
+`session-2026-10-17_123714`: the adapter sent 56 623 frames, Bluecan's `rx` read 57 415,
+so 792 copies, about 200 ms of a full bus. It left `lost 656` and `err 301`, and neither
+counter moved after the first second. A replay of the whole capture the same way left
+`err 884` and `lost 297`. It is the start, not a fault. The bike's nodes will repeat
+their first frame the same way, so `err`, and `lost` if a phone is already asking for
+everything, can jump there too ([at-the-bike.md](at-the-bike.md)).
 
 To see a trip: with Bluecan acknowledging, bring the adapter down and up again at
 250 kbps and send. The BUS page goes to `TRIP-REC` in red and the LED starts its red
