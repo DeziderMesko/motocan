@@ -13,7 +13,7 @@ engine left behind in the first capture are still set at the start of this one. 
 was off throughout, both wheels off the ground, neutral except from 19:28:34.5 to 19:28:59.1.
 
 **The CANable's 120 Ω terminator was on** for this session, as
-[stand-session.md](../../stand-session.md) asked — the rider's word, 2026-10-16. The
+[stand-session.md](../../../journal/stand-session-2026-10-16.md) asked — the rider's word, 2026-10-16. The
 session script has no field for it, so `notes.txt` does not say. There were no bus errors.
 
 Each control was bracketed by a mark before and after (task `9` of the session script),
@@ -73,5 +73,5 @@ With this and the first capture's sequence, byte 6 is not simply "neutral": see
 - **The sidestand**, up and down in neutral (19:25:55–19:26:05): nothing. In gear it does
   something, since it cut the engine in the first capture, but that was not bracketed here.
 - **The high beam** (19:26:49–19:27:02), engine off: nothing. The test in
-  [stand-session.md](../../stand-session.md) asks for it with the engine idling, as a load
+  [stand-session.md](../../../journal/stand-session-2026-10-16.md) asks for it with the engine idling, as a load
   on the idle control, and that was not done.

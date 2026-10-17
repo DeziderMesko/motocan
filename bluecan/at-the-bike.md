@@ -5,9 +5,8 @@ against a replay of the bike's own captures ([bench.md](bench.md)); this is the 
 what only the bike can show. At a standstill throughout. Riding with
 it is a separate decision and is not on this page.
 
-It is not the capture checklist — that is the CANable's, in
-[analysis/at-the-bike.md](../analysis/at-the-bike.md) and
-[analysis/stand-session.md](../analysis/stand-session.md).
+It is not a capture checklist: capturing with the CANable is in
+[analysis/README.md](../analysis/README.md).
 
 **What is different from the bench, and why it deserves care:** this board acknowledges
 frames on the bike's bus, it is not isolated, and it shares the bike's ground. The CANable

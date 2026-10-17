@@ -1,8 +1,8 @@
 # The stand session — the checklist
 
 > **Run on 2026-10-16**, in two captures:
-> [session-2026-10-16_191234](captures/session-2026-10-16_191234/README.md) and
-> [session-2026-10-16_192421](captures/session-2026-10-16_192421/README.md). The wheel
+> [session-2026-10-16_191234](../analysis/captures/session-2026-10-16_191234/README.md) and
+> [session-2026-10-16_192421](../analysis/captures/session-2026-10-16_192421/README.md). The wheel
 > speeds were found and the 2-bit field named. Not done: step 3 (the push), the dash
 > speeds of step 6, steps 7 and 8, and extras I–N; H was done with the engine off. The
 > page is kept as it was used.
@@ -19,7 +19,7 @@ of extras for whatever time and patience are left:
   and whether the bus carries anything it does not carry otherwise.
 
 Setting the laptop and the adapter up is parts A and B of
-[at-the-bike.md](at-the-bike.md), unchanged. What that page calls not negotiable has moved
+[at-the-bike.md](first-session-2026-10-11.md), unchanged. What that page calls not negotiable has moved
 since it was written: the session runs with `--ack`, because without it this connector
 gives two ids of 23. The adapter still transmits nothing, and the watchdog still takes it
 off the bus if it ever does.
@@ -100,7 +100,7 @@ At the end it must print `frames transmitted: 0`, a frame count, a mark count, a
 ## Extras, from the service manual
 
 None of these is needed for the two speeds. They come from
-[R9_CAN_unknowns_vs_manual.md](R9_CAN_unknowns_vs_manual.md), which reads the unnamed
+[R9_CAN_unknowns_vs_manual.md](../analysis/R9_CAN_unknowns_vs_manual.md), which reads the unnamed
 bytes against what the manual says the ECU has, and each one is the test for a candidate
 there. **Do any of them, in any number; skip the rest.** They are placed where they fit
 into the session above. Task `9` in the menu is new and has a key for each control: press
@@ -171,4 +171,4 @@ where it is and say it is there. What gets read out of it:
 Rider aids, lean, temperatures, anything that asks the bike a question, anything on another
 connector. From the other page's list, one thing is left out: cranking for longer than the
 engine needs, which there is no good way to do. They are either done or decided against for now; see the "Next" list at the end
-of [the third capture](captures/session-2026-10-11_200550/README.md#the-third-capture-2026-10-11-the-engine-running).
+of [the third capture](../analysis/captures/session-2026-10-11_200550/README.md#the-third-capture-2026-10-11-the-engine-running).

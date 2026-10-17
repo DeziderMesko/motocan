@@ -189,11 +189,11 @@ bytes as sport, so stepping from sport to custom 2 showed nothing. The TCS diffe
 the rider's own changes. The field going from 2 to 1 between 12:08 and 13:09 is either a
 PWR change in custom 2 that the rider does not now remember making, or the first capture's
 fifth state was not custom 2. Not resolved; the PWR notes in
-[stand-session.md](../../stand-session.md) are what will settle both this and the field's name.
+[stand-session.md](../../../journal/stand-session-2026-10-16.md) are what will settle both this and the field's name.
 
 **Since this was written** the rider narrowed the aim to what AiM's `FZ09 MT09` channel
 list holds — RPM, Speed, Speed 2, Water Temp, Air Temp, PPS, TPS, Gear, Mode, FlagError,
 Error — on this connector, without asking the ECU anything. The R9's service manual turned
 up the same evening and says why the rest is missing: [R9_CANbus.md](../../R9_CANbus.md). Of the
 list above that leaves the stand session, and it is written up as a checklist in
-[stand-session.md](../../stand-session.md).
+[stand-session.md](../../../journal/stand-session-2026-10-16.md).

@@ -12,7 +12,7 @@ standstill, with both wheels off the ground on stands; the second is
 with the ignition left on.
 
 **The CANable's 120 Ω terminator was on** for this session, as
-[stand-session.md](../../stand-session.md) asked — the rider's word, 2026-10-16. The
+[stand-session.md](../../../journal/stand-session-2026-10-16.md) asked — the rider's word, 2026-10-16. The
 session script has no field for it, so `notes.txt` does not say. There were no bus errors.
 
 What was done, in order: the Track display and Track 1–4 (19:15–19:16), the rear wheel

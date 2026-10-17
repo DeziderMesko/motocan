@@ -1,8 +1,8 @@
 # At the bike — the checklist
 
 The first logging session on the R9, as steps to follow rather than documents to read.
-Everything here is drawn from [pre-bike-mapping.md](background/pre-bike-mapping.md),
-[analysis-tips.md](background/analysis-tips.md) and [`tools/2-session.sh`](tools/2-session.sh); where
+Everything here is drawn from [pre-bike-mapping.md](../analysis/background/pre-bike-mapping.md),
+[analysis-tips.md](../analysis/background/analysis-tips.md) and [`tools/2-session.sh`](../analysis/tools/2-session.sh); where
 a step is a suggestion rather than something written down or measured, it says so.
 
 **Two rules that are not negotiable:** the adapter is **listen-only**, and nothing is
@@ -14,7 +14,7 @@ is under [With `--ack`](#with---ack-the-adapter-acknowledges-frames) below. List
 this connector yields two ids of 23, so every session since has run with `--ack`, where
 the adapter acknowledges frames and still transmits none. The second rule stands. The
 checklist for the next session is
-[stand-session.md](stand-session.md) (run 2026-10-16, with the CANable's terminator on);
+[stand-session.md](stand-session-2026-10-16.md) (run 2026-10-16, with the CANable's terminator on);
 this page is kept as the first one was run.
 
 ## A. The laptop, at home, on a network
@@ -23,7 +23,7 @@ Do all of this before leaving. Nothing in part C needs a network; all of this do
 
 | | Command | Passes when |
 |---|---|---|
-| 1 | `cd ~/projects/motocan && git pull --ff-only` | it pulls. No such directory means the laptop was never bootstrapped — copy [`tools/bootstrap-wsl.sh`](tools/bootstrap-wsl.sh) over and run it |
+| 1 | `cd ~/projects/motocan && git pull --ff-only` | it pulls. No such directory means the laptop was never bootstrapped — copy [`tools/bootstrap-wsl.sh`](../analysis/tools/bootstrap-wsl.sh) over and run it |
 | 2 | `cd analysis && ./tools/0-setup.sh` | `imports ok` |
 | 3 | `./tools/1-selftest.sh` | `selftest passed` |
 | 4 | dry run, below | it ends with `session in ...` and four files |
@@ -68,9 +68,9 @@ sleep drops the adapter mid-capture.
 ## B. The pigtail and the adapter, at a desk
 
 Skip what is already done. Pin identification is in
-[connector.md](connector.md) under the connector table, and since 2026-10-10
+[connector.md](../analysis/connector.md) under the connector table, and since 2026-10-10
 the pigtail itself is marked in pen with what the meter found
-([photo](sources/r9/pigtail-verified-pins.jpg)). The short form:
+([photo](../analysis/sources/r9/pigtail-verified-pins.jpg)). The short form:
 
 - The **middle column** is the CAN pair. **CAN High (2) is the middle cavity of the row
   next to the latch**, CAN Low (5) the middle of the other row. Ground is 3, battery +12 V
@@ -90,7 +90,7 @@ the pigtail itself is marked in pen with what the meter found
   other node and its other end, where the second terminator belongs, so on is the better
   setting. Both captures of 2026-10-16 ran with it on, also without a bus error. With the
   adapter wired on and the key off, about 60 Ω is then right. See
-  [stand-session.md](stand-session.md).
+  [stand-session.md](stand-session-2026-10-16.md).
 
 ## C. At the bike
 
@@ -157,7 +157,7 @@ there is one — the session is worth doing without it, and step 8 says what cha
 ## With `--ack`: the adapter acknowledges frames
 
 Not the default, and not for a first session on a bus nobody has listened to. It exists
-because of what the first capture found ([the first capture's write-up](captures/session-2026-10-11_115626/README.md), "The
+because of what the first capture found ([the first capture's write-up](../analysis/captures/session-2026-10-11_115626/README.md), "The
 first capture"): one node resending one frame because nothing acknowledged it. To hear
 what that node says to something that answers, the adapter has to answer.
 
@@ -176,7 +176,7 @@ part B.)* What changes at step 4:
    word `ack`, typed; `--ack` on the command line is the consent now, and step 1 is the
    gate.
 3. It switches mode and starts a watchdog as root
-   ([`tools/can-up-ack.sh`](tools/can-up-ack.sh)). The watchdog takes `can0` down — the
+   ([`tools/can-up-ack.sh`](../analysis/tools/can-up-ack.sh)). The watchdog takes `can0` down — the
    adapter off the bus — if the session ends for any reason, if the controller leaves
    `ERROR-ACTIVE`, if its receive error counter climbs, or if a single frame is
    transmitted. Nothing in the session sends frames; that last check is there so that

@@ -113,3 +113,16 @@ here. The pages as they stood with every correction written into them are at com
   RaceChrono recording from it; not yet on the R9. Still true on 2026-10-17.
 - Its at-the-bike checklist said, until 2026-10-17, that eight channels were entered and the
   TCS and PWR equations had to be replaced with the ones corrected on 2026-10-16.
+
+## The service-manual candidates
+
+- `analysis/R9_CAN_unknowns_vs_manual.md` was written without the capture files, from the
+  behaviour recorded on the mapping page (then `canbus-mapping.md`) and the service manual.
+  Its candidates were held to the three captures of 2026-10-11 on 2026-10-12, with the
+  results in `open-questions.md`; the page itself was kept as written until 2026-10-17,
+  when each candidate was brought to its current state. As written it read the first
+  capture's `0x751` `b0hi:b2` excursions as the shift sensor moving while gears were
+  changed, engine off; they were throttle blips with the engine running.
+- The checklists of the first session (2026-10-11) and the stand session (2026-10-16) lived
+  in `analysis/` until 2026-10-17 and are now `first-session-2026-10-11.md` and
+  `stand-session-2026-10-16.md` here.

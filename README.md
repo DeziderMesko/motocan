@@ -57,8 +57,6 @@ candidates, graded by how well they fit, not findings.
   clutch fully out, since it turned 2.2 % faster against the wheel than the owner's
   manual says, where second and third agree to 0.1 %; and two lamp bits, BC and the
   engine fault, each seen once.
-  The stand session that found the wheels is
-  [analysis/stand-session.md](analysis/stand-session.md).
 - **Open:** the throttle valve's zero, the unnamed fields, anything that needs the bike
   moving. The whole list, with what would settle each item:
   [analysis/open-questions.md](analysis/open-questions.md).

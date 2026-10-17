@@ -30,9 +30,12 @@ take a number from them without checking it against `r9-signals.md`.
 - **The capture files are evidence.** Never edit a `capture.log.xz`, `ref.csv` or
   `notes.txt`; `SHA256SUMS` in each folder is there to show nobody did. Derived files go
   beside them under a new name, with a line at the top saying how they were made.
-- **A record of a decision is not deleted.** When something turns out wrong or is
-  overtaken, annotate it with the date and what replaced it, and leave the original
-  wording. `journal/` is the exception: the owner prunes it.
+- **Descriptive pages say only what is known now; the story goes in `journal/`.** When
+  something turns out wrong or is overtaken, correct the page — no struck-through text,
+  no "until", no status lines — and write what it said and when it changed in
+  [journal/how-findings-changed.md](journal/how-findings-changed.md). A record of a
+  decision is not deleted: it moves there. The capture write-ups are records of their
+  session and keep their dates. `journal/` itself the owner prunes.
 
 ## How a finding is written down
 
@@ -46,7 +49,8 @@ take a number from them without checking it against `r9-signals.md`.
 - Say how sure, in counts: "12 anchors of 12", "both starts captured", "one occurrence".
 - A negative result is a result. "Looked for and not found" goes into `r9-signals.md` with
   what was tried, so it is not looked for again.
-- Give every claim a date when it is written, and write absolute dates.
+- Date the evidence, not the edit: a measurement or an occurrence carries the date it was
+  made. Write absolute dates.
 - Check arithmetic against the capture before writing it. If a number in a document was
   computed, the reader should be able to recompute it from the files in the repository.
 

@@ -5,20 +5,12 @@ way the sibling `bluecan/` folder holds everything about the device that streams
 RaceChrono. The two halves meet at the CAN bus and nowhere else: that one is telemetry
 over Bluetooth, this one is a laptop, a CANable and a log file.
 
-**This folder is self-contained on purpose.** Nothing in it links or shells out to the
-rest of the repository, so a session spent on the analysis reads only what is in here.
-Where a fact from elsewhere mattered, it is written out here rather than pointed at.
-(Since 2026-10-12 a few pages link out to the front page and to `bluecan/`; the tools
-still depend on nothing outside this folder.)
+**The tools are self-contained.** Nothing in `tools/` depends on the rest of the
+repository; a few pages link out to the front page and to `bluecan/`.
 
 The chain below is proved end to end against a synthetic bus whose answer was chosen in
-advance. The diagnostic-connector pigtail that blocked the bike arrived on 2026-09-21, and
-[at-the-bike.md](at-the-bike.md) is the first session as a checklist.
-
-That session has since happened, three times over on 2026-10-11, and
-[r9-signals.md](r9-signals.md) holds what they found. The next one, with the rear
-wheel on a stand, is [stand-session.md](stand-session.md), run on 2026-10-16 in two
-more captures.
+advance. Six captures of the R9 are in [captures/](captures/README.md), and
+[r9-signals.md](r9-signals.md) holds what they found.
 
 ## The order of operations
 
@@ -43,14 +35,13 @@ and step 2 calls it for you.
 [`tools/can-up-ack.sh`](tools/can-up-ack.sh) is its counterpart for `2-session.sh --ack`,
 where the adapter acknowledges frames, and it is never run by hand: it will not start
 without a session to watch, and it takes the interface down when that session ends.
-[at-the-bike.md](at-the-bike.md) says when that mode is worth it.
+A capture of the R9 needs it: listen-only, this connector gives two ids of 23.
 
 [`tools/bootstrap-wsl.sh`](tools/bootstrap-wsl.sh) is not a step either, and runs before
 there is a checkout to run a step from: on a fresh WSL2 Ubuntu it installs the packages
 the chain needs, Claude Code and `gh`, authenticates git, clones this repository and
-hands over to `0-setup.sh`. It installs nothing for the bluecan half. Since
-2026-10-12 the repository is public, so the script can be fetched on its own; the
-command is in its header.
+hands over to `0-setup.sh`. It installs nothing for the bluecan half. The repository is
+public, so the script can be fetched on its own; the command is in its header.
 
 Then the analysis itself, which is not one of ours: `survey` → `correlate` → `bitsearch` →
 `build_dbc` / `calibrate` → `verify`, from [`css-skill/`](css-skill/). It is a
@@ -73,15 +64,12 @@ This distinction is the point of the folder, and it is worth keeping sharp.
   [`captures/`](captures/README.md).
 - [`open-questions.md`](open-questions.md) — what is left, and
   [`R9_CAN_unknowns_vs_manual.md`](R9_CAN_unknowns_vs_manual.md), the **candidates** for the
-  unnamed fields read out of the service manual. Candidates, graded by their own author,
-  and checked against the captures only where it says so.
+  unnamed fields read out of the service manual, each with its grade, its test and what the
+  captures showed.
 - [`connector.md`](connector.md) — the connector and its pins, metered on the bike.
 - [`R9_CANbus.md`](R9_CANbus.md) — the R9 service manual's CAN wiring, summarised: three
   pairs, and the diagnostic connector on the one with only the ECU on it. Not speculation
   where it quotes the manual; its deductions are marked.
-- [`stand-session.md`](stand-session.md) and [`at-the-bike.md`](at-the-bike.md) — the
-  checklists: the next session, and the first one, whose parts A and B are still how the
-  laptop and adapter are set up.
 - [`background/`](background/) — **from before the bike, and mostly prediction.**
   [`riding-data-source.md`](background/riding-data-source.md) is Yamaha's own list of what
   Y-TRAC Rev displays, 27 items, not speculation.
