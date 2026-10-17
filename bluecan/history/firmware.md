@@ -1823,6 +1823,10 @@ five captures. Not uploaded to the board then; it went up with patch 23 the same
 
 Uploaded on the second attempt, as usual under WSL2. The panel has not been looked at yet.
 
+*2026-10-17: the guess was right. In the capture of that day `0x765` copied `0x756` past
+41 km/h and `b0` hi carried bit 12 in the same frames as the rear's; see patch 30, which
+also found the rear's top nibble somewhere else.*
+
 ## Patch 24 — `TPS` for `Valve` on the LIVE page — **applied, uploaded with patch 28**
 
 2026-10-16, asked for by the rider, who found `Valve` too vague on the glass.
@@ -1890,7 +1894,7 @@ the `T` stood one column past every other value.
 Uploaded together with patches 24–27 on 2026-10-17, on the second attempt as usual under
 WSL2. The panel has not been looked at yet.
 
-## Patch 29 — two dashes for every missing value — **applied, not uploaded**
+## Patch 29 — two dashes for every missing value — **applied, uploaded with patch 30**
 
 2026-10-17, asked for by the rider, who had looked at the panel after patch 28 and found
 it good apart from this: a missing `Gear` showed one dash and a missing `PWR` one, every
@@ -1901,6 +1905,27 @@ other value two.
   and its character, from `right_col + 7`, so it still ends in column 19.
 - Between gears, `Gear` still shows a single `-`, in white; two grey dashes mean `0x27C`
   has stopped arriving.
+
+## Patch 30 — the rear wheel past 41 km/h — **applied, uploaded**
+
+2026-10-17, asked for by the rider after the capture of that day
+([session-2026-10-17_123714](../../analysis/captures/session-2026-10-17_123714/README.md#the-wheel-speeds-above-4095-kmh)),
+which took the rear wheel to 59 km/h on the stand.
+
+- `rear_kmh_x100()` takes byte 3's high nibble of `0x756` as bits 12–15, and only byte 1's
+  low nibble as bits 8–11. It had all of byte 1, so above 40.95 km/h the rear started
+  again from zero: at 4 095 counts byte 3 went from `04` to `14` and byte 1 from `0F` to
+  `00`. Byte 1's high nibble has been zero in every frame of six captures.
+- `front_kmh_x100()` is unchanged; its comment no longer calls byte 0's high nibble a
+  guess, since the same capture showed it carrying bit 12 (patch 23).
+- [r9-decode-check](../firmware/tools/r9-decode-check.py) reads the new top fields of
+  [r9.dbc](../../analysis/r9.dbc), `RearSpeed_Top` and `FrontSpeed_Top`, and passes on
+  all six captures. Before this it failed on the sixth, on the front: its copy of the DBC
+  had no top nibble while the firmware had.
+
+Uploaded with patch 29 on the second attempt, as usual under WSL2. Only bit 12 of either
+nibble has been seen set; bits 13–15 are taken with it at a guess, which ends both fields
+at 655 km/h.
 
 ## Open questions before the bike
 

@@ -109,24 +109,20 @@ constexpr int16_t air_tenths(const uint8_t* d) noexcept
 
 // --- 0x756 and 0x765
 
-/// A wheel speed in hundredths of a km/h, from the three nibble-aligned pieces Yamaha
-/// splits it into. The rear's scale is held to a video of the wheel: 700 counts per
-/// revolution a second, which as 0.01 km/h is a 1.946 m wheel, the size of the tyre.
-/// No dash speed has been noted against it yet.
+/// A wheel speed in hundredths of a km/h, from the four nibbles Yamaha splits it into,
+/// most significant first. The rear's is b3 hi, b1 lo, b0 hi, b2 hi. Its scale is held to
+/// the wheel's own pulses on a stand, 46 a revolution: 697 counts per revolution a second,
+/// which as 0.01 km/h is a 1.936 m wheel, the size of the tyre. The dash read 11 % above
+/// it once, as speedometers do. Bit 12 has been seen set, to 59 km/h; bits 13-15 are the
+/// rest of the nibble at a guess.
 constexpr uint16_t rear_kmh_x100(const uint8_t* d) noexcept
 {
-    return static_cast<uint16_t>((static_cast<uint16_t>(d[1]) << 8) | (d[0] & 0xF0U) | (d[2] >> 4));
+    return static_cast<uint16_t>(((d[3] >> 4) << 12) | ((d[1] & 0x0FU) << 8) | (d[0] & 0xF0U) | (d[2] >> 4));
 }
 
-/// The front wheel, the same unit at a guess. On a stand with the rear driven it has
-/// been seen to carry the rear's value instead of its own. Twelve bits are known, which
-/// at 0.01 km/h end at 40.95: nothing above 17 km/h has been seen.
-///
-/// Bits 12-15 are taken from byte 0's high nibble, and that is a GUESS, put here so the
-/// panel tests it: it makes the high byte b0 hi followed by b2 hi, the pairing 0x759 and
-/// 0x756 use (motocan open question 10). The nibble has read zero in every capture, so
-/// r9-decode-check cannot see it and the DBC does not have it. On a stand, while the
-/// front copies the rear, both should read the same above 41 km/h if the guess is right.
+/// The front wheel, the same unit: b0 hi, b2 hi, b6 hi, b3 lo. On a stand with the rear
+/// turning alone it takes the rear's value after some seconds instead of its own; it was
+/// in that copy that b0 hi was seen to carry bit 12, in the same frames as the rear's.
 constexpr uint16_t front_kmh_x100(const uint8_t* d) noexcept
 {
     return static_cast<uint16_t>(((d[0] >> 4) << 12) | ((d[2] >> 4) << 8) | ((d[6] >> 4) << 4) | (d[3] & 0x0FU));

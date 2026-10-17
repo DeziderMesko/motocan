@@ -69,7 +69,7 @@ Then the LIVE page against the dash, which is what the page was built for:
 | 11 | Compare the temperatures | `Water` within 2 °C of the dash; `Air` a degree or two above it |
 | 12 | Grip closed, then to the stop | `Grip` 0 %, then about 100 %. It reads 0 for the first twentieth of the travel |
 | 13 | Bottom row, small | `TPS cmd` shows a number, not dashes |
-| 14 | `Rear` and `Front` | `0` with the wheels still. On a stand, a wheel turned by hand shows a few km/h on its own field |
+| 14 | `Rear` and `Front` | `0` with the wheels still. On a stand, a wheel turned by hand shows a few km/h on its own field; the rear turned for longer than a few seconds shows on `Front` too |
 
 ## D. Engine running
 

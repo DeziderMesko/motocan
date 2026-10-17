@@ -44,9 +44,9 @@ def expected(db, can_id, payload):
     if can_id == 0x27C:
         return {'rpm': s['EngineSpeed'], 'gear': s['Gear'], 'tcs': s['TCS'], 'pwr': s['PWR']}
     if can_id == 0x756:
-        return {'rear': s['RearSpeed_Hi'] * 256 + s['RearSpeed_Mid'] * 16 + s['RearSpeed_Lo']}
+        return {'rear': s['RearSpeed_Top'] * 4096 + s['RearSpeed_Hi'] * 256 + s['RearSpeed_Mid'] * 16 + s['RearSpeed_Lo']}
     if can_id == 0x765:
-        return {'front': s['FrontSpeed_Hi'] * 256 + s['FrontSpeed_Mid'] * 16 + s['FrontSpeed_Lo']}
+        return {'front': s['FrontSpeed_Top'] * 4096 + s['FrontSpeed_Hi'] * 256 + s['FrontSpeed_Mid'] * 16 + s['FrontSpeed_Lo']}
     if can_id == 0x76E:
         return {'track': 1 if s['Display'] == 16 else 0}
     if can_id == 0x512:
