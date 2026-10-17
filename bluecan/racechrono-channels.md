@@ -9,7 +9,9 @@ from seven frames. The signals themselves, and how sure each one is, are on
 Android and shown the right values, against a replay of the R9's own captures on the
 bench — except what was added or corrected on 2026-10-16 and has not been entered yet:
 TCS, PWR, the two wheel speeds and the Track display. Those were computed outside the app
-on every frame of the two captures of that day and agree with the DBC. None of it has been on the bike. Each was also computed outside the app on every
+on every frame of the two captures of that day and agree with the DBC. The two wheel
+speeds were given their top four bits on 2026-10-17, from a capture that went past 41 km/h,
+and agree with the DBC on every frame of all six captures. None of it has been on the bike. Each was also computed outside the app on every
 distinct payload in [the captures](../analysis/captures/) and agrees with the DBC.
 
 ## Where they go
@@ -99,26 +101,31 @@ bytesToUint(raw, 1, 1) * 0.625 - 30
 Rear wheel speed, km/h:
 
 ```
-(bitsToUintLe(raw, 8, 8) * 256 + bitsToUintLe(raw, 4, 4) * 16 + bitsToUintLe(raw, 20, 4)) / 100.0
+(bitsToUintLe(raw, 28, 4) * 4096 + bitsToUintLe(raw, 4, 8) * 16 + bitsToUintLe(raw, 20, 4)) / 100.0
 ```
 
-The scale is held to a video of the wheel on a stand, not to the dash: 0.01 km/h a count
-makes the wheel 1.946 m round, which is what the tyre is. A steady speed read off the dash
-against this channel is the check still to do.
+`bitsToUintLe(raw, 4, 8)` takes byte 0's high nibble and byte 1's low one together, which
+in this order are bits 4–11 of the speed; that keeps the equation short. Held to the
+wheel's own pulses on a stand, 0.01 km/h a count makes the wheel 1.936 m round, which is
+what the tyre is. The dash showed 28 km/h where this read 25.2, once, which is how far a
+speedometer reads high.
 
 ## PID 1893 — `0x765`, 10 Hz
 
-Front wheel speed, km/h, the same unit at a guess:
+Front wheel speed, km/h, the same unit:
 
 ```
-(bitsToUintLe(raw, 20, 4) * 256 + bitsToUintLe(raw, 52, 4) * 16 + bitsToUintLe(raw, 24, 4)) / 100.0
+(bitsToUintLe(raw,4,4)*4096+bitsToUintLe(raw,20,4)*256+bitsToUintLe(raw,52,4)*16+bitsToUintLe(raw,24,4))/100.0
 ```
 
-On a stand with the rear wheel driven by the engine, this carried the rear's speed while
-the front stood still. On the road both turn together, so that should not show; on a
-stand, do not read it as the front. The field is twelve bits as far as is known, so this
-ends at 40.95 km/h, and nothing above 17 has been seen
-([open question 10](../analysis/open-questions.md)).
+Written without spaces because it is 110 characters even so, longer than any equation the
+app has been seen to take. If it is refused, leave out the first term: the rest is right
+up to 40.95 km/h and starts again from zero above it.
+
+On a stand with the rear wheel turning alone, this takes the rear's speed after some
+seconds while the front stands still. On the road both turn together, so that should not
+show; on a stand, do not read it as the front
+([open question 8](../analysis/open-questions.md)).
 
 ## PID 1902 — `0x76E`, 2 Hz
 

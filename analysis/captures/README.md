@@ -1,7 +1,7 @@
 # captures/
 
 One folder per session at the bike, all on the R9's diagnostic connector at 500 kbps, at a
-standstill: three from 2026-10-11, two from 2026-10-16.
+standstill: three from 2026-10-11, two from 2026-10-16, one from 2026-10-17.
 
 | Session | What it was | What it found |
 |---|---|---|
@@ -10,6 +10,7 @@ standstill: three from 2026-10-11, two from 2026-10-16.
 | [session-2026-10-11_200550](session-2026-10-11_200550/README.md) | acknowledging; engine started, with a sound recording and a video of a lean-angle app | engine speed and its scale, both temperatures, grip against valve; lean and the rider-aid settings are not on this connector |
 | [session-2026-10-16_191234](session-2026-10-16_191234/README.md) | acknowledging, terminator on, both wheels on stands; the Track display and Track 1–4, each wheel by hand, the engine in first gear, with a video of the rear wheel and photos of the dash | the rear wheel's speed and its pulses, the front's speed, the 2-bit field is PWR − 1, a Track-display bit |
 | [session-2026-10-16_192421](session-2026-10-16_192421/README.md) | the same, straight after, engine off; each control bracketed | the brake, the two cruise buttons, a clutch-or-brake bit; the start bit is the starter, not the button |
+| [session-2026-10-17_123714](session-2026-10-17_123714/README.md) | acknowledging, both wheels on stands; the rear wheel by hand, then driven in second and third to 59 km/h; two key-offs; photos of the dash and of the mode menu | 46 pulses a revolution, one a hole; both wheel speeds' top nibbles; `0x27C` bits 29–31 are the ECU's gear; the dash speed 11 % above the rear's; candidate bits for the BC and engine lamps |
 
 In each folder:
 

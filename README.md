@@ -8,8 +8,8 @@ Nothing here comes from Yamaha. Every row below was measured on one bike with a 
 adapter on the diagnostic connector, a laptop, and something independent to hold each
 number against: the dash, a recording of the engine's sound, a second sensor.
 
-**Status, 2026-10-16:** nineteen fields decoded from five captures taken at a standstill,
-the two wheel speeds among them. The device that would stream all this to a phone works on
+**Status, 2026-10-17:** twenty fields decoded from six captures taken at a standstill,
+the two wheel speeds among them, now to 59 km/h and against the dash. The device that would stream all this to a phone works on
 the bench, acknowledging as this connector needs, and has not yet been plugged into it.
 
 ## What is decoded so far
@@ -20,16 +20,17 @@ only when the listening node acknowledges them. Bytes are numbered from 0; `b3` 
 | Signal | Frame | Rate | Raw value | Equation | How sure |
 |---|---|---|---|---|---|
 | Engine speed | `0x27C` | 100 Hz | `b0 << 8 \| b1` (16 bits, big-endian) | `rpm = raw * 100 / 256` | `b0` is whole hundreds of rpm, sent again on their own in `0x750`; agrees with the engine's sound at idle (0.3915 ± 1.5 %) and holds to 3 400 rpm |
-| Gear | `0x27C` | 100 Hz | `b4 & 0x07` | `0` = N, `1`–`6`, `7` = between gears | confirmed, 12 anchors of 12 |
-| TCS setting | `0x27C` | 100 Hz | `(b3 >> 1) & 0x0F` | the number on the dash | confirmed, 9 anchors of 9. The bit above it is set in gear with the engine running, which is why the mask |
-| A bit that is set for about half a second as the starter turns | `0x27C` | 100 Hz | `b3 & 0x01` | `1` during the start, `0` at all other times | all four starts captured, and not set when the button was pressed with the start blocked. So it follows the starter, not the button; what it is beyond that is not known |
-| A bit that is set at the first start | `0x27C` | 100 Hz | `b6 >> 7` | `0` from key-on to the first start, `1` after it; `0` for a third of a second at each restart | four starts, and three stops that did not clear it. *Until 2026-10-16 this row read "set while the engine runs"; the stops say otherwise* |
-| PWR setting | `0x27C` and `0x76E` | 100 Hz / 2 Hz | `b4 >> 6`, and `0x76E` `b1` | `PWR = raw + 1` | 4 dash photos of 4, in Track 1–4 |
+| Gear | `0x27C` | 100 Hz | `b4 & 0x07` | `0` = N, `1`–`6`, `7` = between gears | confirmed, 13 anchors of 13 |
+| Gear, as the ECU has it | `0x27C` | 100 Hz | `(b3 >> 5) & 0x07` | `1`–`3` seen; `0` in neutral and with the engine off | first, second and third with the engine running. It holds the last gear between gears, and after the engine stops in gear, until key-off |
+| TCS setting | `0x27C` | 100 Hz | `(b3 >> 1) & 0x0F` | the number on the dash | confirmed, 10 anchors of 10, and the five modes' values in the dash's menu. The bits above it are the ECU's gear, which is why the mask |
+| A bit that is set for about half a second as the starter turns | `0x27C` | 100 Hz | `b3 & 0x01` | `1` during the start and in the last frames at key-off, `0` at all other times | all six starts captured, and not set when the button was pressed with the start blocked. So it follows the starter, not the button; what it is beyond that is not known |
+| A bit that is set at the first start | `0x27C` | 100 Hz | `b6 >> 7` | `0` from key-on to the first start, `1` after it until key-off; `0` for a third of a second at each restart | four starts, and three stops that did not clear it. *Until 2026-10-16 this row read "set while the engine runs"; the stops say otherwise* |
+| PWR setting | `0x27C` and `0x76E` | 100 Hz / 2 Hz | `b4 >> 6`, and `0x76E` `b1` | `PWR = raw + 1` | 5 dash photos of 5, and the five modes' values in the dash's menu |
 | Neutral, at rest | `0x751` | 100 Hz | `b6` | `0x60` or `0x70` = neutral, `0x00` = in gear | agrees with every change into and out of neutral with the engine off. It reads `0x60` in first gear with the engine running, so for the gear, use `0x27C` |
-| Rear wheel speed | `0x756` | 20 Hz | `b1 << 8 \| (b0 & 0xF0) \| b2 >> 4` (16 bits) | `km/h = raw / 100` | 700 counts per revolution a second against a video of the wheel, sd 1 %; as 0.01 km/h that is a 1.946 m wheel, which the tyre is. No dash speed to hold it to yet |
-| Rear wheel pulses | `0x27C` | 100 Hz | `b2` | pulses in each 10 ms frame, 46.4 to a revolution | against the speed above in three stretches, and against the video |
-| Front wheel speed | `0x765` | 10 Hz | `(b2 >> 4) << 8 \| (b6 >> 4) << 4 \| (b3 & 0x0F)` (12 bits) | `km/h = raw / 100` at a guess | follows the front turned by hand. On the stand, with the rear driven, it copied the rear's value instead ([open question 8](analysis/open-questions.md)). Twelve bits end at 40.95 km/h; nothing over 17 has been seen, so any bits above are not known ([open question 10](analysis/open-questions.md)) |
-| Brake, front or rear | `0x383` | 2 Hz | `(b4 >> 3) & 0x01` | `1` while either brake is on | 4 pulls of 4, and twice as the wheel was stopped |
+| Rear wheel speed | `0x756` | 20 Hz | `(b3 >> 4) << 12 \| (b1 & 0x0F) << 8 \| (b0 & 0xF0) \| b2 >> 4` (16 bits) | `km/h = raw / 100` | 697 counts per revolution a second by the wheel's own pulses, in three gears; as 0.01 km/h that is a 1.936 m wheel, which the tyre is. The dash showed 28 km/h at 25.2, a speedometer's usual 11 % high, one photo. Seen to 59 km/h; bit 12 seen set, bits 13–15 not |
+| Rear wheel pulses | `0x27C` | 100 Hz | `b2` | pulses in each 10 ms frame, 46 to a revolution | one a hole: 46 holes counted on the sensor ring, and 11 and 10 turns by hand counted 507 and 462 |
+| Front wheel speed | `0x765` | 10 Hz | `(b0 >> 4) << 12 \| (b2 >> 4) << 8 \| (b6 >> 4) << 4 \| (b3 & 0x0F)` (16 bits) | `km/h = raw / 100` | follows the front turned by hand. On the stand, with the rear turning alone, it takes the rear's value after some seconds instead ([open question 8](analysis/open-questions.md)), and that copy is what showed the top nibble, to 59 km/h; bit 12 seen set, bits 13–15 not |
+| Brake, front or rear | `0x383` | 10 Hz | `(b4 >> 3) & 0x01` | `1` while either brake is on | 4 pulls of 4, and twice as the wheel was stopped |
 | Cruise RES+ and SET− | `0x76D` | 2 Hz | `b3 & 0x01`, and `(b5 >> 4) & 0x01` | `1` while the button is held | 2 presses of each. At 2 Hz a short press can fall between frames |
 | Track display | `0x76E` | 2 Hz | `b2` | `0x10` with the Track display, `0x20` with the normal one | one switch each way |
 | Water temperature | `0x512` | 1 Hz | `b0` | `°C = raw * 0.625 - 30` | confirmed, 6 dash anchors from 17 to 76 °C |
@@ -53,11 +54,10 @@ candidates, graded by how well they fit, not findings.
   voltage, fuel used. The R9's ECU has three separate CAN pairs and the diagnostic
   connector is on the one with nothing but the ECU on it
   ([analysis/R9_CANbus.md](analysis/R9_CANbus.md)).
-- **Next:** a dash speed or the gearing, to hold the wheel speeds' 0.01 km/h to something
-  more than the tyre's size; why the front's field copied the rear's on the stand; the
-  front's bits above 40.95 km/h; and second gear with the engine running, which tests
-  whether `0x27C` bits 29–31 are a second gear field.
-  The stand session that found them is
+- **Next:** why the front's field takes the rear's on the stand; first gear, which turns
+  2.2 % faster against the wheel than the owner's manual's ratio says, held against the
+  manual's second and third; and two lamp bits, BC and the engine fault, each seen once.
+  The stand session that found the wheels is
   [analysis/stand-session.md](analysis/stand-session.md).
 - **Open:** the throttle valve's zero, the unnamed fields, anything that needs the bike
   moving. The whole list, with what would settle each item:
