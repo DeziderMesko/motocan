@@ -18,6 +18,11 @@ bench, with the firmware as of 2026-10-14; it has not yet been used on the R9 it
    of a second from the first frame; on the R9 it should happen as soon as the key is
    turned on. The BUS page then reads `ACK`.
 4. **The bike's values appear** on the LIVE page as their frames arrive.
+5. **Ten seconds after the screen comes up** it clears and shows `Zzzzz....` in the
+   middle for five seconds, then goes dark. The LED stays on, as in D0's LED-only
+   position. The first press of **D0** lights the screen again; from then on D0 works as
+   described under [The buttons](#the-buttons). A press of D0 before the screen goes dark
+   keeps it lit.
 
 It never transmits a frame of its own. What it puts on the wire is the acknowledge bit
 and, when it receives a broken frame, an error flag.
@@ -138,7 +143,7 @@ The six most recent forwarded frames, newest first: id, length, payload in hex.
 
 | Button | Does |
 |---|---|
-| **D0** | cycles: screen and LED on → LED only, screen off → both off → back. Everything else keeps running. Use LED only on the bike |
+| **D0** | cycles: screen and LED on → LED only, screen off → both off → back. Everything else keeps running. Use LED only on the bike. After boot the screen goes dark by itself ([From power-on](#from-power-on), step 5), and the first press lights it |
 | **D1** | next page |
 | **D2** | freezes the screen, to read a frame off the LAST page; the footer says `(held)`. Counting continues behind it. Press D2 again, or D1, to unfreeze |
 

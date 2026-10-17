@@ -189,6 +189,18 @@ private:
         light_count = 3,
     };
 
+    /// the panel's first minutes after boot. It lights, says "Zzzzz...." in the
+    /// middle, and goes dark with the status light still on, which is the riding
+    /// position; the first press of D0 after that lights it again, and from then on
+    /// D0 cycles as it always has.
+    enum doze : uint8_t
+    {
+        doze_awake = 0,  //!< lit, counting down to the message
+        doze_zzz = 1,    //!< the message is on the glass, counting down to dark
+        doze_asleep = 2, //!< dark, waiting for D0
+        doze_over = 3,   //!< D0 has been pressed; nothing here runs again
+    };
+
     /// arbitration ids tracked by the census. The R9's diagnostic connector carries
     /// 23 (motocan/analysis/r9-signals.md), and the 20 this used to be was sized
     /// against another Yamaha: a replay of the R9's own traffic overflowed it. 32 is
@@ -248,6 +260,9 @@ private:
     uint8_t _page;
     uint8_t _light;
     bool _hold;
+    uint8_t _doze;
+    /// millis() when the panel was lit at boot, and later when the message went up
+    uint32_t _doze_ms;
     /// the fault overlay, once armed. Latching, because dropped and lost are
     /// cumulative counters and the moment one of them moves is the moment nobody is
     /// looking. Only a reboot clears it; the BUS page says which one it was.

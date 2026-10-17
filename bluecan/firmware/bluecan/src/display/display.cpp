@@ -72,6 +72,11 @@ constexpr uint32_t refresh_slow_ms = 1000;
 /// button -- a quick press between two repaints would simply not exist.
 constexpr uint32_t poll_ms = 25;
 
+/// how long the panel stays lit after boot before it says it is going to sleep,
+/// and how long it says so before it goes dark. The rider's numbers, 2026-10-17.
+constexpr uint32_t doze_lit_ms = 10000;
+constexpr uint32_t doze_zzz_ms = 5000;
+
 /// bytes, not words: ESP-IDF's StackType_t is a byte. This panel runs in 4 KB with
 /// **1824 B** still free, measured on the board 2026-10-13 after every page had been
 /// visited -- 1912 B before the LIVE page, and the ~2.2 KB this once quoted was the
@@ -229,6 +234,8 @@ display::display() noexcept
     , _page(page_live_id)
     , _light(light_both)
     , _hold(false)
+    , _doze(doze_awake)
+    , _doze_ms(0U)
     , _fault(false)
     , _flow_ms(0U)
     , _lost_prev(0U)
@@ -362,6 +369,7 @@ void display::run() noexcept
     PWR.begin();
 
     _rate_ms = millis();
+    _doze_ms = _rate_ms;
 
     uint32_t last_paint = 0;
 
@@ -370,6 +378,26 @@ void display::run() noexcept
         poll_buttons();
 
         uint32_t now = millis();
+
+        if (_doze == doze_awake && now - _doze_ms >= doze_lit_ms)
+        {
+            // The whole glass, header and footer too: the message is the only thing
+            // on it. Nine characters at size 3 are 162 x 24 pixels.
+            tft.fillScreen(ST77XX_BLACK);
+            tft.setTextSize(3);
+            tft.setTextColor(color_blue_dim, ST77XX_BLACK);
+            tft.setCursor((screen_w - 9 * 18) / 2, (screen_h - 24) / 2);
+            tft.print("Zzzzz....");
+            _doze = doze_zzz;
+            _doze_ms = now;
+        }
+        else if (_doze == doze_zzz && now - _doze_ms >= doze_zzz_ms)
+        {
+            // LED only, not dark: the light is what stays useful on the bike.
+            _light = light_pixel;
+            digitalWrite(TFT_BACKLITE, LOW);
+            _doze = doze_asleep;
+        }
 
         // Sampled even while the panel is dark or held: the rates are a measurement
         // of the bus, not of the display, and a held screen that resumed with a
@@ -387,7 +415,7 @@ void display::run() noexcept
         uint32_t interval = (_page == page_live_id || _page == page_bus_id) ? refresh_bus_ms
                                                                             : refresh_slow_ms;
 
-        if (_light == light_both && !_hold && (now - last_paint) >= interval)
+        if (_light == light_both && !_hold && _doze != doze_zzz && (now - last_paint) >= interval)
         {
             last_paint = now;
             uint32_t t0 = micros();
@@ -521,7 +549,22 @@ void display::poll_buttons() noexcept
     static bool p_next = false;
     static bool p_hold = false;
 
-    if (light && !p_light)
+    if (light && !p_light && _doze != doze_over)
+    {
+        // The first press after boot lights the panel, whatever the doze has got to.
+        // The message and the dark glass have to go, and with them every cached
+        // character, header and footer included, or the next pass would decide
+        // nothing had changed.
+        if (_doze != doze_awake)
+        {
+            tft.fillScreen(ST77XX_BLACK);
+            wipe();
+        }
+        _doze = doze_over;
+        _light = light_both;
+        digitalWrite(TFT_BACKLITE, HIGH);
+    }
+    else if (light && !p_light)
     {
         // Three positions: panel and pixel, pixel alone, dark. Backlight off also
         // stops the repaint, which makes the middle position the cheapest experiment
@@ -532,14 +575,15 @@ void display::poll_buttons() noexcept
         digitalWrite(TFT_BACKLITE, _light == light_both ? HIGH : LOW);
     }
 
-    if (next && !p_next)
+    // Not while the message is up: wipe() would take half of it off the glass.
+    if (next && !p_next && _doze != doze_zzz)
     {
         _page = (_page + 1) % page_count;
         _hold = false;
         wipe();
     }
 
-    if (hold && !p_hold)
+    if (hold && !p_hold && _doze != doze_zzz)
     {
         _hold = !_hold;
         // Freezes the glass, not the counting: the ISR, the queue and the census all
@@ -1625,6 +1669,8 @@ display::display() noexcept
     , _page(page_live_id)
     , _light(light_dark)
     , _hold(false)
+    , _doze(doze_over)
+    , _doze_ms(0U)
     , _fault(false)
     , _flow_ms(0U)
     , _lost_prev(0U)

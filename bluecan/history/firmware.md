@@ -1927,6 +1927,25 @@ Uploaded with patch 29 on the second attempt, as usual under WSL2. Only bit 12 o
 nibble has been seen set; bits 13–15 are taken with it at a guess, which ends both fields
 at 655 km/h.
 
+## Patch 31 — the screen goes to sleep after boot — **applied, built, not uploaded**
+
+2026-10-17, asked for by the rider. The screen comes up as before; ten seconds later it
+clears and shows `Zzzzz....` in the middle, in the wordmark's navy at text size 3, and
+five seconds after that the backlight goes off and D0 is in its LED-only position. The
+first press of D0 lights the screen and repaints everything, header and footer included;
+from then on D0 cycles as before. A press of D0 while the screen is still lit, or while
+the message is up, ends the countdown the same way.
+
+- The countdown is a four-state `doze` in `ui::display`, advanced in the display task's
+  loop and timed from the moment the panel is lit. `doze_lit_ms` and `doze_zzz_ms` hold
+  the two intervals.
+- While the message is up the repaint is stopped, and D1 and D2 are ignored: D1's
+  `wipe()` would take half the message off the glass.
+- LED only rather than dark, because the light is what is still useful on the bike.
+
+Built, release and `DEBUG`, on 2026-10-17; the board was not attached, so it has not been
+seen on the glass.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches
