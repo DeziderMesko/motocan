@@ -1927,7 +1927,7 @@ Uploaded with patch 29 on the second attempt, as usual under WSL2. Only bit 12 o
 nibble has been seen set; bits 13–15 are taken with it at a guess, which ends both fields
 at 655 km/h.
 
-## Patch 31 — the screen goes to sleep after boot — **applied, built, not uploaded**
+## Patch 31 — the screen goes to sleep after boot — **applied, uploaded**
 
 2026-10-17, asked for by the rider. The screen comes up as before; ten seconds later it
 clears and shows `Zzzzz....` in the middle, in the wordmark's navy at text size 3, and
@@ -1945,6 +1945,8 @@ the message is up, ends the countdown the same way.
 
 Built, release and `DEBUG`, on 2026-10-17; the board was not attached, so it has not been
 seen on the glass.
+
+Uploaded later the same day, on the second attempt, as usual under WSL2.
 
 ## Open questions before the bike
 
