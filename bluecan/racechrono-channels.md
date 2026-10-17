@@ -4,11 +4,6 @@ What to enter in RaceChrono so that it decodes what Bluecan streams. What each s
 and how sure: [the front page](../README.md#what-is-decoded-so-far) and
 [r9.dbc](../analysis/r9.dbc).
 
-**Status, 2026-10-17.** Every channel below except the Track display is entered in
-RaceChrono Pro on Android and is in [the export](#the-export). Every equation agrees with
-the DBC on every distinct payload in [the captures](../analysis/captures/). Not yet seen on
-the bike.
-
 ## Entering a channel
 
 Vehicle profile → **CAN-Bus channels** → `+ Add channel` (not the one under *OBD-II
@@ -25,30 +20,20 @@ app shows the PID's bytes and the result.
 
 ## The channels
 
-| Channel in the app | Signal | PID | Equation |
-|---|---|---|---|
-| Engine RPM | engine speed, rpm | 636 | `bytesToUint(raw, 0, 2) * 100.0 / 256` |
-| Gear | 0 neutral, 1–6, 7 between gears | 636 | `bytesToUint(raw, 4, 1) & 7` |
-| Digital 1 | TCS, as on the dash | 636 | `bitsToUintLe(raw, 25, 4)` |
-| Digital 2 | PWR 1–4, as on the dash | 636 | `bitsToUintLe(raw, 38, 2) + 1` |
-| Coolant temperature | water, °C | 1298 | `bytesToUint(raw, 0, 1) * 0.625 - 30` |
-| Air temperature | intake air, °C | 1298 | `bytesToUint(raw, 1, 1) * 0.625 - 30` |
-| Throttle position 1 | grip, % | 1880 | `(bitsToUintLe(raw, 56, 4) * 4096 + bitsToUintLe(raw, 40, 12)) * 100.0 / 31672` |
-| Throttle position 2 | valve as measured, % | 1880 | `(bitsToUintLe(raw, 4, 4) * 256 + bitsToUintLe(raw, 16, 8)) * 100.0 / 2310.4` |
-| Throttle position 3 | valve as commanded, % | 1881 | `(bitsToUintLe(raw, 4, 4) * 16 + bitsToUintLe(raw, 20, 4)) * 100.0 / 144.4` |
-| Wheel speed rear | rear wheel | 1878 | `(bitsToUintLe(raw, 28, 4) * 4096 + bitsToUintLe(raw, 4, 8) * 16 + bitsToUintLe(raw, 20, 4)) / 360.0` |
-| Wheel speed front | front wheel | 1893 | `(bitsToUintLe(raw,4,4)*4096+bitsToUintLe(raw,20,4)*256+bitsToUintLe(raw,52,4)*16+bitsToUintLe(raw,24,4))/360.0` |
-| Digital 3 | Track display: 1 on, 0 off | 1902 | `if(bytesToUint(raw, 2, 1) == 16, 1, 0)` — not entered |
-
-| PID | Id | Rate |
-|---|---|---|
-| 636 | `0x27C` | 100 Hz |
-| 1298 | `0x512` | 1 Hz |
-| 1878 | `0x756` | 20 Hz |
-| 1880 | `0x758` | 20 Hz |
-| 1881 | `0x759` | 20 Hz |
-| 1893 | `0x765` | 10 Hz |
-| 1902 | `0x76E` | 2 Hz |
+| Channel in the app | Signal | PID | Rate | Equation |
+|---|---|---|---|---|
+| Engine RPM | engine speed, rpm | 636 (`0x27C`) | 100 Hz | `bytesToUint(raw, 0, 2) * 100.0 / 256` |
+| Gear | 0 neutral, 1–6, 7 between gears | 636 (`0x27C`) | 100 Hz | `bytesToUint(raw, 4, 1) & 7` |
+| Digital 1 | TCS, as on the dash | 636 (`0x27C`) | 100 Hz | `bitsToUintLe(raw, 25, 4)` |
+| Digital 2 | PWR 1–4, as on the dash | 636 (`0x27C`) | 100 Hz | `bitsToUintLe(raw, 38, 2) + 1` |
+| Coolant temperature | water, °C | 1298 (`0x512`) | 1 Hz | `bytesToUint(raw, 0, 1) * 0.625 - 30` |
+| Air temperature | intake air, °C | 1298 (`0x512`) | 1 Hz | `bytesToUint(raw, 1, 1) * 0.625 - 30` |
+| Throttle position 1 | grip, % | 1880 (`0x758`) | 20 Hz | `(bitsToUintLe(raw, 56, 4) * 4096 + bitsToUintLe(raw, 40, 12)) * 100.0 / 31672` |
+| Throttle position 2 | valve as measured, % | 1880 (`0x758`) | 20 Hz | `(bitsToUintLe(raw, 4, 4) * 256 + bitsToUintLe(raw, 16, 8)) * 100.0 / 2310.4` |
+| Throttle position 3 | valve as commanded, % | 1881 (`0x759`) | 20 Hz | `(bitsToUintLe(raw, 4, 4) * 16 + bitsToUintLe(raw, 20, 4)) * 100.0 / 144.4` |
+| Wheel speed rear | rear wheel | 1878 (`0x756`) | 20 Hz | `(bitsToUintLe(raw, 28, 4) * 4096 + bitsToUintLe(raw, 4, 8) * 16 + bitsToUintLe(raw, 20, 4)) / 360.0` |
+| Wheel speed front | front wheel | 1893 (`0x765`) | 10 Hz | `(bitsToUintLe(raw,4,4)*4096+bitsToUintLe(raw,20,4)*256+bitsToUintLe(raw,52,4)*16+bitsToUintLe(raw,24,4))/360.0` |
+| Digital 3 | Track display: 1 on, 0 off | 1902 (`0x76E`) | 2 Hz | `if(bytesToUint(raw, 2, 1) == 16, 1, 0)` — not entered |
 
 Worth knowing when reading the values:
 
@@ -71,8 +56,8 @@ Worth knowing when reading the values:
 [racechrono/vehicle_2026_yamaha_r9.rcz](racechrono/vehicle_2026_yamaha_r9.rcz) is the
 vehicle profile with every channel above except Digital 3, exported from the app. Engine
 speed in it is `* 100 / 256`, so it shows whole rpm. To import it, open the file on the
-phone and choose RaceChrono, or use *Import* in the menu on the app's main screen; neither
-has been tried yet. An import adds a profile and does not overwrite one of the same name.
+phone and choose RaceChrono, or use *Import* in the menu on the app's main screen. An
+import adds a profile and does not overwrite one of the same name.
 
 To check an export against the DBC:
 
@@ -82,5 +67,12 @@ analysis/.venv/bin/python analysis/tools/7-check-racechrono-export.py bluecan/ra
 
 ## Load on the link
 
-Recording, the app asks Bluecan for the six ids it needs, every 50 ms; Bluecan's BUS page
-then reads `flt 6`. That is about 91 frames a second over Bluetooth, of the 506 on the bus ([numbers.md](history/numbers.md)).
+What Bluecan sends over Bluetooth depends on what the app is doing:
+
+| The app is | BUS page | Bluecan sends | With the R9 |
+|---|---|---|---|
+| recording a session | `flt 6` | the six ids with channels, each at most every 50 ms | 20 + 20 + 20 + 20 + 10 + 1 = about 91 frames/s |
+| on a test connection or in the channel editor | `flt ALL` | every frame on the bus | all 506 frames/s ([numbers.md](history/numbers.md)) |
+
+A replay of only those six ids with `flt ALL` comes to about 170 frames/s: every frame of
+each, 100 + 20 + 20 + 20 + 10 + 1.
