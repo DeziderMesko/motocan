@@ -18,11 +18,7 @@ equation as typed, the 110-character front wheel's too. The values have not been
 the app yet, against a replay or on the bike. *(Later on 2026-10-17: against a replay, the
 wheel speeds read about 3.6 times too fast in the app, because it takes speed in m/s;
 both equations now divide by 360.0. The corrected ones have not been entered yet.)*
-*(Later still on 2026-10-17: the profile was exported from the app, and the export showed
-that TCS and PWR had gone in with `bytesTo…` where this page has `bitsToUintLe`, and the
-wheel speeds divided by `360` without the `.0`. All four were corrected in the app and
-exported again; that export is [below](#the-profile-as-exported), and every equation in it
-agrees with the DBC.)* The Track display was left out by choice. None of it has been on the bike. Each was also computed outside the app on every
+*(Later still on 2026-10-17: entered; see [the export](#the-profile-as-exported).)* The Track display was left out by choice. None of it has been on the bike. Each was also computed outside the app on every
 distinct payload in [the captures](../analysis/captures/) and agrees with the DBC.
 
 ## Where they go
@@ -49,26 +45,21 @@ Four things about the app that cost time here:
 
 ## The profile as exported
 
-[racechrono/vehicle_2026_yamaha_r9.rcz](racechrono/vehicle_2026_yamaha_r9.rcz) is the
-vehicle profile exported from RaceChrono Pro on Android on 2026-10-17, with the eleven
-channels in the table [further down](#which-channel-to-map-each-one-onto) — all of this
-page but the Track display. It is a zip holding one file, `vehicleProfile.json`, with each
-channel's PID and equation as the app stores them.
+[racechrono/vehicle_2026_yamaha_r9.rcz](racechrono/vehicle_2026_yamaha_r9.rcz) is the R9's
+vehicle profile exported from RaceChrono Pro on Android, with the eleven channels in
+[the table below](#which-channel-to-map-each-one-onto). Imported into the app, it saves
+typing them in. It is a zip holding one file, `vehicleProfile.json`, with each channel's
+PID and equation as the app stores them. Engine speed in it is `bytesToUint(raw, 0, 2)*100/256`,
+so the app shows whole rpm.
 
 [`analysis/tools/7-check-racechrono-export.py`](../analysis/tools/7-check-racechrono-export.py)
-evaluates each of its equations on every distinct payload of its id in
-[the captures](../analysis/captures/) and compares the result with
-[r9.dbc](../analysis/r9.dbc). On 2026-10-17 all eleven agreed on every payload, from 416
-distinct payloads of `0x512` to 7 302 of `0x27C`. Engine speed went in as
-`bytesToUint(raw, 0, 2)*100/256`, without the `.0`, so the app shows it in whole rpm,
-rounded down; that is the only place the export differs from this page.
+evaluates the equations in an export on every distinct payload in
+[the captures](../analysis/captures/) and compares them with [r9.dbc](../analysis/r9.dbc).
+For this one, all eleven agree on every payload.
 
-How to import such a file into the app was looked for in RaceChrono's documentation and
-not found, though its changelog fixes a bug in "importing a Vehicle profile", so it can be
-done. Not yet tried: opening the file on the phone and choosing RaceChrono to open it, or
-the *Import* item in the menu on the app's main screen. RaceChrono's backup tutorial says a
-restore does not overwrite a vehicle profile that is already there, so expect a second one
-of the same name.
+To import it, open the file on the phone and choose RaceChrono, or use *Import* in the menu
+on the app's main screen. Neither has been tried yet. An import does not overwrite a
+profile that is already there, so expect a second one of the same name.
 
 The functions are RaceChrono's own, documented at
 [racechrono.com/support/equations](https://racechrono.com/support/equations).
@@ -107,7 +98,7 @@ of the same byte is set then ([r9-signals.md](../analysis/r9-signals.md)). Every
 before 2026-10-16 had the engine off or in neutral, so the replay on the bench could not
 show it. **If the old equation is in the app, replace it.** The new one has not been
 typed into the app yet; it is the same function and form as the grip's, which the app
-accepts. *(2026-10-17: typed in, and checked in [the export](#the-profile-as-exported).)*
+accepts.
 
 PWR, 1–4, the number on the dash:
 
