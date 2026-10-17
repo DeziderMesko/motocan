@@ -87,6 +87,7 @@ The parts, the wiring and the power are in [hardware.md](hardware.md).
 | [build.md](build.md) | Toolchain, build settings, flashing on Linux, WSL2 and by UF2, the serial console |
 | [usage.md](usage.md) | What it does when it starts, the screen page by page, the buttons, the LED, RaceChrono, limits, troubleshooting |
 | [racechrono-channels.md](racechrono-channels.md) | The R9's channels as RaceChrono accepts them: PID, equation, which channel to map onto |
+| [racechrono/](racechrono/) | The R9's vehicle profile as exported from RaceChrono, with those channels in it |
 | [at-the-bike.md](at-the-bike.md) | The checklist for the first time it is plugged into the R9 |
 | [bench.md](bench.md) | Testing without the bike: a USB-CAN adapter, generated and replayed traffic, the tools |
 | [firmware/bluecan/](firmware/bluecan/) | The firmware, and a README on how its code is laid out |
