@@ -38,6 +38,9 @@ the time it was taken, in UTC, so the names below are local time two hours on.
   12:42:47.6, 48.8, 50.1, 51.2 and 52.4: sport, street, rain, custom 1, custom 2. In git as
   the crops `other/modes-sport.jpg` and the rest.
 
+Each photo is also in git at a quarter of its width and height, under its own name with
+`-small` added, JPEG quality 80, without the phone's metadata (2026-10-17).
+
 The rider also counted the holes in the rear wheel's sensor ring by hand and filmed it.
 That video is not in this folder.
 

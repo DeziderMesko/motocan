@@ -31,6 +31,9 @@ and back to the normal display (19:23:34).
   19:16:07.7, 19:16:17.8, 19:16:29.9. They are in git as crops, `other/dash-track1.jpg`
   to `dash-track4.jpg`.
 
+Each photo is also in git at a quarter of its width and height, under its own name with
+`-small` added, JPEG quality 80, without the phone's metadata (2026-10-17).
+
 Video and capture are lined up by when the wheel starts, stops and slows, and they agree to
 half a second without any correction. The tool's fit over the steady stretch puts the
 offset at +0.1 s. The phone's clock is used as it stands.
