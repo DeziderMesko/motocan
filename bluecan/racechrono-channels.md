@@ -11,7 +11,11 @@ bench — except what was added or corrected on 2026-10-16 and has not been ente
 TCS, PWR, the two wheel speeds and the Track display. Those were computed outside the app
 on every frame of the two captures of that day and agree with the DBC. The two wheel
 speeds were given their top four bits on 2026-10-17, from a capture that went past 41 km/h,
-and agree with the DBC on every frame of all six captures. None of it has been on the bike. Each was also computed outside the app on every
+and agree with the DBC on every frame of all six captures.
+**2026-10-17: everything on this page except the Track display has been entered**, TCS,
+PWR, both wheel speeds and the valve as commanded among it. The app accepted every
+equation as typed, the 110-character front wheel's too. The values have not been seen in
+the app yet, against a replay or on the bike. The Track display was left out by choice. None of it has been on the bike. Each was also computed outside the app on every
 distinct payload in [the captures](../analysis/captures/) and agrees with the DBC.
 
 ## Where they go
@@ -186,13 +190,11 @@ names are the app's, read off its Live screen on 2026-10-13:
 | Throttle position 1 | the throttle grip | 1880 |
 | Throttle position 2 | the throttle valve as measured | 1880 |
 
-That is eight channels on three PIDs. The ninth, the valve as commanded on PID 1881, has
-its equation above and was not entered, so a recording session asks Bluecan for three ids
-and its BUS page reads `flt 3`.
-
-The three added on 2026-10-16 have no channel yet. The wheel speeds want whatever speed
-channels the app offers in that list, which was not looked at for this; the Track display
-would be `Digital 3`. Each adds a PID to what a recording session asks for.
+That is eight channels on three PIDs, as of 2026-10-13. On 2026-10-17 three more went in:
+the valve as commanded on PID 1881 and the two wheel speeds on 1878 and 1893. Which of the
+app's channels they were mapped onto is not written down yet. A recording session now asks
+Bluecan for six ids, so its BUS page should read `flt 6`. The Track display, which would be
+`Digital 3`, was not entered.
 
 **TCS and PWR have no channel of their own**, and went in as `Digital`.
 Despite the name it is not a 0-or-1 channel: it shows the number the equation gives, so
@@ -231,9 +233,10 @@ locked.
 
 ## What it costs the link
 
-Seven ids with all twelve channels, three as entered so far. Recording, the app asks for
-each at 50 ms, so about 61 frames a second cross the radio with the first four — 41 with
-three — out of the 506 on the bus — [numbers.md](history/numbers.md). The three added on
+Seven ids with all twelve channels; six as entered on 2026-10-17, all but `0x76E`.
+Recording, the app asks for each at 50 ms, so about 61 frames a second cross the radio with
+the first four — 41 with three — out of the 506 on the bus — [numbers.md](history/numbers.md).
+The six entered come to about 91. The three added on
 2026-10-16 come slower than that: `0x756` at 20 a second, `0x765` at 10 and `0x76E` at 2,
 so all seven come to about 93. The same seven are what Bluecan decodes for its own LIVE
 page, which does not depend on any of this: it reads the frames ahead of the app's filter.
