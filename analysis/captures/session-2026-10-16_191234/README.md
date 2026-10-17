@@ -31,6 +31,10 @@ and back to the normal display (19:23:34).
   19:16:07.7, 19:16:17.8, 19:16:29.9. They are in git as crops, `other/dash-track1.jpg`
   to `dash-track4.jpg`.
 
+`other/rear-wheel-turning.gif` is 1.75 s of the video, from 26.5 s in (19:20:13.1), as
+the clutch drag starts the rear wheel: the white tape on the rim moving, 8 frames a second,
+in real time, the frame cropped to the wheel and 300 px wide (ffmpeg, 48 colours).
+
 Each photo is also in git at a quarter of its width and height, under its own name with
 `-small` added, JPEG quality 80, without the phone's metadata (2026-10-17).
 
@@ -80,6 +84,8 @@ byte 4 and `0x76E` byte 1. The other three steps left SCS and LIF unchanged. EBM
 all four modes and was never stepped.
 
 ## The rear wheel
+
+<img src="other/rear-wheel-turning.gif" width="300" alt="The rear wheel on its stand starting to turn, a white tape on the rim moving round">
 
 **`0x756`, `b1 << 8 | (b0 & 0xF0) | b2 >> 4`, follows the rear wheel, at 700 counts per
 revolution a second.** The video's speed comes from `tools/6-wheel-from-video.py`. A camera
