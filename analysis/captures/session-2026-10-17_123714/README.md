@@ -290,6 +290,12 @@ second, and a dash that lags would read low.
 
 ## Looked for and not found
 
+- **The throttle valve closed below its idle opening** ([open question 3](../../open-questions.md)).
+  The grip shut at 12:41:16.9 from 3 700 rpm; the valve in `0x758`, `(b0 >> 4) << 8 | b2`,
+  fell from 658 to 432 in one frame and then read 384–416 through the run-down to 2 000 rpm,
+  which is what it read at idle before the run-up, 352–400 (median 384, 16.6 %). The
+  engine was cold, coolant about 25 °C, so that idle opening is the high cold one; a warm
+  idle has read 176. The run-down lasted a second with an unloaded wheel.
 - **First gear** was not engaged: the box went from N to second at 12:40:44.3.
 - **A bit for the engine lamp that sets after the BC bit**: nothing else set and stayed set
   between 12:41:10.9 and the stop at 12:41:27.2.
