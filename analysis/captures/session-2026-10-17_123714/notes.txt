@@ -1,0 +1,13 @@
+session 2026-10-17T12:37:14+02:00
+iface can0 @ 500000
+mode: ACK (normal), watchdog log in ack-watchdog.log
+census: 23 ids, ~507 msg/s
+27C 383 512 750 751 755 756 757 758 759 75F 760 761 762 763 764 765 769 76A 76B 76C 76D 76E 
+12:38:58  event   rear_wheel_by_hand_start 
+12:39:31  event   rear_wheel_by_hand_end 
+12:39:36  event   rear_wheel_by_hand_start 
+12:39:59  event   rear_wheel_by_hand_end 
+12:40:39  event   rear_wheel_start   
+12:41:37  event   rear_wheel_end     
+frames transmitted: 0
+   163250 frames, 6 marks, 336s
