@@ -379,6 +379,10 @@ Run each step bracketed with marks.
 9. **Rear stand.** Turn the rear wheel by hand, then idle in first gear.
 10. **Hot restart within a minute.** The O2 delays should shrink.
 
+*2026-10-17: steps 1 (key-on), 4 (the fan), 7 (fast against slow), 8 (stop switch) and
+10 (hot restart) will not be done; the owner sees no value in them. The fields each would
+have tested are listed in [open-questions.md](open-questions.md#tests-decided-against-2026-10-17).*
+
 ---
 
 ## Sources in the service manual

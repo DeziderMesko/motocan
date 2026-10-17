@@ -8,7 +8,7 @@ The state of what *has* been found is [r9-signals.md](r9-signals.md).
 | 1 | ~~**The two wheel speeds** — "Speed" and "Speed 2" in AiM's channel list for this platform. Never looked for with the adapter acknowledging. `0x27C` byte 2 is the working guess for one of them~~ **Found 2026-10-16**: the rear in `0x756`, the front in `0x765`, the rear's pulses in `0x27C` byte 2 ([the fourth capture](captures/session-2026-10-16_191234/README.md)). Left open: the unit, 0.01 km/h, rests on a video and the tyre's size, with no dash speed; the front's scale rests only on the stretch where it copied the rear; and see 8 | a dash speed held steady and noted, or the gearing from the manual; the bike pushed by hand, which turns both wheels at one speed. *2026-10-16: the gearing is in hand and disagrees with the video by 2.7 %, see 11; the rider expects no dash speed on a stand* |
 | 2 | ~~**What the 2-bit mode field is** — `0x27C` byte 4 top two bits, `0x76E` byte 1. It follows the ride mode; PWR is a guess. Custom 2 read `2` in the first capture and `1` in the two after it~~ **Closed 2026-10-16: PWR − 1**, 4 dash photos of 4 in Track 1–4 | — |
 | 3 | **The throttle valve's zero.** The top of the scale is measured; a warm idle reads about 8 %, and nothing has shown the valve fully closed | a closed-throttle deceleration, which is not available at a standstill |
-| 4 | **The fields that change and have no name** — about forty, listed in [r9-signals.md](r9-signals.md#everything-that-changes-and-has-no-name) | the candidates and their tests are in the section below and in [R9_CAN_unknowns_vs_manual.md](R9_CAN_unknowns_vs_manual.md); the tests are extras A–N of the stand session. *2026-10-16: B–G were done, and H with the engine off; I–N were not* |
+| 4 | **The fields that change and have no name** — about forty, listed in [r9-signals.md](r9-signals.md#everything-that-changes-and-has-no-name) | the candidates and their tests are in the section below and in [R9_CAN_unknowns_vs_manual.md](R9_CAN_unknowns_vs_manual.md); the tests are extras A–N of the stand session. *2026-10-16: B–G were done, and H with the engine off; I–N were not. 2026-10-17: J–N will not be done, see [below](#tests-decided-against-2026-10-17)* |
 | 5 | **Anything that needs the bike moving**: speed against a reference, brake switches under way, what the valve does against the grip when traction control steps in | nothing has been captured while riding, and that is a rule of this project so far, not an oversight |
 | 6 | **Bluecan has not read this connector yet.** This bus needs an acknowledging node, and the firmware acknowledges now — proved on the bench against the CANable, not on the bike | plugging it into the R9: [patch 18](../bluecan/history/firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |
 | 7 | ~~**The Track display and its four modes.** With the display set to Track the dash offers Track 1–4 beside the five modes. None of the captures had it on, so it is not known what those modes read in the mode field, what each of them sets, or whether the bus carries anything more with that display on~~ **Closed 2026-10-16**: the modes set PWR and TCS as any other mode does; SCS and LIF changed and showed nothing; the display itself is `0x76E` byte 2, `0x10` against `0x20`; no new ids | — |
@@ -89,3 +89,18 @@ This was not a re-measurement: it fell out of naming a field in another frame.
 The session that would test most of the rest is laid out at the end of the other page:
 a capture begun before key-on, each switch bracketed on its own, a long crank, a hot
 restart, a steady hold and a snap shut from 4 000 rpm.
+
+### Tests decided against, 2026-10-17
+
+The owner sees no value in extras J–N of the [stand session](stand-session.md#extras-from-the-service-manual)
+and will not do them. They are written down here with the fields each would have tested,
+so that the fields are not mistaken for untested by oversight. Extra I, the steady hold and
+the snap shut, is not part of this decision.
+
+| | The test | The fields it would have tested |
+|---|---|---|
+| J | three fast snaps and three slow openings to the same place | `0x757` b1, b2, b5, the acceleration-enrichment candidate: only the snaps should set them |
+| K | idle until the radiator fan starts and stops | the fan relay, which has no candidate field; `0x512` b3 and `0x76C` `b1:b0hi:b2hi`, the idle-control candidates, stepping as the fan loads the idle; a fully warm idle against the manual's 1 200–1 400 rpm |
+| L | stop with the stop switch, and see whether the headlight goes off | `0x27C` b6 bit 7, `0x76E` b4 / b6, `0x751` b3, `0x75F` b1: the headlight against the other bits that come on with the engine |
+| M | a hot restart within a minute | `0x751` b6 bit 4, `0x755` b4 bit 6, `0x769` b1 bit 4, the O2-feedback group: they should switch sooner than the 26–30 s after a cold start |
+| N | the key turned off and on again during a capture | the fuel pump's prime among `0x27C` b6 bit 7, `0x76E` b4 / b6, `0x751` b3, `0x75F` b1; the MIL's 2 s and anything else moving at key-on in `0x383`, `0x760`–`0x763`, `0x76B` |
