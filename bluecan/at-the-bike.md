@@ -1,10 +1,8 @@
 # Bluecan at the bike — the checklist
 
 The first time Bluecan meets the R9. Everything it does has been shown on the bench
-against a replay of the bike's own captures
-([patch 18](history/firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench),
-[patch 19](history/firmware.md#patch-19--the-firmware-decodes-four-frames-and-shows-them--applied-and-measured-on-the-bench));
-this is the list of what only the bike can show. At a standstill throughout. Riding with
+against a replay of the bike's own captures ([bench.md](bench.md)); this is the list of
+what only the bike can show. At a standstill throughout. Riding with
 it is a separate decision and is not on this page.
 
 It is not the capture checklist — that is the CANable's, in
@@ -23,7 +21,7 @@ did the first of those three and neither of the others.
 | 2 | **The KAmod's `120R` jumper is on** | a meter across `CAN H`/`CAN L` on the board, connected to nothing, reads about 120 Ω. The bike's pair reads 120 Ω on its own, one terminator where a CAN bus has two and reads 60 Ω. It works with the jumper off too, but the board acknowledges, so it is the bus's other end and on is better ([hardware.md](hardware.md#termination)) |
 | 3 | The pigtail is wired `CAN H` to pin 2, `CAN L` to pin 5 | continuity from the KAmod's `CAN H` to the **middle cavity of the latch row**, and from `CAN L` to the middle cavity of the other row. The female half is the mirror image of the male; the middle cavities are the same on both, the outer ones are not |
 | 4 | The +12 V wire, pin 4, goes nowhere | cut back or insulated. The board is fed from USB |
-| 5 | The channels are in RaceChrono | [racechrono-channels.md](racechrono-channels.md); eight are entered, the commanded valve on PID 1881 is not. **Replace the TCS and PWR equations** with the ones corrected on 2026-10-16: the old TCS one reads 16 too high in gear with the engine running. The wheel speeds and the Track display are optional; each adds a PID |
+| 5 | The channels are in RaceChrono | the equations in [racechrono-channels.md](racechrono-channels.md), or its exported profile imported |
 
 **Bring:** a multimeter, the phone, the RaceBox, a **data** USB cable — a charge-only one
 lights the board and cost three round trips on the bench. The laptop and the CANable if

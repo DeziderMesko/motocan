@@ -2,7 +2,7 @@
 
 What the board does from power-on, what its screen, buttons and LED say, how RaceChrono
 connects to it, and what to expect when something is wrong. The figures are from the
-bench, with the firmware as of 2026-10-14; it has not yet been used on the R9 itself.
+bench; it has not been used on the R9 itself.
 
 ## From power-on
 

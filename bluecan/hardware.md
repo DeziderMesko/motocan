@@ -62,13 +62,11 @@ depends on where it is plugged in.
 - **On the R9, the `120R` jumper is on.** The diagnostic pair has the engine control unit
   and nothing else on it, and with the key off and nothing plugged in it reads about
   120 Ω: one terminator, on the bike's side. A CAN bus has one at each end and reads
-  60 Ω; this one has only the first. **It works without the second**: the three captures
-  of 2026-10-11 ran with the CANable's terminator off and saw no bus error. But Bluecan
-  acknowledges frames, which makes it the bus's other node and its other end, and with
-  its terminator on the bus is terminated as the standard has it, so on is the better
-  setting. The CANable ran both captures of 2026-10-16 that way, also without an error.
-  Until 2026-10-16 this page said off, reasoning from a bus terminated at both ends
-  already; this one is not.
+  60 Ω; this one has only the first. It works without the second: captures with the
+  CANable's terminator off saw no bus error. But Bluecan acknowledges frames, which makes
+  it the bus's other node and its other end, and with its terminator on the bus is
+  terminated as the standard has it. Captures with the CANable's terminator on saw no bus
+  error either.
 - **On a two-node bench**, it is on as well: Bluecan is then one end of the bus and the
   other adapter the other end. See [bench.md](bench.md).
 

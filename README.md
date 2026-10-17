@@ -8,9 +8,8 @@ Nothing here comes from Yamaha. Every row below was measured on one bike with a 
 adapter on the diagnostic connector, a laptop, and something independent to hold each
 number against: the dash, a recording of the engine's sound, a second sensor.
 
-**Status, 2026-10-17:** twenty fields decoded from six captures taken at a standstill,
-the two wheel speeds among them, now to 59 km/h and against the dash. The device that would stream all this to a phone works on
-the bench, acknowledging as this connector needs, and has not yet been plugged into it.
+Twenty fields are decoded, from six captures taken at a standstill. Bluecan, the device
+that streams them to a phone, works on the bench and has not been on the bike.
 
 ## What is decoded so far
 
@@ -20,11 +19,11 @@ only when the listening node acknowledges them. Bytes are numbered from 0; `b3` 
 | Signal | Frame | Rate | Raw value | Equation | How sure |
 |---|---|---|---|---|---|
 | Engine speed | `0x27C` | 100 Hz | `b0 << 8 \| b1` (16 bits, big-endian) | `rpm = raw * 100 / 256` | `b0` is whole hundreds of rpm, sent again on their own in `0x750`; agrees with the engine's sound at idle (0.3915 ± 1.5 %) and holds to 3 400 rpm |
-| Gear | `0x27C` | 100 Hz | `b4 & 0x07` | `0` = N, `1`–`6`, `7` = between gears | confirmed, 13 anchors of 13 |
+| Gear | `0x27C` | 100 Hz | `b4 & 0x07` | `0` = N, `1`–`6`, `7` = between gears | confirmed, 12 anchors of 12 |
 | Gear, as the ECU has it | `0x27C` | 100 Hz | `(b3 >> 5) & 0x07` | `1`–`3` seen; `0` in neutral and with the engine off | first, second and third with the engine running. It holds the last gear between gears, and after the engine stops in gear, until key-off |
 | TCS setting | `0x27C` | 100 Hz | `(b3 >> 1) & 0x0F` | the number on the dash | confirmed, 10 anchors of 10, and the five modes' values in the dash's menu. The bits above it are the ECU's gear, which is why the mask |
 | A bit that is set for about half a second as the starter turns | `0x27C` | 100 Hz | `b3 & 0x01` | `1` during the start and in the last frames at key-off, `0` at all other times | all six starts captured, and not set when the button was pressed with the start blocked. So it follows the starter, not the button; what it is beyond that is not known |
-| A bit that is set at the first start | `0x27C` | 100 Hz | `b6 >> 7` | `0` from key-on to the first start, `1` after it until key-off; `0` for a third of a second at each restart | four starts, and three stops that did not clear it. *Until 2026-10-16 this row read "set while the engine runs"; the stops say otherwise* |
+| A bit that is set at the first start | `0x27C` | 100 Hz | `b6 >> 7` | `0` from key-on to the first start, `1` after it until key-off; `0` for a third of a second at each restart | four starts, and three stops that did not clear it |
 | PWR setting | `0x27C` and `0x76E` | 100 Hz / 2 Hz | `b4 >> 6`, and `0x76E` `b1` | `PWR = raw + 1` | 5 dash photos of 5, and the five modes' values in the dash's menu |
 | Neutral, at rest | `0x751` | 100 Hz | `b6` | `0x60` or `0x70` = neutral, `0x00` = in gear | agrees with every change into and out of neutral with the engine off. It reads `0x60` in first gear with the engine running, so for the gear, use `0x27C` |
 | Rear wheel speed | `0x756` | 20 Hz | `(b3 >> 4) << 12 \| (b1 & 0x0F) << 8 \| (b0 & 0xF0) \| b2 >> 4` (16 bits) | `km/h = raw / 100` | 697 counts per revolution a second by the wheel's own pulses, in three gears; as 0.01 km/h that is a 1.936 m wheel, which the tyre is. The dash showed 28 km/h at 25.2, a speedometer's usual 11 % high, one photo. Seen to 59 km/h; bit 12 seen set, bits 13–15 not |

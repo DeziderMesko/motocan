@@ -37,7 +37,7 @@ History belongs in [firmware.md](firmware.md) (per patch) and [bench-link.md](be
 
 | Figure | Value | Where it comes from |
 |---|---|---|
-| R9, diagnostic connector, **measured** | **506 frames/s** across **23** arbitration ids, engine off or running | three captures on 2026-10-11 — [r9-signals.md](../../analysis/r9-signals.md#what-the-r9-sends-as-of-2026-10-16) |
+| R9, diagnostic connector, **measured** | **506 frames/s** across **23** arbitration ids, engine off or running | three captures on 2026-10-11 — [r9-signals.md](../../analysis/r9-signals.md#what-the-r9-sends) |
 | What telemetry needs, **measured** | **4 ids, 141 frames/s** on the bus; **61** over the radio at the 50 ms per id the app asks for | [how many frames this actually is](../../analysis/background/pre-bike-mapping.md#how-many-frames-this-actually-is) |
 | Without an ACK | **2 ids**, one frame resent about 3 800 times a second | [the first capture](../../analysis/captures/session-2026-10-11_115626/README.md#the-first-capture-2026-10-11) — the device has to acknowledge, see [README.md](readme-2026-10-13.md#what-the-r9-turned-out-to-send) |
 | Acknowledging, on the bench | switches after **32** intact frames over **200 ms**; **199–202 msg/s** received with TEC and REC at 0 on both nodes; trips at REC **32**, looked for every **10 ms** | [patch 18](firmware.md#patch-18--acknowledge-after-listening--applied-and-measured-on-the-bench) |

@@ -6,7 +6,7 @@ Page references use two numbers:
 - **PDF** is the page number shown by the PDF viewer.
 - **man.** is the page number printed in the manual.
 
-**Neither PDF is in the repository**: both are Yamaha's. The page references are plain text for that reason; they were links into a local copy until 2026-10-12.
+**Neither PDF is in the repository**: both are Yamaha's. The page references are plain text for that reason.
 
 Both manuals are for the **2025** model year. The bike this project measures is a 2026 R9, and its owner's reading is that the two are identical in everything below.
 
@@ -180,16 +180,16 @@ In the ECU coupler drawing these wires sit at the left edge of the top two rows:
 
 ---
 
-## 9. What the captures on pair C add (2026-10-11)
+## 9. What the captures on pair C add
 
-Three captures were taken on the YDT connector on 2026-10-11, and two more on 2026-10-16 with the same 23 ids. They are in [r9-signals.md](r9-signals.md); what they say about the wiring above:
+Six captures on the YDT connector, all with the same 23 ids, are in [r9-signals.md](r9-signals.md). What they say about the wiring above:
 
 - **Pair C carries broadcast traffic, not only diagnostics.** 23 ids at 506 frames a second with the key on: `0x27C`, `0x383`, `0x512` and a block from `0x750` to `0x76E`. Engine speed, gear, TCS, the temperatures, the grip and the throttle valve are in it.
 - **Nothing on pair C acknowledges the ECU's frames.** With the adapter listen-only the ECU resent one frame about 3 800 times a second and only two ids got through; with the adapter acknowledging, all 23 arrived at their own rates. So whatever else is wired to W/Y – W/L, it was not taking part with the key on. That weighs **against** the deduction in sections 2 and 3 that the meter is active on pair C: an active node would have acknowledged.
-- **One terminator is visible from the connector.** The pair reads about 120 Ω with the key off, where two terminators would read 60 Ω. *(2026-10-16: the bus works that way — the captures of 2026-10-11 ran with the adapter's terminator off and saw no bus error — but an adapter that acknowledges is the bus's other end, and since 2026-10-16 its terminator is on, which gives the standard 60 Ω.)*
-- **No IMU data and no rider-aid settings other than TCS reach pair C.** *(2026-10-16: and PWR, which the 2-bit mode field turned out to be.)* Lean was looked for against a 30 Hz reference and is not there; SCS, LIF and QS were stepped 21 times and nothing moved. That fits section 8: those travel on pairs A and B, and the ECU does not copy them to the diagnostic pair.
+- **One terminator is visible from the connector.** The pair reads about 120 Ω with the key off, where two terminators would read 60 Ω. The bus works that way. An adapter that acknowledges is the bus's other end, and with its terminator on the pair reads the standard 60 Ω.
+- **No IMU data and no rider-aid settings other than TCS and PWR reach pair C.** Lean was looked for against a 30 Hz reference and is not there; SCS, LIF and QS were stepped 21 times and nothing moved. That fits section 8: those travel on pairs A and B, and the ECU does not copy them to the diagnostic pair.
 
-The suggested test in section 8 has not been run. The rider has not decided to tap pair A, and the project's aim for now is what pair C already sends.
+The suggested test in section 8 has not been run: the project's aim is what pair C already sends, and tapping pair A is not planned.
 
 ---
 

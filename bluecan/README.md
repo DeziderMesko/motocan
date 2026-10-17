@@ -12,9 +12,9 @@ of the R9's bus; Bluecan is the logger built on them. This folder has its docume
 its firmware in [firmware/bluecan/](firmware/bluecan/), three bench sketches and the
 tools.
 
-**Status, 2026-10-14.** It works on the bench: against a replay of the R9's own captured
-traffic, and with RaceChrono Pro on Android recording a session from it. **It has not yet
-been connected to an R9.** The first time it is, follow [at-the-bike.md](at-the-bike.md).
+It works on the bench, against a replay of the R9's own captured traffic and with
+RaceChrono Pro on Android recording from it. **It has not been connected to an R9.** The
+first time it is, follow [at-the-bike.md](at-the-bike.md).
 
 ## What it does
 
