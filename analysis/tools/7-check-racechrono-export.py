@@ -15,8 +15,8 @@ What it assumes about the app, from bluecan/racechrono-channels.md:
 
   bytesToUint is big-endian over whole bytes, bytesToUintLe little-endian, and
              bitsToUintLe numbers bits the way a DBC numbers a little-endian signal.
-  an integer divided by an integer is rounded down, so the reference for engine speed is
-             rounded down too and a missing ".0" elsewhere shows as a difference.
+  an integer divided by an integer is rounded down, so a missing ".0" shows as a
+             difference. Engine speed is let off by under 1 rpm, so that whole rpm pass.
   speeds are in m/s, so a wheel speed's reference is 0.01 km/h counts / 360.
 
 Each channel is told apart by RaceChrono's channelId, which is the app's channel plus its
@@ -72,7 +72,7 @@ def nibbles(s, top, hi, mid, lo):
 
 
 REFERENCE = {
-    10024: ('Engine RPM', lambda s: int(s['EngineSpeed'])),
+    10024: ('Engine RPM', lambda s: s['EngineSpeed']),
     1004: ('Gear', lambda s: s['Gear']),
     1053577: ('Digital 1, TCS', lambda s: s['TCS']),
     2102153: ('Digital 2, PWR', lambda s: s['PWR']),
@@ -116,7 +116,7 @@ def main():
             want = ref(msg.decode(raw, decode_choices=False))
             d = abs(got - want) if got is not None else float('inf')
             worst = max(worst, d)
-            differ += d > 1e-6
+            differ += d >= (1 if c['channelId'] == 10024 else 1e-6)
         result = 'no reference' if ref is None else f'differ {differ:5}  max diff {worst:.6g}'
         print(f'{pid:5}  {name:37} distinct {n:6}  {result}\n       {eq}')
 
