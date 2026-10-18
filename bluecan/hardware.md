@@ -85,8 +85,8 @@ is the ISO 19689 connector used across Euro 5 motorcycles. Pinout, measured on a
 | Pin | Function | Connect to |
 |---|---|---|
 | 2 | CAN High | KAmod `CAN H` |
-| 3 | Ground | KAmod `GND` only when the board is not powered from the bike — see [Isolation and ground](#isolation-and-ground) |
-| 4 | Battery +12 V, unswitched | **nothing.** Insulate it. Bluecan is powered from USB |
+| 3 | Ground | KAmod `GND` only when the board is not powered from the bike — see [Isolation and ground](#isolation-and-ground). On the AtomS3 Lite, the Unit Mini CAN's `GND` |
+| 4 | Battery +12 V, unswitched | **nothing** on the Feather: insulate it, the Feather is powered from USB. On the AtomS3 Lite, the Unit Mini CAN's `HPWR+`, which powers everything ([below](#the-m5stack-atoms3-lite)) |
 | 5 | CAN Low | KAmod `CAN L` |
 | 6 | K-line | nothing |
 
@@ -179,15 +179,27 @@ not run.
 
 The parts it is meant to be used with:
 
-- **CAN**: an M5Stack [Unit Mini CAN](https://docs.m5stack.com/en/unit/Unit-Mini%20CAN)
-  on the Grove port. **TX G2** (yellow), **RX G1** (white), as in M5Stack's
+- **CAN and power**: an M5Stack [Unit Mini CAN](https://docs.m5stack.com/en/unit/Unit-Mini%20CAN)
+  on the Grove port. It is the reason for this variant: it takes the bike's 12 V from the
+  diagnostic connector and powers the Atom over the Grove cable, so nothing but the
+  pigtail goes to the bike and no USB is needed. **TX G2** (yellow), **RX G1** (white), as in M5Stack's
   `MiniCAN_TJA1051T` example. Its transceiver, a TJA1051T/3, is not isolated, like the
   KAmod; it runs from the Grove 5 V with 3.3 V logic. It carries a **fixed 120 Ω
   terminator**, R1 across `CAN H` and `CAN L` with no jumper
   ([schematic V1.0](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/631/SCH_UNIT_Mini_CAN_V1.0.pdf)),
-  which is what the R9 needs: see [Termination](#termination). Leave the `HPWR+` pin of
-  its HT3.96 terminal unconnected: 9–24 V there feeds the unit's own converter, whose
-  output is the Grove 5 V, and the board is already powered over USB.
+  which is what the R9 needs: see [Termination](#termination). Its HT3.96 terminal takes
+  9–24 V on `HPWR+` into a converter of its own, whose 5 V output reaches the Grove
+  connector through a diode and powers the Atom.
+
+  | Diagnostic connector | Unit Mini CAN, HT3.96 |
+  |---|---|
+  | 2, CAN High | 4, `CAN_H` |
+  | 5, CAN Low | 3, `CAN_L` |
+  | 4, battery +12 V | 2, `HPWR+` |
+  | 3, ground | 1, `GND` |
+
+  Pin 4 is unswitched, so this variant runs whenever it is plugged in, key off included.
+  What it draws then has not been measured.
 - **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
   under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
   Arduino example for it. FAT32, up to 16 GB. Built with `CONFIG_SDLOG`

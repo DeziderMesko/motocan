@@ -122,6 +122,9 @@ here. The pages as they stood with every correction written into them are at com
   with that filter forwarded 88 on 2026-10-19.
 - Its hardware page said on 2026-10-18 that the Unit Mini CAN's documentation does not say
   whether it has a terminator. Its schematic has one, fixed; corrected 2026-10-19.
+- The same page said on 2026-10-18 and 2026-10-19 to leave the Unit Mini CAN's `HPWR+`
+  unconnected and power the Atom over USB. The variant is meant to run from the bike's
+  12 V through it, from the diagnostic connector's pin 4; corrected 2026-10-19.
 
 ## The service-manual candidates
 
