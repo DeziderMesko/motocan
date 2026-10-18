@@ -8,7 +8,8 @@ behind each choice, and the bench rig as it was first built, are in
 
 | Part | Notes |
 |---|---|
-| [Adafruit ESP32-S3 Reverse TFT Feather](https://www.adafruit.com/product/5691), #5691 | ESP32-S3 with 4 MB flash and 2 MB PSRAM, a 240×135 colour display, three buttons (D0, D1, D2), an RGB LED (NeoPixel), a MAX17048 battery gauge, a LiPo charger and a USB-C port |
+| [Adafruit ESP32-S3 Reverse TFT Feather with w.FL Antenna](https://www.adafruit.com/product/6303), #6303 | ESP32-S3 with 4 MB flash and 2 MB PSRAM, a 240×135 colour display, three buttons (D0, D1, D2), an RGB LED (NeoPixel), a MAX17048 battery gauge, a LiPo charger, a USB-C port and a w.FL antenna connector. Sold without an antenna |
+| 2.4 GHz antenna with a w.FL connector | for example [Adafruit #5445](https://www.adafruit.com/product/5445). w.FL is the same connector as MHF3 and IPEX3, and smaller than u.FL (MHF1, IPEX1): a u.FL antenna does not fit |
 | [KAmod CAN SN65HVD230](https://kamami.pl/en/CAN-converters/1200043-kamod-can-sn65hvd230-can-interface-module-with-the-sn65hvd230-chip-5902186316799.html) | 3.3 V CAN transceiver. Goldpin header for the Feather, screw terminal and goldpins for `CAN H`/`CAN L`, power LED, and a `120R` jumper that switches a 120 Ω terminator in and out |
 | Pigtail for the R9's diagnostic connector | the male half of the red 6-pin connector, with leads. See [The R9's diagnostic connector](#the-r9s-diagnostic-connector) |
 | USB-C cable | must carry data if you will flash or read the console through it. A charge-only cable powers the board and nothing else, and looks like a dead board |
@@ -146,6 +147,8 @@ as the CANable 2.0 Pro are the safer way to look at an unknown bus.
 - **The board must have both a CAN controller and Bluetooth LE.** The ESP32 and ESP32-S3
   have both. The ESP32-S2 has no Bluetooth; nRF52 boards have no CAN controller and would
   need an MCP2515, which this firmware does not support.
+- **The same board with a PCB antenna** is [#5691](https://www.adafruit.com/product/5691).
+  It needs no antenna and has no connector for one.
 - **Other boards the firmware builds for**: Adafruit Feather ESP32-S3 (RX GPIO18, TX
   GPIO17), Adafruit HUZZAH32 and ESP32 Dev Module (RX GPIO26, TX GPIO25). On those there
   is no display, no status LED and no battery reading; only the Reverse TFT Feather has

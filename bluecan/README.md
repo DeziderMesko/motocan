@@ -57,7 +57,7 @@ first time it is, follow [at-the-bike.md](at-the-bike.md).
 
 | | |
 |---|---|
-| Board | [Adafruit ESP32-S3 Reverse TFT Feather](https://www.adafruit.com/product/5691) (#5691) |
+| Board | [Adafruit ESP32-S3 Reverse TFT Feather with w.FL Antenna](https://www.adafruit.com/product/6303) (#6303), and a 2.4 GHz antenna with a w.FL (MHF3) connector, which the board is sold without ([hardware.md](hardware.md#parts)) |
 | CAN transceiver | [KAmod CAN SN65HVD230](https://kamami.pl/en/CAN-converters/1200043-kamod-can-sn65hvd230-can-interface-module-with-the-sn65hvd230-chip-5902186316799.html), or another 3.3 V SN65HVD230 board |
 | Bike connection | a pigtail for the R9's red 6-pin diagnostic connector (Yamaha YDT coupler, ISO 19689) |
 | Power | the R9's USB outlet and a USB-C **data** cable. Optionally a 500 mAh LiPo cell |

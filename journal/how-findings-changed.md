@@ -113,6 +113,9 @@ here. The pages as they stood with every correction written into them are at com
   RaceChrono recording from it; not yet on the R9. Still true on 2026-10-17.
 - Its at-the-bike checklist said, until 2026-10-17, that eight channels were entered and the
   TCS and PWR equations had to be replaced with the ones corrected on 2026-10-16.
+- Its parts list named the board as #5691, the Reverse TFT Feather with a PCB antenna, until
+  2026-10-18. The board in use is #6303, the same Feather with a w.FL antenna connector and
+  no antenna in the box; the pages now say so and list the antenna.
 
 ## The service-manual candidates
 
