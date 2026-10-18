@@ -95,8 +95,8 @@ An example; the figures are illustrative.
 ```
 CAN 500k ACK         RUN        4.09V
 rx       123456   506/s
-fwd       98765    41/s flt 3
-ble       98760    41/s lost 0
+fwd       98765    88/s flt 6
+ble       98760    88/s lost 0
 queue    0 peak    3/2000 peer 1
 drop 0  err 0
 ext 0 rtr 0 tec 0 rec 0
@@ -194,7 +194,7 @@ You need **RaceChrono Pro**. The free version does not add DIY devices.
 **What the app asks for depends on what it is doing.** While you configure channels or
 test the connection, it asks for every id at 50 ms (`flt ALL`). When it records, it first
 denies everything and then allows each id it has a channel for, with its interval
-(`flt 3` for the R9's channels as entered). Bluecan applies the filter in the CAN receive
+(`flt 6` for the R9's channels as entered in [racechrono-channels.md](racechrono-channels.md)). Bluecan applies the filter in the CAN receive
 interrupt, so an id nobody asked for costs nothing further. Before any app has asked,
 everything is forwarded.
 
@@ -207,7 +207,7 @@ One phone at a time. A second connection lights the red flash.
 | CAN | 500 kbps, standard 11-bit ids. The bit rate is fixed in the firmware |
 | The R9's diagnostic bus | 23 ids, 506 frames a second |
 | Filter | up to 32 ids. Each is sent at most once per interval the app asks for; measured within 3% of 20 Hz at a 50 ms request |
-| Bluetooth throughput | without a filter, clean to about 590 frames a second; past that the Bluetooth stack starts refusing frames (0.6% at 718, 22% at 914). The R9's 506 fit. Recording the R9's channels is about 41–61 frames a second |
+| Bluetooth throughput | without a filter, clean to about 590 frames a second; past that the Bluetooth stack starts refusing frames (0.6% at 718, 22% at 914). The R9's 506 fit. Recording the R9's channels is about 91 frames a second, 88 measured against a replay ([racechrono-channels.md](racechrono-channels.md#load-on-the-link)) |
 | Connection interval | chosen by the phone. The firmware asks for 7.5–12.5 ms; an Android phone has given 11.25, 12.5 and 15 ms on different connections. Throughput depends on it |
 | Queue | 2000 frames between the CAN receiver and Bluetooth, about 4 seconds of the R9's whole bus |
 | Display | costs nothing measurable: frames are not lost while it repaints |

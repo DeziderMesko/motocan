@@ -182,9 +182,12 @@ The parts it is meant to be used with:
 - **CAN**: an M5Stack [Unit Mini CAN](https://docs.m5stack.com/en/unit/Unit-Mini%20CAN)
   on the Grove port. **TX G2** (yellow), **RX G1** (white), as in M5Stack's
   `MiniCAN_TJA1051T` example. Its transceiver, a TJA1051T/3, is not isolated, like the
-  KAmod. Its documentation does not say whether it carries a 120 Ω terminator; check with
-  a meter, as in [Termination](#termination). Leave its HT3.96 power terminal, 9–24 V,
-  unconnected: the board is powered over USB.
+  KAmod; it runs from the Grove 5 V with 3.3 V logic. It carries a **fixed 120 Ω
+  terminator**, R1 across `CAN H` and `CAN L` with no jumper
+  ([schematic V1.0](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/631/SCH_UNIT_Mini_CAN_V1.0.pdf)),
+  which is what the R9 needs: see [Termination](#termination). Leave the `HPWR+` pin of
+  its HT3.96 terminal unconnected: 9–24 V there feeds the unit's own converter, whose
+  output is the Grove 5 V, and the board is already powered over USB.
 - **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
   under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
   Arduino example for it. FAT32, up to 16 GB. Built with `CONFIG_SDLOG`

@@ -1889,7 +1889,7 @@ the `T` stood one column past every other value.
 - `PWR` is right-aligned like every other value: without the `T` its number is in column
   9, under the others; on the Track display it moves to column 8 and the `T` takes
   column 9. A stale `PWR` shows its dash in column 9. *(2026-10-17: two dashes since
-  [patch 29](#patch-29--two-dashes-for-every-missing-value--applied-not-uploaded).)*
+  [patch 29](#patch-29--two-dashes-for-every-missing-value--applied-uploaded-with-patch-30).)*
 
 Uploaded together with patches 24–27 on 2026-10-17, on the second attempt as usual under
 WSL2. The panel has not been looked at yet.

@@ -116,6 +116,12 @@ here. The pages as they stood with every correction written into them are at com
 - Its parts list named the board as #5691, the Reverse TFT Feather with a PCB antenna, until
   2026-10-18. The board in use is #6303, the same Feather with a w.FL antenna connector and
   no antenna in the box; the pages now say so and list the antenna.
+- Its user guide and at-the-bike checklist said a recording session asks for three ids,
+  `flt 3`, at 41–61 frames a second, until 2026-10-19. The R9 profile has had channels on
+  six ids since 2026-10-17, which is `flt 6` and about 91 frames a second; a bench replay
+  with that filter forwarded 88 on 2026-10-19.
+- Its hardware page said on 2026-10-18 that the Unit Mini CAN's documentation does not say
+  whether it has a terminator. Its schematic has one, fixed; corrected 2026-10-19.
 
 ## The service-manual candidates
 
