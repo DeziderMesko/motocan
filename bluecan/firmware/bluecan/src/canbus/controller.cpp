@@ -30,6 +30,7 @@
 #include <driver/periph_ctrl.h>
 
 #include "controller.hpp"
+#include "../sdlog/sdlog.hpp"
 
 /*
  * ESP32 CAN controller:
@@ -573,6 +574,8 @@ void controller::isr() noexcept
             }
 
             CANDEC.observe(f.id, f.data.u8, f.info.dlc);
+            // The card keeps the whole bus, so it is fed before the app's filter.
+            SDLOG.note(f);
 
             if (!CANDEC.should_decode(f.id))
             {

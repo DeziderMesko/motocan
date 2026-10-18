@@ -25,6 +25,7 @@
 #include <cstdio>
 
 // core 3.x no longer pulls esp_mac.h in transitively
+#include <esp_heap_caps.h>
 #include <esp_mac.h>
 
 #include "device.hpp"
@@ -245,6 +246,13 @@ void device::stats() noexcept
                 _conn_interval.load(std::memory_order_relaxed) * 1.25f,
                 _mtu.load(std::memory_order_relaxed),
                 _frames_handle.load(std::memory_order_relaxed));
+            // Internal RAM only, which is all a board without PSRAM has. The panel
+            // shows the free heap too, but a board without one shows it nowhere else.
+            infoln("     Internal heap: %lu free, %lu lowest, %lu largest block, PSRAM %lu free",
+                (unsigned long)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                (unsigned long)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL),
+                (unsigned long)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+                (unsigned long)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
         }
     }
 }

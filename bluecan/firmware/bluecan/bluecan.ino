@@ -26,6 +26,7 @@
 #include "src/display/display.hpp"
 #include "src/led/led.hpp"
 #include "src/racechrono/device.hpp"
+#include "src/sdlog/sdlog.hpp"
 
 #include <cstdint>
 
@@ -91,6 +92,10 @@ void setup()
     // says so on the glass instead of only over a serial console a release build
     // does not have.
     DISP.start();
+
+    // Before the frame path starts, so that no frame is noted into a ring nobody
+    // will empty. A board with no card carries on without a log.
+    SDLOG.start();
 
     core0_handle = xTaskCreateStaticPinnedToCore(
         core0,

@@ -131,7 +131,7 @@ In [firmware/tools/](firmware/tools/). Each script's header says more.
 | `led-state.py` | prints what the LED is showing, in words, and can generate traffic to change it (`--rate 20`). Needs a debug build |
 | `bluecan-soak.py` | holds the console open under load for as long as asked and reports whether the board restarted. Needs a debug build |
 | `r9-decode-check.py` | checks the firmware's R9 decoder against [analysis/r9.dbc](../analysis/r9.dbc) over every captured frame; see [build.md](build.md#checking-the-decoder) |
-| `reflash-bluecan.sh` | builds and uploads the Bluecan firmware under WSL2. `--debug` for a debug build |
+| `reflash-bluecan.sh` | builds and uploads the Bluecan firmware under WSL2. `--debug` for a debug build; `--like-lite`, `--lite`, `--sd`, `--sd-emulate` and `--recording` as in [build.md](build.md#build-time-settings) |
 | `usb-attach.sh` | attaches the Feather and the CANable into WSL2 through usbipd. `--list` shows what Windows sees |
 | `serial-monitor.sh` | reads the console through Windows when USB is not attached to WSL2 |
 | `check-numbers.sh` | lists every place in both repositories that quotes a measured figure from [history/numbers.md](history/numbers.md). For keeping documents consistent after a change |

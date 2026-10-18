@@ -109,6 +109,14 @@ everything downstream and the phone picks it afresh on every reconnect.
 | Bike supply | USB, **3 A** — no step-down needed | [hardware.md](hardware-2026-10-13.md) |
 | Program storage / DRAM | ~706 KB of 2883584 (24%), 104 KB of static RAM (31%) | `arduino-cli compile`, release build |
 
+## The AtomS3 Lite, on the Feather
+
+| Figure | Value | Where it comes from |
+|---|---|---|
+| Free internal heap, no PSRAM | **197 464 bytes** after start-up, largest block 155 636; flat under the full replay | [patch 32](firmware.md#patch-32--the-feather-as-an-atoms3-lite-and-a-build-for-the-lite--applied-run-on-the-feather) |
+| ...with the microSD log | **147 708 bytes**, largest block 106 484 | [patch 33](firmware.md#patch-33--a-microsd-log-and-a-stand-in-for-the-card--applied-run-with-the-stand-in) |
+| Program storage / static RAM | 604 KB / 67.8 KB; with the microSD log 660 KB / 108 KB | `arduino-cli compile`, release build |
+
 ## The serial console
 
 | Figure | Value | Where it comes from |
@@ -148,6 +156,8 @@ disp-char          :: ~?650 (µs|us)                  :: one character redrawn
 disp-full          :: 24[05] ms|251 ms               :: a full repaint
 disp-stack         :: 1824                           :: display task stack free
 led-update         :: ~?30 (µs|us)                   :: one status-pixel update
+heap-lite          :: 197 464|197 KB                 :: free heap, Feather as the Lite
+heap-lite-sd       :: 147 708|148 KB                 :: free heap, Feather as the Lite with the microSD log
 soak-bench-hour    :: 3 ?224 ?404                    :: the one-hour bench soak
 soak-bluecan       :: 600 s at 919|919 msg/s         :: the 600 s Bluecan soak
 soak-phone         :: 150 s at 476                   :: the longest run with a phone

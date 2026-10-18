@@ -110,6 +110,16 @@
 #define CAN_RX_PIN GPIO_NUM_18   // A0
 #define CAN_TX_PIN GPIO_NUM_17   // A1
 #define BLE_PWR_LVL ESP_PWR_LVL_P12
+/// a microSD card for CONFIG_SDLOG, on header pins nothing else here uses. Not the
+/// board's own SPI pins: those are the display's, and its supply is off without it
+#define SDLOG_SCK  16   // A2
+#define SDLOG_MOSI 15   // A3
+#define SDLOG_MISO 14   // A4
+#define SDLOG_CS    8   // A5
+/// CONFIG_LIKE_ATOMS3_LITE leaves out everything below that an M5Stack AtomS3 Lite does
+/// not have -- display, buttons, status pixel, fuel gauge -- so this board can stand in
+/// for one on the bench. Build it with PSRAM disabled as well; the Lite has none.
+#if !defined(CONFIG_LIKE_ATOMS3_LITE)
 /// this board has the 240x135 ST7789 and the three buttons; src/display drives them
 #define CONFIG_DISPLAY_TFT 1
 /// ...and one WS2812 on PIN_NEOPIXEL, gated by NEOPIXEL_POWER. It is the only
@@ -123,6 +133,23 @@
 /// rate is what says whether the bike is still feeding the device. See
 /// motocan/bluecan/history/firmware.md, patch 17.
 #define CONFIG_FUEL_GAUGE 1
+#endif // !CONFIG_LIKE_ATOMS3_LITE
+#endif
+
+// M5Stack AtomS3 Lite. The core has one variant for it and the AtomS3 with a display;
+// nothing here drives either's extras. CAN through a Unit Mini CAN (TJA1051T/3) on the
+// Grove port, as M5Stack's own MiniCAN_TJA1051T example has it; the Atomic CAN Base
+// would be RX G6, TX G5 instead.
+#if defined(ARDUINO_M5STACK_ATOMS3)
+#define CAN_RX_PIN GPIO_NUM_1    // Grove, white
+#define CAN_TX_PIN GPIO_NUM_2    // Grove, yellow
+#define BLE_PWR_LVL ESP_PWR_LVL_P12
+/// the Atomic TF-Card Base, as M5Stack's Arduino example for it has it: no chip
+/// select, the base holds the card selected
+#define SDLOG_SCK  7
+#define SDLOG_MOSI 6
+#define SDLOG_MISO 8
+#define SDLOG_CS   -1
 #endif
 
 /// define when a cell is actually plugged into the JST jack.

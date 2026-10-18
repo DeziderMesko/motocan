@@ -17,6 +17,7 @@ page is for working on the code.
 | `src/canbus/frame.hpp` | one CAN frame, laid out so the notification to the phone is a pointer into it |
 | `src/racechrono/device.*` | the Bluetooth LE server: RaceChrono's service, the connection interval, the counters |
 | `src/display/display.*` | the four pages, the buttons and the status LED, on their own task |
+| `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG`: a ring the CAN interrupt fills, and a task on core 1 that writes it out. Also its stand-in for a board with no card |
 | `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LEDs, the MAX17048 battery gauge, the serial logger, a timer |
 
 ## How it runs
@@ -27,13 +28,20 @@ page is for working on the code.
  │ CAN receive interrupt │            │ Bluetooth task (IDLE+1)    │
  │  · count, classify    │  frame     │  · waits on the queue      │
  │  · drop 29-bit / RTR  │  queue     │  · notifies the phone      │
+ │  · microSD ring       │            │                            │
  │  · allow-list gate ───┼──2000 ────▶│  · yields 1 tick / 128     │
  │  · enqueue or drop    │  frames    │                            │
  ├───────────────────────┤            │ display task (IDLE+1)      │
  │ loop(): supervisor    │            │  · pages, buttons, LED     │
  │  every 10 ms          │            │ NimBLE host and controller │
+ ├───────────────────────┤            │                            │
+ │ microSD task (IDLE+1) │            │                            │
+ │  · 4096-byte sectors  │            │                            │
  └───────────────────────┘            └────────────────────────────┘
 ```
+
+The microSD ring and task exist only in a build with `CONFIG_SDLOG`. The ring is filled
+before the allow-list gate, so the card keeps every frame whatever the app asked for.
 
 **All CAN work is on core 1 and all Bluetooth and display work on core 0.** The display
 must never be drawn from the CAN side: a full repaint takes about 250 ms, and on core 1

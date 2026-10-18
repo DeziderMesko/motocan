@@ -150,9 +150,44 @@ as the CANable 2.0 Pro are the safer way to look at an unknown bus.
 - **The same board with a PCB antenna** is [#5691](https://www.adafruit.com/product/5691).
   It needs no antenna and has no connector for one.
 - **Other boards the firmware builds for**: Adafruit Feather ESP32-S3 (RX GPIO18, TX
-  GPIO17), Adafruit HUZZAH32 and ESP32 Dev Module (RX GPIO26, TX GPIO25). On those there
-  is no display, no status LED and no battery reading; only the Reverse TFT Feather has
-  been run.
+  GPIO17), Adafruit HUZZAH32 and ESP32 Dev Module (RX GPIO26, TX GPIO25), and the M5Stack
+  AtomS3 Lite, below. On those there is no display, no status LED and no battery
+  reading; only the Reverse TFT Feather has been run.
 - **The transceiver must work at 3.3 V logic.** The SN65HVD230 does. On the KAmod its
   slope-control pin is tied on the board; on a bare SN65HVD230 module, check that `Rs` is
   tied low, or the transceiver sits in standby.
+
+### The M5Stack AtomS3 Lite
+
+A smaller board the firmware builds for, not yet bought or run. Build settings are in
+[build.md](build.md#the-m5stack-atoms3-lite).
+
+| | Feather #6303 | [AtomS3 Lite](https://docs.m5stack.com/en/core/AtomS3%20Lite) |
+|---|---|---|
+| Chip | ESP32-S3, 4 MB flash, 2 MB PSRAM | ESP32-S3FN8, 8 MB flash, no PSRAM |
+| Display, buttons | 240×135, three buttons | none; one button, G41 |
+| RGB LED | NeoPixel, with a power switch | WS2812C on G35, always powered |
+| Battery | charger and MAX17048 gauge | none |
+| Antenna | w.FL, sold without one | built in |
+| USB | TinyUSB, and a UF2 bootloader | the chip's own USB serial port, `303a:1001`; flashed with esptool only |
+| Size | 51 × 23 mm | 24 × 24 × 9.5 mm |
+
+The firmware does not use PSRAM, so its absence costs nothing. What the Lite loses is the
+display, the buttons and the battery reading, and for now the status light too: the
+firmware drives the light from the display's task, which a board without a display does
+not run.
+
+The parts it is meant to be used with:
+
+- **CAN**: an M5Stack [Unit Mini CAN](https://docs.m5stack.com/en/unit/Unit-Mini%20CAN)
+  on the Grove port. **TX G2** (yellow), **RX G1** (white), as in M5Stack's
+  `MiniCAN_TJA1051T` example. Its transceiver, a TJA1051T/3, is not isolated, like the
+  KAmod. Its documentation does not say whether it carries a 120 Ω terminator; check with
+  a meter, as in [Termination](#termination). Leave its HT3.96 power terminal, 9–24 V,
+  unconnected: the board is powered over USB.
+- **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
+  under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
+  Arduino example for it. FAT32, up to 16 GB. Built with `CONFIG_SDLOG`
+  ([build.md](build.md#build-time-settings)). The Atomic CAN Base would put CAN on the
+  same header instead, RX G6 and TX G5.
+

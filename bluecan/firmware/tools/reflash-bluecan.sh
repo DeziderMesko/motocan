@@ -3,6 +3,17 @@
 #
 #   ./tools/reflash-bluecan.sh              # release build: silent on serial, BLE only
 #   ./tools/reflash-bluecan.sh --debug      # adds -DDEBUG: 5 s stats over serial
+#   ./tools/reflash-bluecan.sh --like-lite  # the Feather standing in for an AtomS3 Lite
+#   ./tools/reflash-bluecan.sh --lite       # for an M5Stack AtomS3 Lite itself
+#   ./tools/reflash-bluecan.sh --sd         # log every frame to a microSD card
+#   ./tools/reflash-bluecan.sh --sd-emulate # ...and drive the SPI bus as one would if none
+#   ./tools/reflash-bluecan.sh --recording  # bench: filter as RaceChrono does when it records
+#   ./tools/reflash-bluecan.sh --no-upload  # compile only
+#
+# The flags combine. --like-lite builds for the Feather as the Lite has it: no display,
+# buttons, status pixel or fuel gauge (CONFIG_LIKE_ATOMS3_LITE), no PSRAM, and the
+# chip's own USB serial port instead of TinyUSB, so the board appears as 303a:1001
+# while it runs. A plain build afterwards puts everything back.
 #
 # Why this exists next to reflash.sh: that one goes through build.sh, which has no debug
 # build. This one takes --debug, and otherwise performs the same usb-attach dance around
@@ -17,20 +28,63 @@ cd "$(dirname "$0")/.."
 
 BLUECAN="bluecan"
 
-FQBN="esp32:esp32:adafruit_feather_esp32s3_reversetft"
-OPTS="PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M"
+BOARD="feather"
+DEBUG=""
+SD=""
+RECORDING=""
+UPLOAD=1
+for a in "$@"; do
+    case "$a" in
+        --debug)     DEBUG=1 ;;
+        --like-lite) BOARD="like-lite" ;;
+        --lite)      BOARD="lite" ;;
+        --sd)        SD="sd" ;;
+        --sd-emulate) SD="sd-emulate" ;;
+        --recording) RECORDING=1 ;;
+        --no-upload) UPLOAD="" ;;
+        *)           echo "unknown option: $a" >&2; exit 2 ;;
+    esac
+done
 
-BUILD="build/bluecan"
-EXTRA=()
-if [[ "${1:-}" == "--debug" ]]; then
-    BUILD="build/bluecan-debug"
-    EXTRA=(--build-property "compiler.cpp.extra_flags=-DDEBUG")
+FLAGS=()
+case "$BOARD" in
+    feather)
+        FQBN="esp32:esp32:adafruit_feather_esp32s3_reversetft"
+        OPTS="PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M"
+        BUILD="build/bluecan" ;;
+    like-lite)
+        FQBN="esp32:esp32:adafruit_feather_esp32s3_reversetft"
+        OPTS="PartitionScheme=tinyuf2_noota,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=4M"
+        FLAGS+=(-DCONFIG_LIKE_ATOMS3_LITE)
+        BUILD="build/bluecan-like-lite" ;;
+    lite)
+        FQBN="esp32:esp32:m5stack_atoms3"
+        OPTS="PartitionScheme=default_8MB,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=8M"
+        BUILD="build/bluecan-lite" ;;
+esac
+case "$SD" in
+    sd)         FLAGS+=(-DCONFIG_SDLOG); BUILD="$BUILD-sd" ;;
+    sd-emulate) FLAGS+=(-DCONFIG_SDLOG -DCONFIG_SDLOG_EMULATE); BUILD="$BUILD-sdemu" ;;
+esac
+if [[ -n "$RECORDING" ]]; then
+    FLAGS+=(-DCONFIG_RC_BENCH_RECORDING)
+    BUILD="$BUILD-rec"
+fi
+if [[ -n "$DEBUG" ]]; then
+    FLAGS+=(-DDEBUG)
+    BUILD="$BUILD-debug"
     echo ">> DEBUG build"
+fi
+EXTRA=()
+if (( ${#FLAGS[@]} )); then
+    EXTRA=(--build-property "compiler.cpp.extra_flags=${FLAGS[*]}")
 fi
 mkdir -p "$BUILD"
 
-echo ">> compiling $BLUECAN"
+echo ">> compiling $BLUECAN for $BOARD"
 arduino-cli compile --fqbn "$FQBN:$OPTS" "${EXTRA[@]}" --build-path "$BUILD" "$BLUECAN"
+
+[[ -n "$UPLOAD" ]] || exit 0
 
 for attempt in 1 2 3; do
     ./tools/usb-attach.sh >/dev/null 2>&1 || true

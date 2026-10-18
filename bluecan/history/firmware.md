@@ -1950,6 +1950,105 @@ Uploaded later the same day, on the second attempt, as usual under WSL2.
 The rider then watched it on the board, still 2026-10-17: the screen went dark by itself,
 and D0 lit it again.
 
+## Patch 32 — the Feather as an AtomS3 Lite, and a build for the Lite — **applied, run on the Feather**
+
+2026-10-18, asked for by the rider, who plans to buy an M5Stack AtomS3 Lite with a Unit
+Mini CAN on its Grove port. The Lite is the same ESP32-S3 with 8 MB of flash and **no
+PSRAM**, and has no display, buttons or battery gauge; the comparison is in
+[hardware.md](../hardware.md#the-m5stack-atoms3-lite).
+
+- `CONFIG_LIKE_ATOMS3_LITE` leaves the display, status light and gauge out of a Feather
+  build. `reflash-bluecan.sh --like-lite` adds PSRAM disabled and `USBMode=hwcdc`, the
+  Lite's USB, so that the Feather stands in for one.
+- A board block for `ARDUINO_M5STACK_ATOMS3`: CAN RX G1, TX G2, as M5Stack's
+  `MiniCAN_TJA1051T` example has the Unit Mini CAN. `--lite` builds it, `default_8MB`.
+  Built, not run.
+- A debug build prints the internal heap from the Bluetooth task's statistics, so that a
+  board without a display shows it somewhere.
+
+The firmware allocates its queues and task stacks statically and never used the PSRAM.
+Without it, after start-up: **197 464 bytes of internal heap free**, largest block
+155 636. A release build is 604 KB and 67.8 KB of static RAM against the Feather's 710 KB
+and 106 KB; the difference is the display.
+
+On 2026-10-18, the whole of `session-2026-10-17_123714` replayed (163 250 frames, 23 ids)
+with RaceChrono in its channel editor (`flt ALL`) and the phone at 15.00 ms: 0 frames
+dropped, queue peak 8 of 2000, the lowest heap 196 796 bytes and flat, no reset.
+Bluetooth lost 5 060 of 163 988 frames offered, 3.1 %; a repeat the same night lost
+6.2 %. That is the link at 15 ms with a replay that, under WSL2, comes in bursts of
+545–565 frames a second every half minute, not the Lite: no run of the full Feather at
+15 ms with this replay exists to set beside it.
+
+## Patch 33 — a microSD log, and a stand-in for the card — **applied, run with the stand-in**
+
+2026-10-18, asked for by the rider, for the Atomic TF-Card Base under the Lite.
+`CONFIG_SDLOG` builds it in, `src/sdlog/`.
+
+- The CAN interrupt copies each standard data frame, 24 bytes with a 64-bit time, into a
+  32 KB ring, before the allow-list gate: the card keeps the whole bus whatever the app
+  asked for. A full ring counts a drop and never blocks.
+- A task on **core 1**, level with `loop()`, writes the ring out in 4096-byte sectors, the
+  FatFs sector size in this core, to `/bluecan-NNNN.bin`, and flushes every 5 s. Core 1,
+  not core 0 where the display ran: core 0 carries Bluetooth, and the SD library in this
+  core has no DMA and waits for the card by clocking `0xFF` until it lets go of MISO, so
+  a slow card costs the core it runs on.
+- SPI as in M5Stack's example for the base: SCK G7, MISO G8, MOSI G6, no chip select,
+  25 MHz. The file is kept open and flushed, not closed after each write as in their
+  example. Not yet run with a card.
+- `CONFIG_SDLOG_EMULATE` stands in for the card: with none mounted, the task puts each
+  sector on the bus as the library would, block by block with its token and CRC, polls
+  for 300 µs after each block, stalls for 250 ms every 64th sector, and holds a FATFS and
+  a FIL's worth of heap. On the Feather the bus is on A2–A5, not the display's SPI pins.
+
+Cost, measured on the Feather built as the Lite: program 604 → 660 KB, static RAM
+67.8 → 108 KB (the ring and a 6 KB stack), free heap after start-up 197 464 → 147 708
+bytes, largest block 155 636 → 106 484.
+
+On 2026-10-18 and 2026-10-19 the same replay as in patch 32, `flt ALL`, 15.00 ms, four
+runs in turn. In these the ring was filled from the Bluetooth task's drain loop rather
+than the interrupt; with `flt ALL` it saw the same frames.
+
+| Run | Build | Lost over Bluetooth | Ring peak | Dropped |
+|---|---|---|---|---|
+| 1 | no card | 3.1 % | | 0 |
+| 2 | stand-in card | 8.1 % | 6 128 of 32 768 | 0 |
+| 3 | no card | 6.2 % | | 0 |
+| 4 | stand-in card | 9.0 % | 10 216 of 32 768 | 0 |
+
+The card was worse both times, by 2–4 points against the runs either side, and the same
+build without it differed by 3 points between runs 1 and 3, so a cost to Bluetooth is
+likely and not shown. The extra loss did not fall in the 250 ms stalls; it raised the
+loss throughout. Whether it is the CPU or the SPI lines toggling beside the Feather's
+antenna these runs cannot tell, and on the Lite the lines and the antenna are different.
+The slowest sector took 260 ms, no frame was dropped on either side of the ring, and the
+heap stayed flat.
+
+## Patch 34 — a bench stand-in for a recording session — **applied, run**
+
+2026-10-19. RaceChrono asks for every id while it is in the channel editor, and for the
+six ids it has channels for at 50 ms only once it records
+([racechrono-channels.md](../racechrono-channels.md#load-on-the-link)). With
+`CONFIG_RC_BENCH_RECORDING`, `reflash-bluecan.sh --recording`, every filter request from
+the app is answered by denying everything and allowing those six at 50 ms, so a phone
+in the channel editor loads the link as a recording session would while the CAN side,
+and the card, still see the whole bus. Against the full replay it forwarded 88 frames a
+second of about 480.
+
+On 2026-10-19, the same full replay, RaceChrono in its channel editor, the phone moved
+to lie beside the Feather and at 11.25 ms for both, the Feather built as the Lite, one
+run each:
+
+| Build | Forwarded | Lost over Bluetooth | Sectors written | Ring peak | Dropped |
+|---|---|---|---|---|---|
+| no card | 29 087, 88 a second | **0** | | | 0 |
+| stand-in card | 29 134, 88 a second | **0** | 960, the whole bus | 9 904 of 32 768 | 0 |
+
+At a recording session's load the card cost the link nothing measurable, and it kept the
+whole bus while the phone was sent six ids: 960 sectors is 3 932 160 bytes, 163 840
+records of 24, as many as in the unfiltered runs of patch 33. The slowest sector took
+259 ms; the lowest heap was 147 264 bytes; the card's task had 3 980 bytes of its stack
+left.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

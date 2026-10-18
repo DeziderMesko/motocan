@@ -25,6 +25,7 @@
 #include <algorithm>
 
 #include "decoder.hpp"
+#include "r9.hpp"
 
 namespace canbus
 {
@@ -164,6 +165,25 @@ void decoder::onWrite(BLECharacteristic* characteristic)
     // the bench test that asks to read them off the console impossible to pass. The
     // per-frame verboseln in the sketch is why the level cannot simply be raised.
     infoln("ID request CMD %u LEN %u", command, len);
+
+#if defined(CONFIG_RC_BENCH_RECORDING)
+    // Bench only: whatever the app asked, answer as RaceChrono does when it records the
+    // R9 profile -- deny everything, then the six ids it has channels for at 50 ms. It
+    // lets a phone left in the channel editor stand in for a recording session.
+    {
+        static constexpr uint32_t ids[] = {
+            r9::id_engine, r9::id_temps, r9::id_rear,
+            r9::id_throttle, r9::id_valve_cmd, r9::id_front,
+        };
+        deny_all();
+        for (uint32_t id : ids)
+        {
+            allow_id(id, 50U);
+        }
+        infoln("ID request replaced: the R9's %u channel ids at 50 ms", (unsigned)(sizeof(ids) / sizeof(ids[0])));
+        return;
+    }
+#endif
 
     switch (command)
     {

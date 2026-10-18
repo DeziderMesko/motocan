@@ -41,7 +41,9 @@ first time it is, follow [at-the-bike.md](at-the-bike.md).
 ## What it does not do
 
 - **It does not record anything.** RaceChrono on the phone records; the board keeps
-  nothing.
+  nothing. A build with a microSD log exists for the AtomS3 Lite
+  ([hardware.md](hardware.md#the-m5stack-atoms3-lite)) and has not yet been run with a
+  card.
 - **It has no GPS.** RaceChrono needs its own position source, the phone's or an external
   receiver.
 - **It decodes only what has been worked out.** Brake pressure and lean angle are not

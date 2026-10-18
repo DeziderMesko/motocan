@@ -55,6 +55,35 @@ Board: **Adafruit Feather ESP32-S3 Reverse TFT**, FQBN
 | `PSRAM` | `enabled` | PSRAM: QSPI PSRAM | |
 | `FlashSize` | `4M` | Flash Size: 4MB (32Mb) | |
 
+### The M5Stack AtomS3 Lite
+
+The firmware also builds for an [AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite), FQBN
+`esp32:esp32:m5stack_atoms3`, with these options:
+
+| Option | Value | Why |
+|---|---|---|
+| `PartitionScheme` | `default_8MB` | the Lite has 8 MB of flash and no UF2 bootloader to keep |
+| `PSRAM` | `disabled` | it has none |
+| `LoopCore`, `EventsCore` | `1`, `1` | as on the Feather |
+| `CDCOnBoot` | `cdc` | |
+| `USBMode` | `hwcdc` | the chip's own USB serial port, the only one the Lite has |
+| `FlashSize` | `8M` | |
+
+Under WSL2, `tools/reflash-bluecan.sh --lite` builds and uploads it. It has been built,
+not run: there is no Lite here yet.
+
+`tools/reflash-bluecan.sh --like-lite` builds for the Feather as the Lite has it, so that
+the Feather can stand in for one on the bench: `CONFIG_LIKE_ATOMS3_LITE` (below), PSRAM
+disabled and `USBMode=hwcdc`. In that build the Feather appears as `303a:1001` while it
+runs, not `239a:8123`, and its display, buttons and status light are dark. A plain build
+puts everything back.
+
+| Build, release | Program storage | Static RAM | Free heap after start-up |
+|---|---|---|---|
+| Feather | 710 KB | 106 KB | |
+| Feather as the Lite, or the Lite | 604 KB | 67.8 KB | 197 KB, of internal RAM, measured on the Feather |
+| ...with the microSD log | 660 KB | 108 KB | 148 KB |
+
 ## Building
 
 From `bluecan/firmware/`:
@@ -81,14 +110,16 @@ A clean build takes about half a minute and ends with about 710 KB of program st
 
 A release build writes only a few lines to the serial console: start-up, warnings and
 errors. A debug build adds a block of statistics every 5 seconds — frame counts, queue,
-Bluetooth, bus state, the LED's state in words, display cost, heap — and a line for each
-change of bus state. Add this to the compile command:
+Bluetooth, bus state, the LED's state in words, display cost, internal heap, and the
+microSD log when it is built in — and a line for each change of bus state. Add this to the compile command:
 
 ```bash
 --build-property "compiler.cpp.extra_flags=-DDEBUG"
 ```
 
-Under WSL2, `tools/reflash-bluecan.sh --debug` builds and uploads one in a step.
+Under WSL2, `tools/reflash-bluecan.sh --debug` builds and uploads one in a step. Its
+other flags, `--like-lite`, `--lite`, `--sd`, `--sd-emulate`, `--recording` and
+`--no-upload`, combine with it and with each other.
 
 A debug build waits 5 seconds at start-up before doing anything, so that a console can be
 attached in time. Use a release build on the bike.
@@ -105,6 +136,13 @@ Android phone need.
 | `CONFIG_CANBUS_ACK` | on | lets the controller acknowledge once the bit rate is proved. Undefined, the board only ever listens, which on the R9's diagnostic connector gets almost nothing |
 | `CONFIG_BLE_CONN_ITVL_MIN` / `_MAX` | `6` / `10` (7.5–12.5 ms) | the Bluetooth connection interval asked of the phone, in 1.25 ms units. **For an iPhone, change these to `12` / `24`** (15–30 ms): iOS rejects a request below 15 ms or with less than 15 ms between minimum and maximum, and then uses an interval of its own choosing. `12` / `24` works on Android too |
 | `CONFIG_CELL_FITTED` | off | show the battery's state of charge and whether it is charging. Define it only with a cell plugged in; with none, the gauge reports a full, discharging battery that is not there. Untested with a cell |
+| `CONFIG_LIKE_ATOMS3_LITE` | off | on the Feather, leaves out the display, buttons, status light and battery gauge, which an AtomS3 Lite does not have. `reflash-bluecan.sh --like-lite` sets it |
+| `CONFIG_SDLOG` | off | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into `/bluecan-NNNN.bin`. The card keeps the whole bus whatever the app's filter. `--sd` sets it. Not yet run with a card |
+| `CONFIG_SDLOG_EMULATE` | off | with `CONFIG_SDLOG` and no card, drives the SPI bus and holds the heap as a card would, so that its cost can be measured on a board without one. `--sd-emulate` sets both |
+| `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |
+| `CONFIG_SDLOG_SPI_HZ` | 25 MHz | the card's SPI clock, as M5Stack's example for the base has it |
+| `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
+| `CONFIG_RC_BENCH_RECORDING` | off | bench only: whatever RaceChrono asks for, apply the filter it sends when it records the R9 profile, the six ids with channels at 50 ms. A phone left in the channel editor then stands in for a recording session. `--recording` sets it |
 | `DEBUG` | off | see [A debug build](#a-debug-build) |
 | `RC_WRAPPER_NOTIFY` | off | sends frames through the slower Arduino BLE wrapper. Only for comparing the two paths |
 | `CONFIG_RC_STATS_TIMEOUT` | 5 000 000 µs | how often a debug build prints its statistics |
