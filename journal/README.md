@@ -16,3 +16,5 @@ nothing in this folder from outside it that you would mind losing.
   checked and seen.
 - [bluecan-code-review-log.md](bluecan-code-review-log.md) — which ranges of Bluecan's
   source have been reviewed, and what each review found.
+- [bluecan-wifi-bench-2026-10-20.md](bluecan-wifi-bench-2026-10-20.md) — the bench checks
+  the Wi-Fi mode and the light-sleep standby left for a hand at the button and a phone.
