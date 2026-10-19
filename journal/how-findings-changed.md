@@ -133,6 +133,9 @@ here. The pages as they stood with every correction written into them are at com
   The same page said that asserting DTR does not reset the board and that a crash does
   not show on the console; both were about TinyUSB, and were rewritten for the chip's own
   port the same day.
+- Its hardware page said on 2026-10-18 and 2026-10-19 that the AtomS3 Lite would have no
+  status light, the firmware driving it from the display's task. From patch 38, the same
+  day, the light has a task of its own and the Lite's LED carries it.
 
 ## The service-manual candidates
 

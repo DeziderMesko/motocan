@@ -36,6 +36,7 @@ led& led::get() noexcept
 }
 
 led::led() noexcept
+#if defined(BUILTIN_LED_PIN)
     : _timer_config {
         .speed_mode       = LEDC_LOW_SPEED_MODE,
         .duty_resolution  = LEDC_TIMER_13_BIT,
@@ -44,7 +45,7 @@ led::led() noexcept
         .clk_cfg          = LEDC_AUTO_CLK
     }
     , _channel_config {
-        .gpio_num       = LED_BUILTIN,
+        .gpio_num       = BUILTIN_LED_PIN,
         .speed_mode     = LEDC_LOW_SPEED_MODE,
         .channel        = LEDC_CHANNEL_0,
         .intr_type      = LEDC_INTR_DISABLE,
@@ -60,17 +61,29 @@ led::led() noexcept
     ledc_timer_config(&_timer_config);
     ledc_channel_config(&_channel_config);
 }
+#else
+#if defined(CONFIG_STATUS_LED)
+    : _status_last(0xFFFFFFFFU)
+    , _status_powered(false)
+#endif
+{
+}
+#endif
 
 void led::builtin_off() noexcept
 {
+#if defined(BUILTIN_LED_PIN)
     ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+#endif
 }
 
 void led::builtin_on() noexcept
 {
+#if defined(BUILTIN_LED_PIN)
     ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 8191 /* 13-bit max */);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+#endif
 }
 
 #if defined(CONFIG_STATUS_LED)
@@ -91,14 +104,16 @@ __always_inline uint8_t dim(uint8_t v) noexcept
 
 void led::status_begin() noexcept
 {
-    pinMode(NEOPIXEL_POWER, OUTPUT);
-    digitalWrite(NEOPIXEL_POWER, NEOPIXEL_POWER_ON);
+#if defined(STATUS_LED_POWER)
+    pinMode(STATUS_LED_POWER, OUTPUT);
+    digitalWrite(STATUS_LED_POWER, STATUS_LED_POWER_ON);
+#endif
     _status_powered = true;
 
     // Unconditional: this is the write that allocates the RMT channel, and the
     // de-duplication below would skip it if the cached colour happened to match.
     _status_last = 0U;
-    rgbLedWrite(PIN_NEOPIXEL, 0, 0, 0);
+    rgbLedWrite(STATUS_LED_PIN, 0, 0, 0);
 }
 
 void led::status(uint8_t r, uint8_t g, uint8_t b) noexcept
@@ -113,7 +128,9 @@ void led::status(uint8_t r, uint8_t g, uint8_t b) noexcept
 
     if (!_status_powered)
     {
-        digitalWrite(NEOPIXEL_POWER, NEOPIXEL_POWER_ON);
+#if defined(STATUS_LED_POWER)
+        digitalWrite(STATUS_LED_POWER, STATUS_LED_POWER_ON);
+#endif
         _status_powered = true;
         // The pixel's own latch does not survive its power rail, so whatever was
         // cached describes a chip that has since forgotten it.
@@ -126,7 +143,7 @@ void led::status(uint8_t r, uint8_t g, uint8_t b) noexcept
     }
 
     _status_last = packed;
-    rgbLedWrite(PIN_NEOPIXEL, dr, dg, db);
+    rgbLedWrite(STATUS_LED_PIN, dr, dg, db);
 }
 
 void led::status_end() noexcept
@@ -137,9 +154,12 @@ void led::status_end() noexcept
     }
 
     // Dark first, then the rail: cutting power to a lit pixel leaves it lit for as
-    // long as its capacitor holds, which looks like a fault rather than an off.
-    rgbLedWrite(PIN_NEOPIXEL, 0, 0, 0);
-    digitalWrite(NEOPIXEL_POWER, LOW);
+    // long as its capacitor holds, which looks like a fault rather than an off. A
+    // pixel with no rail to cut is left dark, which costs its quiescent current.
+    rgbLedWrite(STATUS_LED_PIN, 0, 0, 0);
+#if defined(STATUS_LED_POWER)
+    digitalWrite(STATUS_LED_POWER, !STATUS_LED_POWER_ON);
+#endif
     _status_powered = false;
     _status_last = 0xFFFFFFFFU;
 }

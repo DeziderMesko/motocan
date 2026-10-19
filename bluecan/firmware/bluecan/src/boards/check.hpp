@@ -40,6 +40,10 @@
 #error "CONFIG_STANDBY does not put the display to sleep; build the atom or feather-as-atom profile"
 #endif
 
-#if defined(CONFIG_STATUS_LED) && !defined(CONFIG_DISPLAY_TFT)
-#error "the status light is driven by the display's task; CONFIG_STATUS_LED needs CONFIG_DISPLAY_TFT"
+#if defined(CONFIG_STATUS_LED) && !defined(STATUS_LED_PIN)
+#error "CONFIG_STATUS_LED needs the board file to give the pixel's pin, STATUS_LED_PIN"
+#endif
+
+#if defined(STATUS_LED_POWER) && !defined(STATUS_LED_POWER_ON)
+#error "STATUS_LED_POWER needs STATUS_LED_POWER_ON, the level that powers the pixel"
 #endif

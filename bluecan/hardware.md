@@ -173,9 +173,8 @@ A smaller board the firmware builds for, not yet bought or run. It is the `atom`
 | Size | 51 × 23 mm | 24 × 24 × 9.5 mm |
 
 The firmware does not use PSRAM, so its absence costs nothing. What the Lite loses is the
-display, the buttons and the battery reading, and for now the status light too: the
-firmware drives the light from the display's task, which a board without a display does
-not run.
+display, the buttons and the battery reading. Its RGB LED carries the status light, as the
+NeoPixel does on the Feather.
 
 The parts it is meant to be used with:
 

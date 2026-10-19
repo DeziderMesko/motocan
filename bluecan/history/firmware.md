@@ -2184,6 +2184,38 @@ static RAM by nothing. Run on the Feather: `feather --debug`, 186 712 bytes of h
 `feather-as-atom --debug`, 195 416 free, acknowledging, asleep after 5 s of silence,
 awake on the next frame and acknowledging 508 ms after `setup()`.
 
+## Patch 38 — the status light on its own task, on both boards — **applied, run on the Feather**
+
+2026-10-19, asked for by the owner: the light taken out of the display so that it stands
+on its own, on the Feather and on the AtomS3 Lite. Finding 4 of
+[the reliability review of that day](../../journal/bluecan-review-2026-10-19.md), done before
+a Lite is on the bench.
+
+- **`src/status/status_light.*`** holds what the display task used to: the rungs, the
+  blips and the flatline, the fault latch, and the debug line `Status light:`, word for
+  word, so `led-state.py` reads it as before. It runs on a task of its own on core 0,
+  every 25 ms, with the fault and the forwarded rate sampled once a second as before.
+  The display keeps its pages and buttons; D0's dark position tells the light through
+  `LIGHT.set_dark()`.
+- **The pixel comes from the board file**: `STATUS_LED_PIN`, and `STATUS_LED_POWER` with
+  its level where the pixel's supply is switched. The Feather's NeoPixel on 33 with its
+  switch on 21; the Lite's WS2812C on G35, always powered. `feather-as-atom` keeps the
+  NeoPixel, standing in for G35. The plain LED that lights once the controller is up is
+  `BUILTIN_LED_PIN`, the Feather's red LED; the Lite has none, and the core's
+  `LED_BUILTIN` there is the RGB pixel's virtual pin, on which the old code set up PWM
+  and failed quietly.
+- **Standby puts the light out** before the chip sleeps (`LIGHT.stop()`): the Lite's pixel
+  is always powered and would keep its last colour for as long as the bike stands.
+- 3 KB of static stack for the task: static RAM up by 3.4 KB on every profile with a
+  light, the heap down by as much.
+
+Built for every profile. Run on the Feather: `feather --debug`, the display and the light
+both running, the light's stack 1344 bytes free of 3072, the display's 1960;
+`feather-as-atom --debug`, the light reporting blue breathing with nothing subscribed,
+asleep after the bus went quiet, awake on the next frame and reporting again. Not seen
+yet: the pixel itself in each state with this code, D0's dark position, the pixel dark
+while asleep, and the subscribed rungs, for want of the phone reconnecting during the run.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

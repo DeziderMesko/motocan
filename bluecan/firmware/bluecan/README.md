@@ -17,10 +17,11 @@ page is for working on the code.
 | `src/canbus/r9.hpp` | the R9 signal equations for the LIVE page, written from [analysis/r9.dbc](../../../analysis/r9.dbc). Check them with [r9-decode-check.py](../tools/r9-decode-check.py) after changing either |
 | `src/canbus/frame.hpp` | one CAN frame, laid out so the notification to the phone is a pointer into it |
 | `src/racechrono/device.*` | the Bluetooth LE server: RaceChrono's service, the connection interval, the counters |
-| `src/display/display.*` | the four pages, the buttons and the status LED, on their own task |
+| `src/display/display.*` | the four pages and the buttons, on their own task |
+| `src/status/status_light.*` | the status light, on its own task, on any board with a pixel (`CONFIG_STATUS_LED`): what colour, from the counters, every 25 ms |
 | `src/standby/standby.*` | deep sleep while the bus is silent, and the wake on CAN RX, built in with `CONFIG_STANDBY` |
 | `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG`: a ring the CAN interrupt fills, and a task on core 1 that writes it out. Also its stand-in for a board with no card |
-| `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LEDs, the MAX17048 battery gauge, the serial logger, a timer |
+| `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LED drivers, on the pins the board file gives; the MAX17048 battery gauge; the serial logger; a timer |
 
 ## How it runs
 
@@ -34,15 +35,16 @@ page is for working on the code.
  │  · allow-list gate ───┼──2000 ────▶│  · yields 1 tick / 128     │
  │  · enqueue or drop    │  frames    │                            │
  ├───────────────────────┤            │ display task (IDLE+1)      │
- │ loop(): supervisor    │            │  · pages, buttons, LED     │
- │  every 10 ms          │            │ NimBLE host and controller │
- ├───────────────────────┤            │                            │
- │ microSD task (IDLE+1) │            │                            │
+ │ loop(): supervisor    │            │  · pages, buttons          │
+ │  every 10 ms          │            │ status light task (IDLE+1) │
+ ├───────────────────────┤            │  · the LED, every 25 ms    │
+ │ microSD task (IDLE+1) │            │ NimBLE host and controller │
  │  · 4096-byte sectors  │            │                            │
  └───────────────────────┘            └────────────────────────────┘
 ```
 
-The microSD ring and task exist only in a build with `CONFIG_SDLOG`. The ring is filled
+The display task exists only on the Feather, the status light's on a board with a pixel,
+and the microSD ring and task only in a build with `CONFIG_SDLOG`. The ring is filled
 before the allow-list gate, so the card keeps every frame whatever the app asked for.
 
 **All CAN work is on core 1 and all Bluetooth and display work on core 0.** The display

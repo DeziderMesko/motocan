@@ -29,6 +29,7 @@
 #include "../logging/logging.hpp"
 #include "../racechrono/device.hpp"
 #include "../sdlog/sdlog.hpp"
+#include "../status/status_light.hpp"
 #include "../utils/timer.hpp"
 
 #include <driver/rtc_io.h>
@@ -120,6 +121,10 @@ void check() noexcept
 
     // What is in the card's ring goes out before the power does.
     SDLOG.stop();
+
+    // Dark: the pixel keeps its last colour for as long as it has power, and on the
+    // Lite that is the whole time the bike stands.
+    LIGHT.stop();
 
     // TX recessive for as long as the chip sleeps: the digital pads lose their state
     // in deep sleep, and a transmit input left to float can hold the bus dominant.

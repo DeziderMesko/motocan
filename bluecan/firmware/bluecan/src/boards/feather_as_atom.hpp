@@ -28,14 +28,16 @@
 //
 // The Feather's pins, and only what the Lite has. The build options are the Feather's
 // own, which are already the Lite's (see feather_revtft.hpp), so what is left
-// different is the pins, the flash (4 MB here, 8 MB there) and the antenna.
+// different is the pins, the flash (4 MB here, 8 MB there) and the antenna -- and the
+// status light's pixel, the Feather's NeoPixel standing in for the Lite's G35, which
+// has a supply switch the Lite's does not.
 
 #include "feather_revtft.hpp"
 
 // not on the Lite
 #undef CONFIG_DISPLAY_TFT
-#undef CONFIG_STATUS_LED
 #undef CONFIG_FUEL_GAUGE
+#undef BUILTIN_LED_PIN
 
 // as on the Lite: see atoms3_lite.hpp
 #if !defined(CONFIG_NO_STANDBY)

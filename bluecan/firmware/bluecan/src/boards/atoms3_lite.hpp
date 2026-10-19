@@ -26,14 +26,19 @@
 // tools/reflash-bluecan.sh. Built, not yet run: no Lite has been on the bench.
 //
 // The core has one variant for the Lite and the AtomS3 with a display; nothing here
-// drives either's extras. Its RGB LED (G35) is dark for now: the status light lives in
-// the display's task, which this board does not run.
+// drives the display's.
 
 /// CAN through the Unit Mini CAN (TJA1051T/3) on the Grove port, as M5Stack's own
 /// MiniCAN_TJA1051T example has it; the Atomic CAN Base would be RX G6, TX G5 instead
 #define CAN_RX_PIN GPIO_NUM_1    // Grove, white
 #define CAN_TX_PIN GPIO_NUM_2    // Grove, yellow
 #define BLE_PWR_LVL ESP_PWR_LVL_P12
+
+/// the WS2812C on G35, always powered, as the status light (src/status). Its only LED:
+/// the core's LED_BUILTIN on this board is the same pixel, not a plain LED, so there
+/// is no BUILTIN_LED_PIN
+#define CONFIG_STATUS_LED 1
+#define STATUS_LED_PIN 35
 
 /// the Atomic TF-Card Base, as M5Stack's Arduino example for it has it: no chip
 /// select, the base holds the card selected

@@ -107,8 +107,8 @@ everything downstream and the phone picks it afresh on every reconnect.
 | BAT rail on the bench | **4.09 V**, no measurable cost to read | [patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read) |
 | With the JST jack empty | the gauge models the charger's rail as a cell: 4.10 V, 100.0%, "discharging" at 22%/hr | [patch 17](firmware.md#patch-17--the-supply-voltage-on-the-glass--applied-flashed-and-read) |
 | Bike supply | USB, **3 A** — no step-down needed | [hardware.md](hardware-2026-10-13.md) |
-| Program storage / static RAM | 651 KB of 2883584 (22%), 73.9 KB (22%); built as the Lite, without PSRAM and on the chip's own USB serial port | `arduino-cli compile`, release build, [patch 37](firmware.md#patch-37--build-profiles-one-file-per-board-the-feather-built-as-the-lite--applied-run-on-the-feather) |
-| Free internal heap, no PSRAM | **186 712 bytes** after start-up, largest block 139 252; no phone connected | [patch 37](firmware.md#patch-37--build-profiles-one-file-per-board-the-feather-built-as-the-lite--applied-run-on-the-feather) |
+| Program storage / static RAM | 652 KB of 2883584 (22%), 77.3 KB (23%); built as the Lite, without PSRAM and on the chip's own USB serial port | `arduino-cli compile`, release build, [patch 38](firmware.md#patch-38--the-status-light-on-its-own-task-on-both-boards--applied-run-on-the-feather) |
+| Free internal heap, no PSRAM | **183 228 bytes** after start-up, largest block 139 252; no phone connected | [patch 38](firmware.md#patch-38--the-status-light-on-its-own-task-on-both-boards--applied-run-on-the-feather) |
 
 ## The AtomS3 Lite, on the Feather
 
@@ -116,8 +116,8 @@ everything downstream and the phone picks it afresh on every reconnect.
 |---|---|---|
 | Free internal heap, no PSRAM | **197 464 bytes** after start-up, largest block 155 636; flat under the full replay | [patch 32](firmware.md#patch-32--the-feather-as-an-atoms3-lite-and-a-build-for-the-lite--applied-run-on-the-feather) |
 | ...with the microSD log | **147 708 bytes**, largest block 106 484 | [patch 33](firmware.md#patch-33--a-microsd-log-and-a-stand-in-for-the-card--applied-run-with-the-stand-in) |
-| ...with standby, as the `feather-as-atom` profile has it | **195 416 bytes**, largest block 155 636; no phone connected | [patch 37](firmware.md#patch-37--build-profiles-one-file-per-board-the-feather-built-as-the-lite--applied-run-on-the-feather) |
-| Program storage / static RAM, `atom` and `feather-as-atom` | 614 KB / 68.0 KB; with the microSD log 672 KB / 108 KB | `arduino-cli compile`, release build |
+| ...with standby and the status light, as the `feather-as-atom` profile has them | **190 872 bytes**, largest block 147 444; no phone connected | [patch 38](firmware.md#patch-38--the-status-light-on-its-own-task-on-both-boards--applied-run-on-the-feather) |
+| Program storage / static RAM, `atom` and `feather-as-atom` | 610 KB / 71.2 KB; with the microSD log 667 KB / 111 KB | `arduino-cli compile`, release build |
 
 ## The serial console
 
@@ -159,8 +159,9 @@ disp-full          :: 24[05] ms|251 ms               :: a full repaint
 disp-stack         :: 1824                           :: display task stack free
 led-update         :: ~?30 (µs|us)                   :: one status-pixel update
 heap-lite          :: 197 464|197 KB                 :: free heap, Feather as the Lite
-heap-lite-standby  :: 195 416|195 KB                 :: free heap, feather-as-atom profile
-heap-feather       :: 186 712|187 KB                 :: free heap, Feather built as the Lite, with the display
+heap-lite-standby  :: 190 872|191 KB                 :: free heap, feather-as-atom profile
+heap-feather       :: 183 228|183 KB                 :: free heap, Feather built as the Lite, with the display
+stale-heap-p37     :: 195 416|186 712                :: patch 37's heap figures, before the light's task
 heap-lite-sd       :: 147 708|148 KB                 :: free heap, Feather as the Lite with the microSD log
 soak-bench-hour    :: 3 ?224 ?404                    :: the one-hour bench soak
 soak-bluecan       :: 600 s at 919|919 msg/s         :: the 600 s Bluecan soak

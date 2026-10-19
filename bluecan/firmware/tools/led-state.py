@@ -7,8 +7,8 @@
 
 The pixel is the one instrument on this board that a shell cannot read: the panel at
 least reports its own repaint cost over serial, and a colour reports nothing at all.
-So the firmware says what colour it is on -- see report_status_led() in
-src/display/display.cpp -- both on the 5 s stats cadence and, more usefully, the moment
+So the firmware says what colour it is on -- see status_light::report() in
+src/status/status_light.cpp -- both on the 5 s stats cadence and, more usefully, the moment
 the rung changes. This holds the console open and prints those lines with a clock, so
 "what the firmware thinks the light is" and "what the light looks like" can be compared
 by one person at one desk.

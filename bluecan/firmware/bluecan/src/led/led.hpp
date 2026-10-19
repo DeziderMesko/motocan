@@ -31,7 +31,7 @@ namespace led
 #if defined(CONFIG_STATUS_LED)
 /// Full brightness on a WS2812 is a torch in a mirror, and this one sits in the
 /// rider's field of view by definition. Daylight sets the floor rather than night --
-/// the display's third light position turns the pixel off entirely -- so this is ~9%
+/// the Feather's dark light position turns the pixel off entirely -- so this is ~9%
 /// of full scale, and every colour below is scaled by it.
 #ifndef CONFIG_STATUS_LED_LEVEL
 #define CONFIG_STATUS_LED_LEVEL 24
@@ -55,7 +55,7 @@ public:
     ~led() noexcept = default;
 
     /**
-     * Turn on built-in LED
+     * Turn on the board's plain LED, BUILTIN_LED_PIN; nothing on a board without one
      */
     void builtin_on() noexcept;
 
@@ -68,7 +68,7 @@ public:
     /**
      * Power the status pixel and leave it dark.
      *
-     * Called once, from the display task, before the first status() -- the RMT
+     * Called once, from the status light's task, before the first status() -- the RMT
      * channel behind it allocates on first use, and doing that at start-up keeps the
      * free-heap baseline honest for anything measured later.
      */
@@ -82,15 +82,16 @@ public:
      * dropped, so an animation that is between steps costs a comparison rather than
      * an RMT transaction.
      *
-     * Display task only: one WS2812 is 24 bits at 800 kHz, and rmtWrite() blocks for
-     * the ~30 us it takes. That is nothing next to a ~420 us idle repaint and it would
-     * be the whole budget inside the CAN ISR.
+     * The status light's task only: one WS2812 is 24 bits at 800 kHz, and
+     * rmtWrite() blocks for the ~30 us it takes. That is nothing on core 0, and it
+     * would be the whole budget inside the CAN ISR.
      */
     void status(uint8_t r, uint8_t g, uint8_t b) noexcept;
 
     /**
      * Dark, and the power rail off with it -- no quiescent draw, which is what makes
-     * the display's third light position a real off rather than a black pixel.
+     * the Feather's dark light position a real off rather than a black pixel. Where
+     * the board has no rail to cut (no STATUS_LED_POWER), only dark.
      */
     void status_end() noexcept;
 #endif
@@ -99,13 +100,15 @@ private:
     explicit led() noexcept;
 
 private:
+#if defined(BUILTIN_LED_PIN)
     ledc_timer_config_t _timer_config;
     ledc_channel_config_t _channel_config;
+#endif
 
 #if defined(CONFIG_STATUS_LED)
     /// last colour written, packed 0x00RRGGBB, or 0xFFFFFFFF for "unknown"
     uint32_t _status_last;
-    /// whether NEOPIXEL_POWER is currently on
+    /// whether the pixel is powered: STATUS_LED_POWER on, where the board has one
     bool _status_powered;
 #endif
 };

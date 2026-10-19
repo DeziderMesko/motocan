@@ -108,29 +108,6 @@ private:
     void poll_buttons() noexcept;
     void sample_rates() noexcept;
 
-    /**
-     * Drive the status pixel from the counters this task already reads.
-     *
-     * Runs every pass of the loop, not every repaint: the light is an animation and
-     * the panel is not, and it must keep working in the light position where the
-     * panel does not repaint at all. Costs a comparison unless the colour changed.
-     */
-    void update_status_led() noexcept;
-
-    /**
-     * Say on the console what colour the light is on, and why.
-     *
-     * DEBUG only, and called from two places: the stats cadence, and the moment the
-     * light changes rung. The second is what makes it usable as an instrument --
-     * plug a phone in and the line arrives with it, rather than up to five seconds
-     * later. See tools/led-state.py in motocan.
-     */
-#if defined(DEBUG)
-    void report_status_led() noexcept;
-#else
-    void report_status_led() noexcept {}
-#endif
-
     /// draw one line, but only if its text or its colour differs from what is already
     /// on the glass -- a colour change with no character change still has to redraw,
     /// or a row that keeps its digits but changes hue leaves the old hue behind on
@@ -263,24 +240,6 @@ private:
     uint8_t _doze;
     /// millis() when the panel was lit at boot, and later when the message went up
     uint32_t _doze_ms;
-    /// the fault overlay, once armed. Latching, because dropped and lost are
-    /// cumulative counters and the moment one of them moves is the moment nobody is
-    /// looking. Only a reboot clears it; the BUS page says which one it was.
-    bool _fault;
-    /// millis() of the last non-zero forwarded-frame rate. What separates a slow
-    /// link from a stopped one, which no other indicator on this board can do.
-    uint32_t _flow_ms;
-    /// RCDEV.lost() as of the last sample. The fault latch wants the growth, not the
-    /// total: a test connection asks for every id and is not rate-limited, so
-    /// refusals during one are the documented behaviour rather than a fault, and the
-    /// count they leave behind must not arm the light for the session after it.
-    uint32_t _lost_prev;
-    /// what the light is doing, packed so a change is one comparison:
-    /// rung << 16 | hz << 8 | fault. The pixel is the one part of this firmware a
-    /// shell cannot see at all -- the panel at least reports its own repaint cost --
-    /// so in a DEBUG build it says what colour it is on, both on the stats cadence
-    /// and the moment it changes.
-    uint32_t _led_state;
     uint32_t _draw_us;
     uint32_t _draw_us_max;
     /// _draw_us as of the last one-second sample. What the panel shows has to change

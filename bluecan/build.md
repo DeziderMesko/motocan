@@ -52,8 +52,8 @@ and the build options are in
 | Profile | Board | What it has |
 |---|---|---|
 | `feather` (the default) | Adafruit Feather ESP32-S3 Reverse TFT | display, buttons, status light, battery gauge |
-| `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | none of those; sleeps while the bus is silent ([standby](#build-time-settings)). Built, not yet run: there is no Lite here yet |
-| `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: display, buttons, status light and gauge dark, standby on. Temporary, until a Lite is on the bench |
+| `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | the status light on its RGB LED, and nothing else of those; sleeps while the bus is silent ([standby](#build-time-settings)). Built, not yet run: there is no Lite here yet |
+| `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: the status light on the NeoPixel, display, buttons and gauge dark, standby on. Temporary, until a Lite is on the bench |
 
 ### Build options
 
@@ -76,9 +76,9 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 651 KB | 73.9 KB | 187 KB, no phone connected |
-| `feather-as-atom`, `atom` | 614 KB | 68.0 KB | 195 KB, measured on the Feather, no phone connected |
-| ...with the microSD log | 672 KB | 108 KB | 148 KB, measured before standby was in the profile |
+| `feather` | 652 KB | 77.3 KB | 183 KB, no phone connected |
+| `feather-as-atom`, `atom` | 610 KB | 71.2 KB | 191 KB, measured on the Feather, no phone connected |
+| ...with the microSD log | 667 KB | 111 KB | 148 KB, measured before standby and the status light's task were in the profile |
 
 ## Building
 

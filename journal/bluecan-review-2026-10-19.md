@@ -155,4 +155,6 @@ second reviewer. The fixes are [patch 36](../bluecan/history/firmware.md#patch-3
 - The reviewer found two things the review missed. Cards over 32 GB come formatted
   exFAT, which the core's FatFs cannot mount; hardware.md says so now. And the file-name
   search opened every file on every start, slower with every ride; fixed in patch 36.
-
+- **4** done the same day, before a Lite: the light has its own task and takes its pixel
+  from the board file ([patch 38](../bluecan/history/firmware.md#patch-38--the-status-light-on-its-own-task-on-both-boards--applied-run-on-the-feather)).
+  On a Lite it has been built, not seen.

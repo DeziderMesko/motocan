@@ -50,11 +50,17 @@
 /// the 240x135 ST7789 and the three buttons; src/display drives them
 #define CONFIG_DISPLAY_TFT 1
 
-/// one WS2812 on PIN_NEOPIXEL, gated by NEOPIXEL_POWER. It is the only instrument on
-/// this board readable from a moving bike, so src/display drives it as a status light
-/// for the chain -- bus, queue, radio, phone. See motocan/bluecan/history/firmware.md,
-/// patch 16.
+/// one WS2812 on PIN_NEOPIXEL, with its supply switched by NEOPIXEL_POWER. It is the
+/// only instrument on this board readable from a moving bike, so src/status drives it
+/// as a status light for the chain -- bus, queue, radio, phone. See
+/// motocan/bluecan/history/firmware.md, patch 16.
 #define CONFIG_STATUS_LED 1
+#define STATUS_LED_PIN      PIN_NEOPIXEL
+#define STATUS_LED_POWER    NEOPIXEL_POWER
+#define STATUS_LED_POWER_ON NEOPIXEL_POWER_ON
+
+/// the red LED on D13, lit once the CAN controller is up
+#define BUILTIN_LED_PIN LED_BUILTIN
 
 /// a MAX17048 fuel gauge on the I2C bus at 0x36, watching the BAT rail. It is the only
 /// supply voltage anything on this board can measure -- VBUS goes to a pad and nowhere

@@ -28,6 +28,7 @@
 #include "src/racechrono/device.hpp"
 #include "src/sdlog/sdlog.hpp"
 #include "src/standby/standby.hpp"
+#include "src/status/status_light.hpp"
 
 #include <cstdint>
 
@@ -115,6 +116,10 @@ void setup()
     //
 
     assert(xPortGetCoreID() == 1);
+
+    // The status light, on its own task on core 0. First, so that it says the board
+    // is booting while the rest comes up.
+    LIGHT.start();
 
     // The panel, on its own task on core 0. Started before anything else has a
     // status worth showing, so a board that fails to bring the CAN controller up
