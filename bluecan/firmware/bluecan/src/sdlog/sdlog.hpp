@@ -126,9 +126,17 @@ public:
      * Single producer: the CAN interrupt on core 1.
      */
     void note(canbus::frame const& f) noexcept;
+
+    /**
+     * Write out what the ring holds, partial sector included, close the file and stop
+     * the task. For a board about to lose its power or go to sleep; waits up to a
+     * second, which a card that stalls the longest the specification allows fits in.
+     */
+    void stop() noexcept;
 #else
     bool start() noexcept { return true; }
     void note(canbus::frame const&) noexcept {}
+    void stop() noexcept {}
 #endif
 
 private:
@@ -138,6 +146,7 @@ private:
     static void task(void* self);
     void run() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
+    void write_rest() noexcept;
     void sync() noexcept;
 #if defined(DEBUG)
     void stats() noexcept;
@@ -158,6 +167,8 @@ private:
     uint32_t _worst_us;             //!< slowest sector write
     uint32_t _errors;               //!< failed writes
     mode_t _mode;
+    std::atomic<bool> _stop;        //!< asked by stop()
+    std::atomic<bool> _stopped;     //!< answered by the task
     TaskHandle_t _handle;
     void* _charge;                  //!< emulation: the heap a mounted card would hold
     utils::timer _sync_timer;

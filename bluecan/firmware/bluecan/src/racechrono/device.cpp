@@ -182,8 +182,8 @@ void device::onSubscribe(BLECharacteristic* chr, ble_gap_conn_desc*, uint16_t su
     const uint16_t handle = chr->getHandle();
     _frames_handle.store(handle, std::memory_order_relaxed);
 
-    infoln("Bluetooth LE subscribe 0x%04x -> notifications %s, frame handle %u",
-        sub, on ? "on" : "off", handle);
+    infoln("Bluetooth LE subscribe 0x%04x -> notifications %s, frame handle %u, %lu ms after start",
+        sub, on ? "on" : "off", handle, static_cast<unsigned long>(millis()));
 }
 
 #endif // CONFIG_NIMBLE_ENABLED

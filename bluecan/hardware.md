@@ -198,8 +198,12 @@ The parts it is meant to be used with:
   | 4, battery +12 V | 2, `HPWR+` |
   | 3, ground | 1, `GND` |
 
-  Pin 4 is unswitched, so this variant runs whenever it is plugged in, key off included.
-  What it draws then has not been measured.
+  Pin 4 is unswitched, so this variant is powered whenever it is plugged in, key off
+  included. Its firmware sleeps five seconds after the bus goes quiet and wakes on the
+  first frame ([build.md](build.md#build-time-settings), `CONFIG_STANDBY`). Asleep, the
+  chip draws microamperes; the Unit Mini CAN does not sleep (its transceiver's `S` pin
+  is tied to ground, and its power LED is always lit), nor do the two boards'
+  converters or the Atom's RGB LED, and none of it has been measured yet.
 - **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
   under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
   Arduino example for it. FAT32, up to 16 GB. Built with `CONFIG_SDLOG`

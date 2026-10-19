@@ -8,6 +8,7 @@
 #   ./tools/reflash-bluecan.sh --sd         # log every frame to a microSD card
 #   ./tools/reflash-bluecan.sh --sd-emulate # ...and drive the SPI bus as one would if none
 #   ./tools/reflash-bluecan.sh --recording  # bench: filter as RaceChrono does when it records
+#   ./tools/reflash-bluecan.sh --standby    # sleep when the bus is silent (on for --lite)
 #   ./tools/reflash-bluecan.sh --no-upload  # compile only
 #
 # The flags combine. --like-lite builds for the Feather as the Lite has it: no display,
@@ -32,6 +33,7 @@ BOARD="feather"
 DEBUG=""
 SD=""
 RECORDING=""
+STANDBY=""
 UPLOAD=1
 for a in "$@"; do
     case "$a" in
@@ -41,6 +43,7 @@ for a in "$@"; do
         --sd)        SD="sd" ;;
         --sd-emulate) SD="sd-emulate" ;;
         --recording) RECORDING=1 ;;
+        --standby)   STANDBY=1 ;;
         --no-upload) UPLOAD="" ;;
         *)           echo "unknown option: $a" >&2; exit 2 ;;
     esac
@@ -66,6 +69,10 @@ case "$SD" in
     sd)         FLAGS+=(-DCONFIG_SDLOG); BUILD="$BUILD-sd" ;;
     sd-emulate) FLAGS+=(-DCONFIG_SDLOG -DCONFIG_SDLOG_EMULATE); BUILD="$BUILD-sdemu" ;;
 esac
+if [[ -n "$STANDBY" ]]; then
+    FLAGS+=(-DCONFIG_STANDBY)
+    BUILD="$BUILD-standby"
+fi
 if [[ -n "$RECORDING" ]]; then
     FLAGS+=(-DCONFIG_RC_BENCH_RECORDING)
     BUILD="$BUILD-rec"

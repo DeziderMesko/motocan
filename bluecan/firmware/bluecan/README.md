@@ -17,6 +17,7 @@ page is for working on the code.
 | `src/canbus/frame.hpp` | one CAN frame, laid out so the notification to the phone is a pointer into it |
 | `src/racechrono/device.*` | the Bluetooth LE server: RaceChrono's service, the connection interval, the counters |
 | `src/display/display.*` | the four pages, the buttons and the status LED, on their own task |
+| `src/standby/standby.*` | deep sleep while the bus is silent, and the wake on CAN RX, built in with `CONFIG_STANDBY` |
 | `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG`: a ring the CAN interrupt fills, and a task on core 1 that writes it out. Also its stand-in for a board with no card |
 | `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LEDs, the MAX17048 battery gauge, the serial logger, a timer |
 

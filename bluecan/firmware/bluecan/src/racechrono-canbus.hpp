@@ -150,6 +150,11 @@
 #define SDLOG_MOSI 6
 #define SDLOG_MISO 8
 #define SDLOG_CS   -1
+/// powered from the diagnostic connector's unswitched 12 V through the Unit Mini CAN,
+/// so it sleeps while the key is off; CONFIG_NO_STANDBY keeps it awake
+#if !defined(CONFIG_NO_STANDBY)
+#define CONFIG_STANDBY 1
+#endif
 #endif
 
 /// define when a cell is actually plugged into the JST jack.

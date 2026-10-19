@@ -435,8 +435,9 @@ void controller::supervise() noexcept
             if (set_ack(true))
             {
                 _ack.store(ack_state::acknowledging, std::memory_order_relaxed);
-                bootln("CAN bus bit rate proved on %u frames (%u errors before them), acknowledging from here",
-                       static_cast<unsigned>(frames - _proof_frames), static_cast<unsigned>(errors));
+                bootln("CAN bus bit rate proved on %u frames (%u errors before them), acknowledging from here, %lu ms after start",
+                       static_cast<unsigned>(frames - _proof_frames), static_cast<unsigned>(errors),
+                       static_cast<unsigned long>(millis()));
             }
         }
         break;

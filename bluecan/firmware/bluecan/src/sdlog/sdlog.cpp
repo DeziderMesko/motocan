@@ -124,6 +124,8 @@ sdlog::sdlog() noexcept
     , _worst_us(0U)
     , _errors(0U)
     , _mode(mode_off)
+    , _stop(false)
+    , _stopped(false)
     , _handle(nullptr)
     , _charge(nullptr)
     , _sync_timer{}
@@ -269,6 +271,13 @@ void sdlog::run() noexcept
 
     while (true)
     {
+        if (_stop.load(std::memory_order_acquire))
+        {
+            write_rest();
+            _stopped.store(true, std::memory_order_release);
+            vTaskSuspend(nullptr);
+        }
+
         const uint32_t tail = _tail.load(std::memory_order_relaxed);
         const uint32_t waiting = _head.load(std::memory_order_acquire) - tail;
 
@@ -335,6 +344,65 @@ bool sdlog::write_sector(uint8_t const* p) noexcept
         poll(CONFIG_SDLOG_EMU_STALL_MS * 1000U);
     }
     return true;
+}
+
+void sdlog::stop() noexcept
+{
+    if (_mode == mode_off || _handle == nullptr)
+    {
+        return;
+    }
+
+    _stop.store(true, std::memory_order_release);
+    for (int i = 0; i < 100 && !_stopped.load(std::memory_order_acquire); i++)
+    {
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+void sdlog::write_rest() noexcept
+{
+    // Whole sectors first, as the loop would have, then whatever is left of the last.
+    const uint32_t head = _head.load(std::memory_order_acquire);
+    uint32_t tail = _tail.load(std::memory_order_relaxed);
+
+    while (head - tail >= sector)
+    {
+        write_sector(ring + (tail & mask));
+        _sectors++;
+        tail += sector;
+    }
+
+    // The rest is less than a sector and starts on a sector boundary, so it cannot
+    // wrap.
+    const uint32_t rest = head - tail;
+    if (rest > 0U)
+    {
+        if (_mode == mode_card)
+        {
+            file.write(ring + (tail & mask), rest);
+        }
+        else
+        {
+            emulated_op op;
+            for (uint32_t done = 0U; done < rest; done += 512U)
+            {
+                emulate_block(ring + ((tail + done) & mask));
+            }
+        }
+        tail += rest;
+    }
+    _tail.store(tail, std::memory_order_release);
+
+    if (_mode == mode_card)
+    {
+        file.close();
+        SD.end();
+    }
+    else
+    {
+        sync();
+    }
 }
 
 void sdlog::sync() noexcept

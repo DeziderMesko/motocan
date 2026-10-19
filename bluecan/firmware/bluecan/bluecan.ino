@@ -27,6 +27,7 @@
 #include "src/led/led.hpp"
 #include "src/racechrono/device.hpp"
 #include "src/sdlog/sdlog.hpp"
+#include "src/standby/standby.hpp"
 
 #include <cstdint>
 
@@ -58,6 +59,10 @@ void setup()
 
     Serial.begin(115200);
 
+    // Before anything touches the CAN pins: a wake from standby leaves them held in
+    // the RTC domain.
+    const bool woke = standby::on_boot();
+
 #if ARDUINO_USB_CDC_ON_BOOT
     // The core defaults this to 250 ms, and a USB CDC write blocks until the host
     // reads or the timeout expires. 250 ms of a blocked drain task is 250 ms of
@@ -67,13 +72,22 @@ void setup()
     Serial.setTxTimeoutMs(20);
 #endif
 
-    delay(1500);
+    // Time for a console to attach. Not after a wake from standby: the engine control
+    // unit is repeating its first frame until this board answers, and nobody is at a
+    // console on the bike.
+    if (!woke)
+    {
+        delay(1500);
+    }
     Serial.print("Starting up on core ");
     Serial.println(xPortGetCoreID());
     Serial.flush();
 
 #if defined(DEBUG)
-    delay(5000);
+    if (!woke)
+    {
+        delay(5000);
+    }
 #endif
 
     // set logging level
@@ -217,4 +231,6 @@ void loop()
     CANCTLR.stats();
     // start acknowledging once the bit rate is proved, stop if the bus looks wrong
     CANCTLR.supervise();
+    // sleep once the bus has been silent long enough; wakes as a restart
+    standby::check();
 }

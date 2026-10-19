@@ -118,8 +118,8 @@ microSD log when it is built in — and a line for each change of bus state. Add
 ```
 
 Under WSL2, `tools/reflash-bluecan.sh --debug` builds and uploads one in a step. Its
-other flags, `--like-lite`, `--lite`, `--sd`, `--sd-emulate`, `--recording` and
-`--no-upload`, combine with it and with each other.
+other flags, `--like-lite`, `--lite`, `--sd`, `--sd-emulate`, `--recording`,
+`--standby` and `--no-upload`, combine with it and with each other.
 
 A debug build waits 5 seconds at start-up before doing anything, so that a console can be
 attached in time. Use a release build on the bike.
@@ -142,6 +142,8 @@ Android phone need.
 | `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |
 | `CONFIG_SDLOG_SPI_HZ` | 25 MHz | the card's SPI clock, as M5Stack's example for the base has it |
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
+| `CONFIG_STANDBY` | on for the AtomS3 Lite, off otherwise | deep sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display: on the Feather only with `CONFIG_LIKE_ATOMS3_LITE`. `--standby` sets it; `CONFIG_NO_STANDBY` turns it off on the Lite |
+| `CONFIG_STANDBY_TIMEOUT_S` | 5 s | the silence that counts as the key being off. The R9 sends over 500 frames a second with it on |
 | `CONFIG_RC_BENCH_RECORDING` | off | bench only: whatever RaceChrono asks for, apply the filter it sends when it records the R9 profile, the six ids with channels at 50 ms. A phone left in the channel editor then stands in for a recording session. `--recording` sets it |
 | `DEBUG` | off | see [A debug build](#a-debug-build) |
 | `RC_WRAPPER_NOTIFY` | off | sends frames through the slower Arduino BLE wrapper. Only for comparing the two paths |

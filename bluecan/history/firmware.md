@@ -2049,6 +2049,49 @@ records of 24, as many as in the unfiltered runs of patch 33. The slowest sector
 259 ms; the lowest heap was 147 264 bytes; the card's task had 3 980 bytes of its stack
 left.
 
+## Patch 35 — standby: deep sleep while the bus is silent — **applied, run on the Feather**
+
+2026-10-19, asked for by the rider, for the AtomS3 Lite powered from the diagnostic
+connector's unswitched 12 V through the Unit Mini CAN. `CONFIG_STANDBY`, `src/standby/`;
+on for the Lite, `--standby` with `--like-lite` on the Feather.
+
+- `loop()` watches the controller's frame counter. Five seconds without a frame
+  (`CONFIG_STANDBY_TIMEOUT_S`, first asked for at 60 s, then 10, then 5) and the chip
+  goes to deep sleep: the microSD log written out and closed, CAN TX held recessive in
+  the RTC domain, CAN RX armed as the ext0 wake source, low.
+- A wake is a restart. `setup()` releases both pads first, and skips the 1.5 s and the
+  debug build's 5 s it waits for a console after a power-on.
+- A debug build prints, every 5 s, how many times the board has slept since power-on,
+  and when this start reached `setup()`, began acknowledging and saw the phone
+  subscribe, in ms of `millis()`. A woken board's boot lines are gone before a console
+  can attach, so these are what is left of them.
+- [console-log.sh](../firmware/tools/console-log.sh) keeps the console in a file across
+  sleeps: `usbipd attach --auto-attach` brings the board back into WSL on each wake.
+  Read from Windows instead, the port reset the board each time it was opened
+  (`rst:0x15`, `USB_UART_CHIP_RESET`), with DTR and RTS low, with DTR alone, and with
+  both high.
+
+Run on the Feather built as the Lite on 2026-10-19, the CANable playing the bike:
+
+- Asleep 5 s after the bus went quiet, every time.
+- 60 s of silence: no wake.
+- Woken by traffic five times in five, the CANable in one-shot mode sending a frame
+  every 2 ms whether acknowledged or not. Each time it was acknowledging **508–509 ms**
+  after `setup()` began, and asleep again 5 s after the traffic stopped. Not counted:
+  the bootloader before `setup()`, which took 250 ms after a reset; `millis()` read 7 at
+  `setup()`.
+- In normal mode the CANable gives a frame 16 attempts, about 4 ms, and then stops
+  until it is acknowledged. A single frame sent so woke the board, which its wake count
+  showed afterwards although no console caught it, and so did `cangen` in normal mode;
+  but with the CANable stopped the board saw too few frames to prove the bit rate,
+  never acknowledged, and slept again. The R9 does not stop: with nothing acknowledging it,
+  [session-2026-10-11_115626](../../analysis/captures/session-2026-10-11_115626/README.md)
+  is 2 599 203 frames in 685 s, about 3 800 a second, which is the bus full.
+
+Not yet measured: the current asleep and awake, which needs the Lite, the Unit Mini CAN
+and a 12 V supply; and whether RaceChrono reconnects by itself after a wake, and how
+long it takes.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches
