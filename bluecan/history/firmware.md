@@ -2088,9 +2088,15 @@ Run on the Feather built as the Lite on 2026-10-19, the CANable playing the bike
   [session-2026-10-11_115626](../../analysis/captures/session-2026-10-11_115626/README.md)
   is 2 599 203 frames in 685 s, about 3 800 a second, which is the bus full.
 
+With RaceChrono connected beforehand, the same day, four cycles of 30 s of traffic, the
+build with the stand-in card: the phone came back by itself every time, subscribed
+**2 497–2 866 ms** after `setup()` began. In this build the board was acknowledging only
+after 2 029–2 031 ms rather than 509: `SD.begin()` with no card takes about 1.5 s, and
+`setup()` starts the card before Bluetooth and CAN. With a card in, or without the log,
+both come that much sooner; the phone has not been timed in either.
+
 Not yet measured: the current asleep and awake, which needs the Lite, the Unit Mini CAN
-and a 12 V supply; and whether RaceChrono reconnects by itself after a wake, and how
-long it takes.
+and a 12 V supply.
 
 ## Open questions before the bike
 
