@@ -47,6 +47,13 @@
 /// the controller back to listen-only if the bus stops looking healthy.
 #define CONFIG_CANBUS_ACK 1
 
+/// The Wi-Fi mode, entered by holding the board's button for five seconds: the bus's
+/// statistics and the card's files on a web page, in place of Bluetooth, never beside
+/// it. See src/mode/ and src/web/. CONFIG_NO_WIFI leaves it out.
+#if !defined(CONFIG_NO_WIFI)
+#define CONFIG_WIFI 1
+#endif
+
 /// statistics timeout in microseconds
 #define CONFIG_RC_STATS_TIMEOUT 5000000
 

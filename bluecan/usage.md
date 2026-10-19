@@ -148,7 +148,7 @@ The six most recent forwarded frames, newest first: id, length, payload in hex.
 |---|---|
 | **D0** | cycles: screen and LED on → LED only, screen off → both off → back. Everything else keeps running. Use LED only on the bike. After boot the screen goes dark by itself ([From power-on](#from-power-on), step 5), and the first press lights it |
 | **D1** | next page |
-| **D2** | freezes the screen, to read a frame off the LAST page; the footer says `(held)`. Counting continues behind it. Press D2 again, or D1, to unfreeze |
+| **D2** | freezes the screen, to read a frame off the LAST page; the footer says `(held)`. Counting continues behind it. Press D2 again, or D1, to unfreeze. **Held for 5 seconds** and let go, it switches to the [Wi-Fi mode](#the-wi-fi-mode) and back |
 
 **RESET** restarts the board. Pressed twice quickly, it enters the UF2 bootloader
 ([build.md](build.md#by-uf2-with-no-tools-at-all)); press RESET once more to leave it.
@@ -174,6 +174,53 @@ The sleep is light sleep, not deep sleep: the Lite's button cannot wake the chip
 deep sleep. What either costs the bike's battery is estimated in
 [hardware.md](hardware.md#current-while-asleep).
 
+## The Wi-Fi mode
+
+In place of Bluetooth, the board can put up a Wi-Fi network of its own with a web page on
+it: the bus's statistics, and the microSD card's log files to download. Never both at
+once: the chip has one radio, and the normal mode is built to get every frame through it
+to the phone.
+
+**To switch**, hold the button for five seconds: the Lite's one button, D2 on the Feather.
+At five seconds the LED turns **steady white**; let go, and the board restarts in the
+Wi-Fi mode, its LED **breathing purple**, steady purple once something has joined the
+network. A board asleep is woken with a short press first. Holding the button again the
+same way switches back.
+
+**To connect**, join the network `bluecan-XXXX` (the last four hex digits of the board's
+MAC) with the password from `bluecan/firmware/bluecan/src/web/secret.hpp`, which the
+build script wrote and printed the first time it built ([build.md](build.md#build-time-settings)).
+Then open <http://192.168.4.1/>. The network has no internet, and a phone may ask
+whether to stay on it.
+
+**The page** updates every second:
+
+| Section | Shows |
+|---|---|
+| Bus | whether the board acknowledges, frames a second and in total, error interrupts, TEC and REC, trips, 29-bit and remote frames, frames dropped |
+| Bike | engine speed, gear, both wheel speeds, water and air temperature, from the frames the LIVE page decodes; `-` when a frame has not arrived for two seconds |
+| Ids | every id seen since the start: how many a second, how many in all, how long since the last, its last payload |
+| Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it |
+| Board | free memory, and how many devices are on the network |
+
+Nothing on the page writes anything, and files cannot be deleted from it. The card is
+not written in this mode: frames on the bus meanwhile are not logged. A downloaded file
+is 24 bytes a frame; [firmware/tools/sdlog-to-candump.py](firmware/tools/sdlog-to-candump.py)
+turns it into a candump log.
+
+**Back to the normal mode** by a restart, whichever comes first:
+
+- the page's button *Back to the normal mode*;
+- the board's button held for five seconds again;
+- five minutes without a request to the page: the page closed, or the phone's browser
+  shut while the phone stays on the network;
+- the rear wheel above 10 km/h for a second: the bike is being ridden. RaceChrono, if it
+  is waiting, connects again by itself.
+
+Any other restart, a reset or the power, also comes back in the normal mode. In the
+Wi-Fi mode the board does not sleep, so that a download is not cut off with the key
+off; the five minutes are what stop it running on.
+
 ## The LED
 
 One RGB LED, readable at a glance. The colour is the state of the chain from the bus to
@@ -191,6 +238,9 @@ puts it out first.
 | yellow or green, a double flash every 2 s | subscribed, and **no frames for more than 2 seconds**: the bus has gone quiet, the key is off, or the connector has come out |
 | amber, blinking 1 Hz | the CAN controller's error counters have reached its warning limit — BUS shows `ERRORS` |
 | red, solid | the CAN controller is bus-off |
+| white, steady | the button has been held for five seconds: let go to switch modes |
+| purple, breathing | the [Wi-Fi mode](#the-wi-fi-mode), nobody on its network |
+| purple, steady | the Wi-Fi mode, a device on its network |
 | a short red flash once a second, over any of the above | **something was lost** since start-up: a frame dropped from the queue, more filter requests than fit, a second phone connected, frames refused by Bluetooth while recording, or the board stopped acknowledging. It stays until a restart. The BUS page shows which |
 
 The blips go faster with more frames: about 2 a second at the 20 frames a second a

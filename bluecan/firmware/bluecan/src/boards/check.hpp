@@ -40,6 +40,10 @@
 #error "CONFIG_STANDBY does not put the display to sleep; build the atom or feather-as-atom profile"
 #endif
 
+#if defined(CONFIG_WIFI) && !defined(BUTTON_PIN)
+#error "CONFIG_WIFI is entered by holding the board's button: the board file gives BUTTON_PIN, or build with CONFIG_NO_WIFI"
+#endif
+
 #if defined(BUTTON_PIN) && !defined(BUTTON_PRESSED)
 #error "BUTTON_PIN needs BUTTON_PRESSED, the level the pin reads while the button is pressed"
 #endif

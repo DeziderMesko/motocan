@@ -25,11 +25,14 @@
 
 #if defined(CONFIG_STATUS_LED)
 
+#include "../button/button.hpp"
 #include "../canbus/controller.hpp"
 #include "../canbus/decoder.hpp"
 #include "../led/led.hpp"
 #include "../logging/logging.hpp"
+#include "../mode/mode.hpp"
 #include "../racechrono/device.hpp"
+#include "../web/web.hpp"
 
 #include <hal/twai_ll.h>
 
@@ -133,7 +136,10 @@ const char* rung_name(uint8_t rung) noexcept
     case 2:  return "amber blink    (error-passive)";
     case 3:  return "blue breathe   (nothing subscribed)";
     case 4:  return "yellow         (subscribed, flt ALL -- configuring)";
-    default: return "green          (subscribed, filtered -- recording)";
+    case 5:  return "green          (subscribed, filtered -- recording)";
+    case 6:  return "white solid    (button held long enough -- let go to switch)";
+    case 7:  return "purple breathe (Wi-Fi mode, nobody on the network)";
+    default: return "purple solid   (Wi-Fi mode, someone on the network)";
     }
 }
 #endif
@@ -345,7 +351,31 @@ void status_light::update() noexcept
     /// blip rate actually used, or 0 for a rung that is not blipping
     uint8_t hz = 0U;
 
-    if (!running)
+    if (button::ready())
+    {
+        // The button has been held long enough: letting go switches the mode. Above
+        // everything, since it is the answer to what the hand on the button is doing.
+        r = 255; g = 255; b = 255;
+        lvl = 255;
+        rung = 6U;
+    }
+    else if (mode::current() == mode::run::wifi)
+    {
+        // The Wi-Fi mode: no phone link to report on, so one colour for the mode,
+        // breathing until something joins the network and steady while it is on it.
+        r = 160; g = 0; b = 255;
+        if (WEB.stations() == 0U)
+        {
+            lvl = breathe(now, 2000U);
+            rung = 7U;
+        }
+        else
+        {
+            lvl = 255;
+            rung = 8U;
+        }
+    }
+    else if (!running)
     {
         // The controller is not up. In practice this is the second and a half
         // between the display task starting and setup() reaching CANCTLR.start(),
@@ -444,7 +474,7 @@ void status_light::report() noexcept
     const uint8_t hz = static_cast<uint8_t>((_state >> 8) & 0xFFU);
 
     char pattern[32];
-    if (rung < 4U)
+    if (rung < 4U || rung > 5U)
     {
         pattern[0] = '\0';
     }

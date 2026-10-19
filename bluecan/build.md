@@ -53,7 +53,7 @@ and the build options are in
 |---|---|---|
 | `feather` (the default) | Adafruit Feather ESP32-S3 Reverse TFT | display, buttons, status light, battery gauge |
 | `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | the status light on its RGB LED, and nothing else of those; sleeps while the bus is silent ([standby](#build-time-settings)). Built, not yet run: there is no Lite here yet |
-| `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: the status light on the NeoPixel, display, buttons and gauge dark, standby on. Temporary, until a Lite is on the bench |
+| `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: the status light on the NeoPixel, D2 as the Lite's one button, the display, D0, D1 and the gauge dark, standby on. Temporary, until a Lite is on the bench |
 
 ### Build options
 
@@ -76,9 +76,13 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 652 KB | 77.3 KB | 183 KB, no phone connected |
-| `feather-as-atom`, `atom` | 610 KB | 71.2 KB | 191 KB, measured on the Feather, no phone connected |
-| ...with the microSD log | 667 KB | 111 KB | 148 KB, measured before standby and the status light's task were in the profile |
+| `feather` | 1215 KB | 98.5 KB | not measured with the Wi-Fi mode built in |
+| `feather-as-atom`, `atom` | 1175 KB | 92.5 KB | 167 KB in the normal mode, 162 KB in the Wi-Fi mode, measured on the Feather in a debug build, nothing connected |
+| ...with the microSD log | 1234 KB | 133 KB | not measured with the Wi-Fi mode built in |
+
+The Wi-Fi mode is about 560 KB of the program and 21 KB of the static RAM, which the
+Wi-Fi driver sets aside whether the mode runs or not: built without it
+(`CONFIG_NO_WIFI`), `feather-as-atom` is 612 KB and 71.3 KB.
 
 ## Building
 
@@ -99,6 +103,11 @@ arduino-cli compile --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:Part
 `feather-as-atom` is the same with `--build-property "compiler.cpp.extra_flags=-DBOARD_FEATHER_AS_ATOM"`;
 `atom` takes its own FQBN and options from the table. In the Arduino IDE, open
 `bluecan/firmware/bluecan/bluecan.ino` and set the Tools menu as in the table.
+
+The first build on a computer also writes
+`firmware/bluecan/src/web/secret.hpp`, the Wi-Fi mode's password, and prints it. Git
+ignores that file; a plain `arduino-cli compile` without it stops with a message saying
+so.
 
 `./build.sh` is for the bench sketches and refuses Bluecan.
 
@@ -151,6 +160,12 @@ with the display, is refused at compile time by
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
 | `CONFIG_STANDBY` | on for `atom` and `feather-as-atom`, off for `feather` | light sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX, or the board file's button (`BUTTON_PIN`), wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
 | `CONFIG_STANDBY_TIMEOUT_S` | 60 s | the silence before it sleeps. The R9 sends over 500 frames a second with the key on, so a second would do; the rest is time to use the board after waking it with the button, and on the bench |
+| `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 21 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |
+| `CONFIG_WIFI_PASSWORD` | random, in `src/web/secret.hpp` | the access point's WPA2 password. `reflash-bluecan.sh` writes the file with a random twelve characters the first time it builds, and prints them; git ignores the file, so the password stays on the computer that built the board. Edit the file to change it, eight characters or more |
+| `CONFIG_BUTTON_HOLD_S` | 5 s | how long the button is held to switch between the normal and the Wi-Fi mode |
+| `CONFIG_WIFI_IDLE_S` | 300 s | the time without a request to the page after which the Wi-Fi mode gives way to the normal one. An open page asks every second |
+| `CONFIG_WIFI_MOVING_KMH_X100`, `CONFIG_WIFI_MOVING_MS` | 1000 (10 km/h), 1000 ms | the rear wheel speed, held that long, that ends the Wi-Fi mode: the bike is being ridden |
+| `CONFIG_WIFI_CHANNEL` | 1 | the access point's channel |
 | `CONFIG_RC_BENCH_RECORDING` | off | bench only: whatever RaceChrono asks for, apply the filter it sends when it records the R9 profile, the six ids with channels at 50 ms. A phone left in the channel editor then stands in for a recording session. `--recording` sets it |
 | `DEBUG` | off | see [A debug build](#a-debug-build) |
 | `RC_WRAPPER_NOTIFY` | off | sends frames through the slower Arduino BLE wrapper. Only for comparing the two paths |

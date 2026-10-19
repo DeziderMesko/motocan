@@ -50,6 +50,12 @@
 /// the 240x135 ST7789 and the three buttons; src/display drives them
 #define CONFIG_DISPLAY_TFT 1
 
+/// the button for the mode switch, and in feather-as-atom for the wake from standby:
+/// D2, high when pressed, as the display reads it to freeze the screen. On the Lite
+/// it is G41, its one button
+#define BUTTON_PIN     GPIO_NUM_2
+#define BUTTON_PRESSED 1
+
 /// one WS2812 on PIN_NEOPIXEL, with its supply switched by NEOPIXEL_POWER. It is the
 /// only instrument on this board readable from a moving bike, so src/status drives it
 /// as a status light for the chain -- bus, queue, radio, phone. See

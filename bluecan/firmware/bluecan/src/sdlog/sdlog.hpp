@@ -143,6 +143,14 @@ public:
      * restarts after five.
      */
     void stop() noexcept;
+
+    /**
+     * Mount the card to read its files, in place of start(), for the Wi-Fi mode: no
+     * ring, no writer task, nothing written. The files are then the SD library's, under
+     * "/". Safe to call again after a failure, to try a card put in since.
+     * @return true if the card is mounted
+     */
+    bool mount_for_reading() noexcept;
 #else
     bool start() noexcept { return true; }
     void note(canbus::frame const&) noexcept {}

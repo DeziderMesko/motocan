@@ -2265,6 +2265,80 @@ the board back after a light-sleep wake. usbipd went on listing it as attached, 
 `/dev/ttyACM0` stayed and gave nothing; detaching it and attaching it again by hand
 brought the console back every time, with the board running.
 
+## Patch 40 — the Wi-Fi mode: statistics and the card's files on a web page — **applied, run on the Feather without a phone**
+
+2026-10-19 and 20, asked for by the owner: a small web server on Wi-Fi with the bus's
+statistics and the microSD card's files to download. Decided by the owner before it was
+written:
+
+- **Never beside Bluetooth.** The chip has one 2.4 GHz radio, and the frame path is built
+  to get ~506 frames a second through it to the phone. Switching to Wi-Fi by itself
+  whenever RaceChrono is not connected was considered and turned down: it would make the
+  time to reconnect unpredictable.
+- **Entered by holding the button for five seconds**, D2 on the Feather. Left by the
+  same hold, a button on the page, five minutes without a request to the page, or the
+  rear wheel above 10 km/h for a second. The last two are counted from requests, not
+  from devices on the network, so that a phone left on it with the browser shut cannot
+  keep the board awake on the bike's battery; and the speed rather than the gear,
+  since it says the bike is moving the moment it is, while second gear may be a long
+  way off and first is where a bike is often parked.
+- **Purple for the mode** on the LED; green already means recording. No deleting files
+  from the page. The card is not written in this mode, which leaves frames unlogged if
+  someone rides off in it: the speed rule ends it within a second of 10 km/h.
+
+What was built:
+
+- **`src/mode/`**: the mode of this start, left in RTC memory by the restart that
+  switches, and cleared by the start that reads it, so that every other restart comes
+  back normal. The card is written out before the switch.
+- **`src/button/`**: the hold, read from `loop()` every 10 ms. The switch happens on
+  letting go, not at the fifth second, and the light shows steady white from the fifth
+  second on so that the hand knows. `BUTTON_PIN` moved from `feather-as-atom` to the
+  Feather's own file: the `feather` profile switches with D2 too, which still freezes
+  the screen on a short press.
+- **`src/web/`**: the access point `bluecan-XXXX` on channel 1, WPA2, at most two
+  devices; a `WebServer` task and a census task on core 0. The census takes the frame
+  queue in place of the Bluetooth task, counts each id, keeps its last payload and its
+  rate, and feeds the display's census as before. The page asks for `/stats.json` every
+  second, `/files.json` once, and downloads with `/file?name=bluecan-NNNN.bin`, a name
+  checked against that pattern and nothing else. A file is sent in 4096-byte blocks
+  rather than by the library's `streamFile()`, which reads the whole file on after the
+  phone has gone; each block counts as a request for the idle rule.
+- **The password** is not in git: `src/web/secret.hpp`, written by `reflash-bluecan.sh`
+  the first time with twelve random characters and printed. A build without it stops
+  and says where it comes from.
+- **The card in this mode** is mounted for reading only (`sdlog::mount_for_reading()`),
+  on the server task, when the page first asks for the list; a card put in later is
+  found on the next request.
+- **The light**: steady white once the hold is long enough, purple breathing in the Wi-Fi
+  mode, steady purple with a device on the network. The Feather's header says `Wi-Fi`.
+- **Memory**: the mode's two stacks and two 4 KB buffers come from the heap when it
+  starts, after a first build that held them statically cost the normal mode 16 KB for
+  nothing. What remains is the Wi-Fi driver's own static data, 21.2 KB, linked in
+  whether the mode runs or not: 92.5 KB of static RAM against 71.3 KB with
+  `CONFIG_NO_WIFI`, and 167 456 bytes of heap free in the normal mode against 190 872
+  before. The program grew from 612 KB to 1175 KB, 40% of the Feather's partition.
+- [tools/sdlog-to-candump.py](../firmware/tools/sdlog-to-candump.py) turns a downloaded
+  file into a candump log for the analysis tools. A file opened again after a failed
+  write starts at a sector boundary inside a record; the tool finds the first whole one.
+
+Run on the Feather built as the Lite, 2026-10-20, with a build that started in the Wi-Fi
+mode by itself, since nobody was at the button; the CANable played the bike:
+
+- The access point came up as `bluecan-C5D8` at 192.168.4.1. The census drained the
+  queue at 476 frames a second with nothing dropped and a queue peak of 1. Free heap
+  161 964 bytes; stacks free: web 6844 of 8192, census 1320 of 3072.
+- **The rear wheel at 15 km/h**, frames of `0x756` at 20 Hz: back in the normal mode
+  1.1 s after the first, by the console. At 5 km/h for 4 s it stayed.
+- **No request for 300 s**: back in the normal mode at 300 s by the console, Bluetooth up
+  and the light blue.
+- The normal mode afterwards: 167 456 bytes free.
+
+Not yet seen: the page in a browser, the list and a download from a card, and the page's
+button. This computer reaches the internet only over its Wi-Fi, which joining the board's
+network would have cut. Also not seen: the hold on the button, the white and purple of the
+light by eye, the Feather's header, and anything on a Lite.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

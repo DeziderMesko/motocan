@@ -94,6 +94,16 @@ if (( ${#FLAGS[@]} )); then
 fi
 mkdir -p "$BUILD"
 
+# The Wi-Fi mode's password, in a file git ignores: made once, with a random one, the
+# first time anything is built here. Without letters and digits that read alike, for
+# typing into a phone.
+SECRET="$BLUECAN/src/web/secret.hpp"
+if [[ ! -f "$SECRET" ]]; then
+    PASS=$(python3 -c 'import secrets; print("".join(secrets.choice("abcdefghjkmnpqrstuvwxyz23456789") for _ in range(12)))')
+    printf '// Written by tools/reflash-bluecan.sh, and ignored by git: the Wi-Fi mode'"'"'s password.\n#define CONFIG_WIFI_PASSWORD "%s"\n' "$PASS" > "$SECRET"
+    echo ">> Wi-Fi password, kept in $SECRET: $PASS"
+fi
+
 echo ">> compiling $BLUECAN, profile $PROFILE"
 arduino-cli compile --fqbn "$FQBN:$OPTS" "${EXTRA[@]}" --build-path "$BUILD" "$BLUECAN"
 

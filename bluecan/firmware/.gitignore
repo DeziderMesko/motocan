@@ -1,1 +1,4 @@
 build/
+
+# the Wi-Fi mode's password, written by tools/reflash-bluecan.sh
+bluecan/src/web/secret.hpp

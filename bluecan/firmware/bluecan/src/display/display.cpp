@@ -25,6 +25,7 @@
 #include "../canbus/decoder.hpp"
 #include "../canbus/r9.hpp"
 #include "../logging/logging.hpp"
+#include "../mode/mode.hpp"
 #include "../power/power.hpp"
 #include "../racechrono/device.hpp"
 #include "../status/status_light.hpp"
@@ -759,6 +760,12 @@ void display::refresh() noexcept
     bool sub = RCDEV.subscribed();
     const char* state = !up ? "advertising" : sub ? "SUB" : "connected";
     uint16_t state_c = !up ? ST77XX_YELLOW : sub ? ST77XX_GREEN : ST77XX_RED;
+    // In the Wi-Fi mode there is no Bluetooth to report on, and the mode is the news.
+    if (mode::current() == mode::run::wifi)
+    {
+        state = "Wi-Fi";
+        state_c = ST77XX_MAGENTA;
+    }
 
     // Connection interval, in tenths of a millisecond: the link reports it in 1.25 ms
     // units, and it is the ceiling on everything downstream, since the radio only

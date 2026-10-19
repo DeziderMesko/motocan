@@ -8,7 +8,7 @@ page is for working on the code.
 
 | | |
 |---|---|
-| `bluecan.ino` | `setup()` on core 1: the display, the Bluetooth task, then the CAN controller. The Bluetooth task's loop, which drains the frame queue to the phone |
+| `bluecan.ino` | `setup()` on core 1: the display, the Bluetooth task or the Wi-Fi mode, then the CAN controller. The Bluetooth task's loop, which drains the frame queue to the phone. `loop()`: the bus supervisor, the button, and standby or the Wi-Fi mode's exits |
 | `src/racechrono-canbus.hpp` | build-time settings — see [build.md](../../build.md#build-time-settings) |
 | `src/boards/` | one file per board profile: its pins and what it has, picked by `board.hpp`; `check.hpp` refuses combinations that cannot work — see [build.md](../../build.md#profiles) |
 | `src/canbus/controller.*` | the CAN controller, driven at register level: the receive interrupt, the frame queue, listen-only and acknowledging, the supervisor that trips it back to listen-only and proves the bus again |
@@ -20,6 +20,9 @@ page is for working on the code.
 | `src/display/display.*` | the four pages and the buttons, on their own task |
 | `src/status/status_light.*` | the status light, on its own task, on any board with a pixel (`CONFIG_STATUS_LED`): what colour, from the counters, every 25 ms |
 | `src/standby/standby.*` | light sleep while the bus is silent, and the wake on CAN RX or the button, built in with `CONFIG_STANDBY` |
+| `src/mode/mode.*` | which mode this start runs, normal or Wi-Fi, and the restart that switches; built in with `CONFIG_WIFI` |
+| `src/button/button.*` | the board's button for the switch: held for `CONFIG_BUTTON_HOLD_S` and let go |
+| `src/web/web.*`, `src/web/page.hpp` | the Wi-Fi mode: the access point, the web server and its page, the census of ids that takes the frame queue in place of Bluetooth, and the mode's exits. The password is `src/web/secret.hpp`, which git ignores |
 | `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG`: a ring the CAN interrupt fills, and a task on core 1 that writes it out. Also its stand-in for a board with no card |
 | `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LED drivers, on the pins the board file gives; the MAX17048 battery gauge; the serial logger; a timer |
 
@@ -46,6 +49,13 @@ page is for working on the code.
 The display task exists only on the Feather, the status light's on a board with a pixel,
 and the microSD ring and task only in a build with `CONFIG_SDLOG`. The ring is filled
 before the allow-list gate, so the card keeps every frame whatever the app asked for.
+
+In the Wi-Fi mode the right-hand side is different: no Bluetooth task and no NimBLE, but
+the Wi-Fi driver, a web server task, and a census task that drains the frame queue
+instead, counting each id for the page. Neither card task nor ring runs; the server
+reads the card itself. The CAN side on core 1 is the same in both modes. Everything the
+Wi-Fi mode needs is allocated when it starts, so that the normal mode does not carry
+it, except what the Wi-Fi driver sets aside statically, about 21 KB.
 
 **All CAN work is on core 1 and all Bluetooth and display work on core 0.** The display
 must never be drawn from the CAN side: a full repaint takes about 250 ms, and on core 1

@@ -405,6 +405,24 @@ bool sdlog::write_sector(uint8_t const* p) noexcept
     return true;
 }
 
+bool sdlog::mount_for_reading() noexcept
+{
+    static bool mounted = false;
+    if (mounted)
+    {
+        return true;
+    }
+
+    // A directory being listed and a file being sent are two open at once.
+    sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
+    mounted = SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", 2);
+    if (mounted)
+    {
+        bootln("SD log: card mounted for reading");
+    }
+    return mounted;
+}
+
 void sdlog::stop() noexcept
 {
     if (_mode == mode_off || _handle == nullptr)

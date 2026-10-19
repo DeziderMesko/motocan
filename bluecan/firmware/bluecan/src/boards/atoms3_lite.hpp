@@ -48,7 +48,8 @@
 #define SDLOG_CS   -1
 
 /// the button on the top of the case, G41, pulled up on the board: low when pressed.
-/// Wakes the board from standby. G41 is not an RTC pin, so this wake needs light sleep
+/// Wakes the board from standby, and held, switches it to the Wi-Fi mode and back.
+/// G41 is not an RTC pin, so the wake needs light sleep
 #define BUTTON_PIN     GPIO_NUM_41
 #define BUTTON_PRESSED 0
 

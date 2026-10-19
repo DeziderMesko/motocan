@@ -27,7 +27,7 @@ layer. See [Substituting parts](#substituting-parts) before using a different bo
 | 17 | `A1` | **CAN TX**, to the transceiver. Held recessive (high) until the firmware starts acknowledging |
 | 0 | `D0` | button: display and LED on / LED only / both off. Reads low when pressed |
 | 1 | `D1` | button: next page. Reads high when pressed |
-| 2 | `D2` | button: freeze the screen. Reads high when pressed |
+| 2 | `D2` | button: freeze the screen; held 5 s, the Wi-Fi mode. Reads high when pressed |
 | 3, 4 | `SDA`, `SCL` | I²C to the MAX17048 battery gauge at `0x36`, and the STEMMA QT connector |
 | 21, 33 | — | NeoPixel power and data |
 | 7 | — | power switch for the display and the I²C devices |

@@ -20,15 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "src/racechrono-canbus.hpp"
+#include "src/button/button.hpp"
 #include "src/canbus/controller.hpp"
 #include "src/canbus/decoder.hpp"
 #include "src/canbus/frame.hpp"
 #include "src/display/display.hpp"
 #include "src/led/led.hpp"
+#include "src/mode/mode.hpp"
 #include "src/racechrono/device.hpp"
 #include "src/sdlog/sdlog.hpp"
 #include "src/standby/standby.hpp"
 #include "src/status/status_light.hpp"
+#include "src/web/web.hpp"
 
 #include <cstdint>
 
@@ -53,6 +56,7 @@ constexpr TickType_t core0_wait = pdMS_TO_TICKS(20);
 constexpr uint32_t core0_batch = 128U;
 
 void core0(void*);
+void start_normal();
 
 }
 
@@ -63,8 +67,11 @@ void setup()
     Serial.begin(115200);
 
     // Before anything else: a board in standby sleeps here, with nothing running yet,
-    // and carries on from this line when it wakes.
+    // and restarts when it wakes.
     const bool woke = standby::on_boot() != standby::start::power_on;
+
+    // The normal mode, Bluetooth and the card's log, or the Wi-Fi mode in its place.
+    const bool wifi = mode::on_boot() == mode::run::wifi;
 
 #if ARDUINO_USB_CDC_ON_BOOT
     // A USB serial write blocks while a computer is plugged in and not reading, until
@@ -127,35 +134,20 @@ void setup()
     // does not have.
     DISP.start();
 
-    // Before the frame path starts, so that no frame is noted into a ring nobody
-    // will empty. A board with no card carries on without a log.
-    SDLOG.start();
+#if defined(CONFIG_WIFI)
+    button::start();
+#endif
 
-    core0_handle = xTaskCreateStaticPinnedToCore(
-        core0,
-        "racechrono",
-        core0_stack_size,
-        nullptr,
-        // Above the idle task, level with the display task rather than under it.
-        //
-        // At tskIDLE_PRIORITY this task round-robins with core 0's idle task, so it
-        // gets about half of whatever the BLE host leaves, and the display task
-        // preempts it on top of that. Level with the display costs nothing -- the
-        // panel sleeps between repaints -- and stops the idle task taking every
-        // second slice while frames are waiting.
-        //
-        // It is level with, not above, the display on purpose. Under saturation this
-        // task's drain loop stops exiting, and the panel is the only instrument that
-        // still reports while that lasts.
-        tskIDLE_PRIORITY + 1,
-        core0_stack,
-        &core0_buffer,
-        0
-    );
-    RCASSERT(core0_handle);
-
-    // wait for core 0 to start (not strictly necessary)
-    while (!core0_started) { delay(100); }
+    if (wifi)
+    {
+        // The access point and the page, and the census that takes the frame queue
+        // in place of Bluetooth. No log: the card is read here, not written.
+        RCASSERT(WEB.start());
+    }
+    else
+    {
+        start_normal();
+    }
 
     // setup can-bus on core 1 (default), interrupt handler will be serviced on core 1
     if (CANCTLR.install())
@@ -187,6 +179,40 @@ void setup()
 
 namespace
 {
+
+// The normal mode's half of setup(): the card's log and the Bluetooth task.
+void start_normal()
+{
+    // Before the frame path starts, so that no frame is noted into a ring nobody
+    // will empty. A board with no card carries on without a log.
+    SDLOG.start();
+
+    core0_handle = xTaskCreateStaticPinnedToCore(
+        core0,
+        "racechrono",
+        core0_stack_size,
+        nullptr,
+        // Above the idle task, level with the display task rather than under it.
+        //
+        // At tskIDLE_PRIORITY this task round-robins with core 0's idle task, so it
+        // gets about half of whatever the BLE host leaves, and the display task
+        // preempts it on top of that. Level with the display costs nothing -- the
+        // panel sleeps between repaints -- and stops the idle task taking every
+        // second slice while frames are waiting.
+        //
+        // It is level with, not above, the display on purpose. Under saturation this
+        // task's drain loop stops exiting, and the panel is the only instrument that
+        // still reports while that lasts.
+        tskIDLE_PRIORITY + 1,
+        core0_stack,
+        &core0_buffer,
+        0
+    );
+    RCASSERT(core0_handle);
+
+    // wait for core 0 to start (not strictly necessary)
+    while (!core0_started) { delay(100); }
+}
 
 // core 0 - receive can frames from queue, send over bluetooth le
 void core0(void*)
@@ -266,6 +292,24 @@ void loop()
     CANCTLR.stats();
     // start acknowledging once the bit rate is proved, stop if the bus looks wrong
     CANCTLR.supervise();
+
+#if defined(CONFIG_WIFI)
+    // the button held and let go: the other mode, by a restart
+    if (button::poll())
+    {
+        mode::restart_into(mode::current() == mode::run::wifi ? mode::run::normal : mode::run::wifi);
+    }
+
+    if (mode::current() == mode::run::wifi)
+    {
+        // back to the normal mode when the page asks, when nobody uses the page, or
+        // when the bike moves; no standby meanwhile, so that the board does not sleep
+        // under a download with the key off
+        WEB.check();
+        return;
+    }
+#endif
+
     // sleep once the bus has been silent long enough; going to sleep is a restart
     standby::check();
 }
