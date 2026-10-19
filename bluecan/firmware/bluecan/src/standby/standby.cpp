@@ -33,6 +33,7 @@
 #include "../utils/timer.hpp"
 
 #include <driver/gpio.h>
+#include <esp_rom_gpio.h>
 #include <driver/rtc_io.h>
 #include <esp_sleep.h>
 #include <hal/usb_serial_jtag_ll.h>
@@ -88,7 +89,11 @@ const char* name(start s) noexcept
 start sleep() noexcept
 {
     // TX recessive for as long as the chip sleeps, held so that nothing can change it.
+    // A plain GPIO, level before routing, as controller.cpp does it: the restart into
+    // this sleep need not have taken the pad off the controller's output.
     gpio_set_level(CAN_TX_PIN, 1);
+    esp_rom_gpio_pad_select_gpio(CAN_TX_PIN);
+    esp_rom_gpio_connect_out_signal(CAN_TX_PIN, SIG_GPIO_OUT_IDX, false, false);
     gpio_set_direction(CAN_TX_PIN, GPIO_MODE_OUTPUT);
     gpio_hold_en(CAN_TX_PIN);
 
@@ -111,7 +116,9 @@ start sleep() noexcept
     // Off the USB bus for the sleep and until the restart after it; see on_boot().
     usb_serial_jtag_ll_phy_enable_pad(false);
 
-    const esp_err_t err = esp_light_sleep_start();
+    // A sleep refused, because a wake came while it was being prepared, is a wake all
+    // the same. Nothing is said on the console: the USB port is off until the restart.
+    esp_light_sleep_start();
 
     // Which pin it was, read while a press that woke the chip is still being held: a
     // light-sleep wake is a millisecond or so.
@@ -127,10 +134,6 @@ start sleep() noexcept
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_GPIO);
     // TX stays held: on_boot() releases it after the restart that follows.
 
-    if (err != ESP_OK)
-    {
-        errorln("Standby: light sleep refused: %s", esp_err_to_name(err));
-    }
     return woke;
 }
 

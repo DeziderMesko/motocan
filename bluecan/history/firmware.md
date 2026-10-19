@@ -2362,6 +2362,10 @@ on its buttons to be flashed again.
   waiting; the wake after it was one of the failed ones above.
 - `WiFi.persistent(false)`: the access point's settings are not written to flash on
   every entry to the Wi-Fi mode.
+- Before the sleep, TX is put on a plain GPIO output through the GPIO matrix, level
+  first, as `controller.cpp` does it, rather than only given a direction: the restart
+  into the sleep need not have taken the pad off the controller's output. Patch 39's
+  runs acknowledged after every wake, so this had not shown.
 
 Built for every profile. Not run: the Feather is in the failed state and needs its
 buttons for download mode before anything can be flashed.
