@@ -2339,6 +2339,33 @@ button. This computer reaches the internet only over its Wi-Fi, which joining th
 network would have cut. Also not seen: the hold on the button, the white and purple of the
 light by eye, the Feather's header, and anything on a Lite.
 
+## Patch 41 — a wake goes through a deep sleep of a millisecond — **built, not run**
+
+2026-10-20, found on the bench the night after patch 39: its wake did not keep the
+chip's own USB port working. After patch 40 was flashed, the Feather went to sleep, was
+woken by traffic, and acknowledged, but Windows listed it as `Unknown USB Device (Device
+Descriptor Request Failed)`; four more sleeps and wakes, the same each time. The same
+build had come back twice in patch 39's run. This is what the owner saw on 2026-10-19
+when Windows reported a problem with a USB device. On the bike nothing uses that port;
+on the bench it is the console and the upload, and a board in that state takes a hand
+on its buttons to be flashed again.
+
+- **After the light sleep, `standby` now sleeps again, deeply, for 1 ms**, with a timer
+  to wake it, instead of a system reset. The start after a wake is then the start
+  after a deep sleep, which is what every wake was before patch 39, and the port came
+  back from it in every run of patch 35. RTC memory keeps what woke the chip, and the
+  hold on TX lasts through it; `on_boot()` releases it.
+- `console-log.sh` gets the board back itself: on the line that says it is going to
+  sleep, or when the port goes, it detaches the board in usbipd, waits for Windows to
+  list it again, and attaches it. usbipd's own auto-attach had left a dead port after
+  each wake from light sleep. Seen as far as the board going to sleep and the script
+  waiting; the wake after it was one of the failed ones above.
+- `WiFi.persistent(false)`: the access point's settings are not written to flash on
+  every entry to the Wi-Fi mode.
+
+Built for every profile. Not run: the Feather is in the failed state and needs its
+buttons for download mode before anything can be flashed.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

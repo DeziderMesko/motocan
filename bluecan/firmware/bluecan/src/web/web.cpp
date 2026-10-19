@@ -193,6 +193,9 @@ bool web::start() noexcept
     esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
     snprintf(ssid, sizeof(ssid), "bluecan-%02X%02X", mac[4], mac[5]);
 
+    // Not written to flash: the settings are the same every time, and each entry to
+    // this mode would otherwise be a write to NVS.
+    WiFi.persistent(false);
     WiFi.mode(WIFI_AP);
     if (!WiFi.softAP(ssid, CONFIG_WIFI_PASSWORD, CONFIG_WIFI_CHANNEL, 0, 2))
     {

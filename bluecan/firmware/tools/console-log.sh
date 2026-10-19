@@ -8,8 +8,11 @@
 # Then, in any other terminal:  tail -f bluecan/firmware/build/console.log
 #
 # A board that sleeps disappears from USB and comes back as a new device on every
-# wake. usbipd's auto-attach puts it back into WSL each time, and the reader here
-# reopens the port whenever it reappears. The port is read from Linux on purpose:
+# wake. usbipd's own auto-attach did not get it back after a wake from light sleep: it
+# went on listing the board as attached, and the port gave nothing. So the reader does
+# it itself: when the board says it is going to sleep, or the port goes, it detaches
+# the board in usbipd, waits for Windows to see it again, attaches it, and reopens the
+# port. The port is read from Linux on purpose:
 # opening it from Windows reset the board every time on 2026-10-19 (rst:0x15,
 # USB_UART_CHIP_RESET), whatever DTR and RTS were set to, while Linux with DTR set
 # and RTS clear, as bench.py does, does not.
@@ -45,22 +48,48 @@ if [[ -z "$BUSID" ]]; then
     exit 1
 fi
 
-"$USBIPD" attach --wsl --busid "$BUSID" --auto-attach --unplugged >/dev/null 2>&1 &
-ATTACH=$!
-trap 'kill $ATTACH 2>/dev/null' EXIT
-
 echo "--- writing $LOG, board on USB $BUSID (ctrl-c to stop)" >&2
 
-python3 -u - <<'EOF' | tee -a "$LOG"
-import glob, time, datetime, serial
+USBIPD="$USBIPD" BUSID="$BUSID" python3 -u - <<'EOF' | tee -a "$LOG"
+import glob, os, subprocess, time, datetime, serial
+
+USBIPD = os.environ['USBIPD']
+BUSID = os.environ['BUSID']
 
 def say(text):
     print(datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3], text, flush=True)
 
+def usbipd(*args):
+    return subprocess.run([USBIPD, *args], capture_output=True, text=True).stdout
+
+def state():
+    """The board's line in `usbipd list`: 'Attached', 'Shared', or None while Windows
+    does not see it -- asleep."""
+    for line in usbipd('list').splitlines():
+        if line.startswith(BUSID + ' '):
+            return 'Attached' if line.rstrip().endswith('Attached') else 'Shared'
+    return None
+
+def attach():
+    """Detach whatever usbipd holds, wait for Windows to see the board, attach it,
+    and wait for its port."""
+    usbipd('detach', '--busid', BUSID)
+    while True:
+        if state() == 'Shared':
+            usbipd('attach', '--wsl', '--busid', BUSID)
+            for _ in range(50):
+                if glob.glob('/dev/ttyACM*'):
+                    return
+                time.sleep(0.1)
+        time.sleep(1)
+
+if not glob.glob('/dev/ttyACM*'):
+    attach()
+
 while True:
     ports = sorted(glob.glob('/dev/ttyACM*'))
     if not ports:
-        time.sleep(0.1)
+        attach()
         continue
     s = serial.Serial()
     s.port = ports[0]
@@ -75,12 +104,26 @@ while True:
         continue
     say('--- %s open' % ports[0])
     buf = b''
+    asleep = False
     try:
-        while True:
+        while not asleep:
             buf += s.read(4096)
             while b'\n' in buf:
                 line, buf = buf.split(b'\n', 1)
-                say(line.decode('utf-8', 'replace').rstrip('\r'))
+                text = line.decode('utf-8', 'replace').rstrip('\r')
+                say(text)
+                # Standby restarts into the sleep: what is left to read is the
+                # bootloader, then nothing until the wake.
+                if 'Standby: no frame for' in text:
+                    asleep = True
+        time.sleep(2)
+        while True:
+            chunk = s.read(4096)
+            if not chunk:
+                break
+            for line in chunk.split(b'\n'):
+                if line.strip():
+                    say(line.decode('utf-8', 'replace').rstrip('\r'))
     except (OSError, serial.SerialException):
         pass
     try:
@@ -88,4 +131,6 @@ while True:
     except Exception:
         pass
     say('--- %s gone' % ports[0])
+    attach()
+    say('--- %s back' % BUSID)
 EOF

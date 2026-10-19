@@ -34,7 +34,6 @@
 
 #include <driver/gpio.h>
 #include <driver/rtc_io.h>
-#include <esp_rom_sys.h>
 #include <esp_sleep.h>
 #include <hal/usb_serial_jtag_ll.h>
 
@@ -126,7 +125,7 @@ start sleep() noexcept
 #endif
     gpio_wakeup_disable(CAN_RX_PIN);
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_GPIO);
-    gpio_hold_dis(CAN_TX_PIN);
+    // TX stays held: on_boot() releases it after the restart that follows.
 
     if (err != ESP_OK)
     {
@@ -139,10 +138,11 @@ start sleep() noexcept
 
 start on_boot() noexcept
 {
-    // TX may be under a hold: from a sleep below that a reset cut short, or in the RTC
-    // domain, where the deep sleep of an earlier build left it. A held TX pad would keep
-    // every acknowledgement off the bus, so both are released on every start. Harmless
-    // when there is none.
+    // TX is under a hold after a wake, kept by sleep() through the restart, and may be
+    // after a reset that cut a sleep short, or in the RTC domain where an earlier
+    // build's deep sleep left it. A held TX pad would keep every acknowledgement off the
+    // bus, so it is released on every start, and both pads given back to the GPIO
+    // matrix. Harmless when there is nothing to release.
     gpio_hold_dis(CAN_TX_PIN);
     rtc_gpio_deinit(CAN_TX_PIN);
     rtc_gpio_deinit(CAN_RX_PIN);
@@ -171,17 +171,17 @@ start on_boot() noexcept
     kept.sleeps++;
     kept.woke = static_cast<uint32_t>(sleep());
 
-    // And woken, it restarts once more, the whole chip this time, so that the chip's own
-    // USB port comes back as it does at a power-on. Left to itself, light sleep takes the
-    // port off the bus and puts it back on waking, and on the Feather on 2026-10-19 it
-    // came back unusable: the board woke and acknowledged, but no console returned and
-    // Windows reported a failed USB device. A system reset straight after the wake,
-    // with the port put back by the sleep, did no better. So sleep() takes the port off
-    // the bus itself, which the sleep then leaves off, and it stays off until the reset
-    // brings it up. The reset costs the bootloader, about 250 ms, as a wake from deep
-    // sleep did.
-    esp_rom_software_reset_system();
-    return start::power_on;   // not reached
+    // And woken, it restarts once more, through a deep sleep of a millisecond, so that
+    // the start after a wake is the start after a deep sleep, as it was before the button
+    // could wake the board. The chip's own USB port is why. Continuing after the light
+    // sleep, the port came back unusable: the board woke and acknowledged, but no
+    // console returned, and Windows reported a failed USB device. A system reset
+    // straight after the wake, with sleep() keeping the port off the bus until it,
+    // worked twice and then failed the same way on 2026-10-20, Windows listing
+    // "Device Descriptor Request Failed". A wake from deep sleep never did, over patch
+    // 35's runs. RTC memory, with what woke the chip, and the hold on TX last through it.
+    esp_sleep_enable_timer_wakeup(1000U);
+    esp_deep_sleep_start();
 }
 
 void check() noexcept
