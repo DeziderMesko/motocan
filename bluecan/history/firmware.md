@@ -2367,6 +2367,11 @@ on its buttons to be flashed again.
   into the sleep need not have taken the pad off the controller's output. Patch 39's
   runs acknowledged after every wake, so this had not shown.
 
+- The page, tried in a headless Chromium at a phone's width against a stand-in server
+  giving `/stats.json` and `/files.json` in the shapes `web.cpp` builds: every section
+  filled, the gear 0 shown as N, a missing value as `-`, the files newest first. The
+  payload column made the id table wider than the screen; it now wraps.
+
 Built for every profile. Not run: the Feather is in the failed state and needs its
 buttons for download mode before anything can be flashed.
 

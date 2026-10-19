@@ -45,7 +45,7 @@ table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 th{color:var(--dim);font-weight:normal;font-size:12px}
 td:first-child,th:first-child{text-align:left}
-td.data{font-family:ui-monospace,monospace;text-align:left;font-size:13px}
+td.data{font-family:ui-monospace,monospace;text-align:left;font-size:13px;white-space:normal;min-width:9em}
 .wrap{overflow-x:auto}
 button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--accent);background:none;color:var(--accent)}
 button.main{background:var(--accent);color:var(--bg)}
