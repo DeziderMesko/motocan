@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build a bluecan sketch and produce a .uf2 for drag-and-drop flashing.
+# Build a bench sketch and produce a .uf2 for drag-and-drop flashing. Bluecan itself
+# is built by tools/reflash-bluecan.sh.
 #
 # Usage:  ./build.sh [sketch_dir] [--upload|--flash]
 #
@@ -32,6 +33,13 @@ for a in "$@"; do
 done
 
 cd "$(dirname "$0")"
+
+# Bluecan has board profiles, and their options are kept in one place.
+if [[ "$SKETCH" == "bluecan" ]]; then
+    echo "!! Bluecan is built by profile: ./tools/reflash-bluecan.sh [feather|atom|feather-as-atom]" >&2
+    echo "   (--no-upload compiles only; the feather profiles also write a .uf2)" >&2
+    exit 2
+fi
 
 FQBN="esp32:esp32:adafruit_feather_esp32s3_reversetft"
 OPTS="PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M"

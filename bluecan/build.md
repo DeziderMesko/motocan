@@ -41,70 +41,68 @@ The firmware is in [firmware/bluecan/](firmware/bluecan/) in this repository; it
 git clone https://github.com/DeziderMesko/motocan.git
 ```
 
-## Board settings
+## Profiles
 
-Board: **Adafruit Feather ESP32-S3 Reverse TFT**, FQBN
-`esp32:esp32:adafruit_feather_esp32s3_reversetft`, with these options:
+Bluecan is built for one of three profiles. Each is a board, and with it what the board
+has: one file per profile under
+[firmware/bluecan/src/boards/](firmware/bluecan/src/boards/) gives the pins and the parts,
+and the build options are in
+[firmware/tools/reflash-bluecan.sh](firmware/tools/reflash-bluecan.sh) and nowhere else.
 
-| Option | Value | Arduino IDE, Tools menu | Why |
-|---|---|---|---|
-| `PartitionScheme` | `tinyuf2_noota` | Partition Scheme: TinyUF2 4MB No OTA | 2816 KB for the application, and it keeps the board's UF2 bootloader. **Not `huge_app`**, which overwrites the bootloader |
-| `LoopCore` | `1` | Arduino Runs On: Core 1 | the firmware asserts that `setup()` runs on core 1 |
-| `EventsCore` | `1` | Events Run On: Core 1 | keeps core 0 for Bluetooth and the display |
-| `CDCOnBoot` | `cdc` | USB CDC On Boot: Enabled | the serial console is on the USB port |
-| `PSRAM` | `enabled` | PSRAM: QSPI PSRAM | |
-| `FlashSize` | `4M` | Flash Size: 4MB (32Mb) | |
-
-### The M5Stack AtomS3 Lite
-
-The firmware also builds for an [AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite), FQBN
-`esp32:esp32:m5stack_atoms3`, with these options:
-
-| Option | Value | Why |
+| Profile | Board | What it has |
 |---|---|---|
-| `PartitionScheme` | `default_8MB` | the Lite has 8 MB of flash and no UF2 bootloader to keep |
-| `PSRAM` | `disabled` | it has none |
-| `LoopCore`, `EventsCore` | `1`, `1` | as on the Feather |
-| `CDCOnBoot` | `cdc` | |
-| `USBMode` | `hwcdc` | the chip's own USB serial port, the only one the Lite has |
-| `FlashSize` | `8M` | |
+| `feather` (the default) | Adafruit Feather ESP32-S3 Reverse TFT | display, buttons, status light, battery gauge |
+| `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | none of those; sleeps while the bus is silent ([standby](#build-time-settings)). Built, not yet run: there is no Lite here yet |
+| `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: display, buttons, status light and gauge dark, standby on. Temporary, until a Lite is on the bench |
 
-Under WSL2, `tools/reflash-bluecan.sh --lite` builds and uploads it. It has been built,
-not run: there is no Lite here yet.
+### Build options
 
-`tools/reflash-bluecan.sh --like-lite` builds for the Feather as the Lite has it, so that
-the Feather can stand in for one on the bench: `CONFIG_LIKE_ATOMS3_LITE` (below), PSRAM
-disabled and `USBMode=hwcdc`. In that build the Feather appears as `303a:1001` while it
-runs, not `239a:8123`, and its display, buttons and status light are dark. A plain build
-puts everything back.
+| Option | `feather`, `feather-as-atom` | `atom` | Why |
+|---|---|---|---|
+| FQBN | `esp32:esp32:adafruit_feather_esp32s3_reversetft` | `esp32:esp32:m5stack_atoms3` | |
+| `PartitionScheme` | `tinyuf2_noota` | `default_8MB` | the Feather's keeps its UF2 bootloader, with 2816 KB for the application. **Not `huge_app`**, which overwrites the bootloader. The Lite has 8 MB and no UF2 bootloader to keep |
+| `LoopCore`, `EventsCore` | `1`, `1` | `1`, `1` | the firmware asserts that `setup()` runs on core 1; core 0 is for Bluetooth and the display |
+| `CDCOnBoot` | `cdc` | `cdc` | the serial console is on the USB port |
+| `USBMode` | `hwcdc` | `hwcdc` | the chip's own USB serial port, the only one the Lite has |
+| `PSRAM` | `disabled` | `disabled` | the Lite has none |
+| `FlashSize` | `4M` | `8M` | |
+
+The Feather has 2 MB of PSRAM and could use TinyUSB, and is built without either on
+purpose: so that what is measured on it is what the Lite will run, the same heap and the
+same USB stack. Nothing in the firmware depends on the choice. Setting `PSRAM=enabled` and
+leaving `USBMode` out, which is TinyUSB, gives the Feather's own back with no other
+change; the board then appears as `239a:8123` instead of `303a:1001`, and the tools find
+it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| Feather | 710 KB | 106 KB | |
-| Feather as the Lite, or the Lite | 604 KB | 67.8 KB | 197 KB, of internal RAM, measured on the Feather |
-| ...with the microSD log | 660 KB | 108 KB | 148 KB |
+| `feather` | 651 KB | 73.9 KB | 187 KB, no phone connected |
+| `feather-as-atom`, `atom` | 614 KB | 68.0 KB | 195 KB, measured on the Feather, no phone connected |
+| ...with the microSD log | 672 KB | 108 KB | 148 KB, measured before standby was in the profile |
 
 ## Building
 
 From `bluecan/firmware/`:
 
 ```bash
-./build.sh bluecan
+./tools/reflash-bluecan.sh feather --no-upload
 ```
 
-It compiles with the settings above and writes `build/bluecan/bluecan.uf2` beside the
-binaries; `./build.sh bluecan --upload` also uploads it over USB. The same with
-`arduino-cli` alone, from the repository root:
+It compiles the profile into `build/bluecan-feather/`, and for the two Feather profiles
+writes `bluecan.uf2` beside the binaries. Without `--no-upload` it also uploads, under
+WSL2 as [below](#under-wsl2). The same with `arduino-cli` alone, from the repository root:
 
 ```bash
-arduino-cli compile --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M" --build-path build/bluecan bluecan/firmware/bluecan
+arduino-cli compile --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=4M" --build-path build/bluecan-feather bluecan/firmware/bluecan
 ```
 
-In the Arduino IDE, open `bluecan/firmware/bluecan/bluecan.ino` and set the Tools menu as
-in the table above.
+`feather-as-atom` is the same with `--build-property "compiler.cpp.extra_flags=-DBOARD_FEATHER_AS_ATOM"`;
+`atom` takes its own FQBN and options from the table. In the Arduino IDE, open
+`bluecan/firmware/bluecan/bluecan.ino` and set the Tools menu as in the table.
 
-A clean build takes about half a minute and ends with about 710 KB of program storage
-(24%) and 106 KB of static RAM (32%).
+`./build.sh` is for the bench sketches and refuses Bluecan.
+
+A clean build takes about half a minute.
 
 ### A debug build
 
@@ -117,17 +115,27 @@ microSD log when it is built in — and a line for each change of bus state. Add
 --build-property "compiler.cpp.extra_flags=-DDEBUG"
 ```
 
-Under WSL2, `tools/reflash-bluecan.sh --debug` builds and uploads one in a step. Its
-other flags, `--like-lite`, `--lite`, `--sd`, `--sd-emulate`, `--recording`,
-`--standby` and `--no-upload`, combine with it and with each other.
+`tools/reflash-bluecan.sh <profile> --debug` builds and uploads one in a step. Its other
+flags are for the bench, and combine with it and with each other:
+
+| Flag | Sets | |
+|---|---|---|
+| `--sd` | `CONFIG_SDLOG` | the microSD log, on the profile's card pins |
+| `--sd-emulate` | `CONFIG_SDLOG`, `CONFIG_SDLOG_EMULATE` | the same, standing in for a card that is not there |
+| `--recording` | `CONFIG_RC_BENCH_RECORDING` | the filter RaceChrono sends when it records |
+| `--no-standby` | `CONFIG_NO_STANDBY` | keeps `atom` and `feather-as-atom` awake on a silent bus |
+| `--no-upload` | | compile only |
 
 A debug build waits 5 seconds at start-up before doing anything, so that a console can be
 attached in time. Use a release build on the bike.
 
 ## Build-time settings
 
-In [firmware/bluecan/src/racechrono-canbus.hpp](firmware/bluecan/src/racechrono-canbus.hpp). The defaults are what the R9 and an
-Android phone need.
+In [firmware/bluecan/src/racechrono-canbus.hpp](firmware/bluecan/src/racechrono-canbus.hpp), and what a board has in its
+file under [firmware/bluecan/src/boards/](firmware/bluecan/src/boards/). The defaults are
+what the R9 and an Android phone need. A combination that cannot work, such as standby
+with the display, is refused at compile time by
+[boards/check.hpp](firmware/bluecan/src/boards/check.hpp).
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -135,14 +143,13 @@ Android phone need.
 | `CONFIG_CANBUS_DECODER_BMWG8X` | off | upstream's BMW decoder. Define one decoder, not both |
 | `CONFIG_CANBUS_ACK` | on | lets the controller acknowledge once the bit rate is proved. Undefined, the board only ever listens, which on the R9's diagnostic connector gets almost nothing |
 | `CONFIG_BLE_CONN_ITVL_MIN` / `_MAX` | `6` / `10` (7.5–12.5 ms) | the Bluetooth connection interval asked of the phone, in 1.25 ms units. **For an iPhone, change these to `12` / `24`** (15–30 ms): iOS rejects a request below 15 ms or with less than 15 ms between minimum and maximum, and then uses an interval of its own choosing. `12` / `24` works on Android too |
-| `CONFIG_CELL_FITTED` | off | show the battery's state of charge and whether it is charging. Define it only with a cell plugged in; with none, the gauge reports a full, discharging battery that is not there. Untested with a cell |
-| `CONFIG_LIKE_ATOMS3_LITE` | off | on the Feather, leaves out the display, buttons, status light and battery gauge, which an AtomS3 Lite does not have. `reflash-bluecan.sh --like-lite` sets it |
+| `CONFIG_CELL_FITTED` | off, in `boards/feather_revtft.hpp` | show the battery's state of charge and whether it is charging. Define it only with a cell plugged in; with none, the gauge reports a full, discharging battery that is not there. Untested with a cell |
 | `CONFIG_SDLOG` | off | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. A card that is missing, or fails a write, is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. `--sd` sets it. Not yet run with a card |
 | `CONFIG_SDLOG_EMULATE` | off | with `CONFIG_SDLOG` and no card, drives the SPI bus and holds the heap as a card would, so that its cost can be measured on a board without one. `--sd-emulate` sets both |
 | `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |
 | `CONFIG_SDLOG_SPI_HZ` | 25 MHz | the card's SPI clock, as M5Stack's example for the base has it |
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
-| `CONFIG_STANDBY` | on for the AtomS3 Lite, off otherwise | deep sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display: on the Feather only with `CONFIG_LIKE_ATOMS3_LITE`. `--standby` sets it; `CONFIG_NO_STANDBY` turns it off on the Lite |
+| `CONFIG_STANDBY` | on for `atom` and `feather-as-atom`, off for `feather` | deep sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
 | `CONFIG_STANDBY_TIMEOUT_S` | 5 s | the silence that counts as the key being off. The R9 sends over 500 frames a second with it on |
 | `CONFIG_RC_BENCH_RECORDING` | off | bench only: whatever RaceChrono asks for, apply the filter it sends when it records the R9 profile, the six ids with channels at 50 ms. A phone left in the channel editor then stands in for a recording session. `--recording` sets it |
 | `DEBUG` | off | see [A debug build](#a-debug-build) |
@@ -151,26 +158,28 @@ Android phone need.
 
 ## Flashing
 
-The ESP32-S3's USB is part of the chip, so the board changes USB identity while it is being
-flashed: `239a:8123` while running, `303a:1001` in download mode, `239a:0123` in the UF2
-bootloader. That is normal, and it is what makes flashing under WSL2 need extra steps.
+The ESP32-S3's USB is part of the chip, and a Bluecan build runs on its own USB serial
+port: the board appears as `303a:1001` while it runs and in download mode alike. The
+Feather's UF2 bootloader is `239a:0123`, and the bench sketches, built with TinyUSB, run
+as `239a:8123`.
 
 ### Over USB, on Linux
 
 ```bash
-arduino-cli upload --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=enabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,FlashSize=4M" --input-dir build/bluecan --port /dev/ttyACM0 bluecan/firmware/bluecan
+arduino-cli upload --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=4M" --input-dir build/bluecan-feather --port /dev/ttyACM0 bluecan/firmware/bluecan
 ```
 
 The board resets into download mode by itself. If the upload cannot find it, put it there
-by hand — hold **D0**, press and release **RESET**, release D0 — and run the upload again.
+by hand — on the Feather hold **D0**, press and release **RESET**, release D0 — and run the
+upload again.
 
 ### By UF2, with no tools at all
 
-The board's bootloader can appear as a USB drive. `./build.sh bluecan` has already made
-the `.uf2`; from a plain `arduino-cli` build, convert it:
+The Feather's bootloader can appear as a USB drive. `reflash-bluecan.sh` has already made
+the `.uf2` for the Feather profiles; from a plain `arduino-cli` build, convert it:
 
 ```bash
-python3 bluecan/firmware/tools/uf2conv.py build/bluecan/bluecan.ino.bin --base 0x10000 --family 0xc47e5767 --convert --output bluecan.uf2
+python3 bluecan/firmware/tools/uf2conv.py build/bluecan-feather/bluecan.ino.bin --base 0x10000 --family 0xc47e5767 --convert --output bluecan.uf2
 ```
 
 Then **double-tap RESET**. A drive named `FTHRS3BOOT` appears; copy `bluecan.uf2` onto it,
@@ -199,23 +208,23 @@ devices through from Windows.
 
    The WSL kernel needs `CONFIG_USB_ACM` for the serial port to appear. The 6.18 kernel
    used here has it; some older WSL2 kernels were built without it.
-2. **Bind both of the board's identities**, from an administrator PowerShell. `usbipd list`
-   shows the bus id. Bind the board while it is running a sketch (`239a:8123`), then put it
-   into download mode — hold D0, tap RESET — and bind it again as `303a:1001`:
-   `usbipd bind --busid <BUSID>`. Bindings survive reboots.
+2. **Bind the board's identities**, from an administrator PowerShell. `usbipd list` shows
+   the bus id; `usbipd bind --busid <BUSID>` binds it. Bind it while it runs Bluecan or
+   sits in download mode (`303a:1001`), and, for the bench sketches, once more while it
+   runs one of them (`239a:8123`). Bindings survive reboots.
 3. Attach it after every Windows restart, and after every flash:
    [firmware/tools/usb-attach.sh](firmware/tools/usb-attach.sh). It needs no administrator.
 
 [firmware/tools/reflash-bluecan.sh](firmware/tools/reflash-bluecan.sh) does the build and
-the upload together and re-attaches the board around its identity changes. The first
-attempt usually fails while the new identity is being attached; the script retries.
+the upload together and re-attaches the board around its resets; an attempt that fails
+while the board is being attached again is retried.
 
 ```bash
-bluecan/firmware/tools/reflash-bluecan.sh
+bluecan/firmware/tools/reflash-bluecan.sh feather
 ```
 
 ```bash
-bluecan/firmware/tools/reflash-bluecan.sh --debug
+bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug
 ```
 
 The UF2 drive is visible from Windows; copy the `.uf2` there from Explorer if WSL does not
@@ -223,18 +232,23 @@ see it under `/mnt`.
 
 ## The serial console
 
-115 200 baud on `/dev/ttyACM0` (a COM port on Windows). Two things make it look dead when
-it is not:
+115 200 baud on `/dev/ttyACM0` (a COM port on Windows), the chip's own USB serial port.
 
-- **The board prints only when the host asserts DTR.** `cat /dev/ttyACM0` shows nothing.
-  Use a terminal that sets DTR, or [firmware/tools/bench.py](firmware/tools/bench.py),
-  which works as a plain reader for any sketch: `bluecan/firmware/tools/bench.py 10` reads
-  for 10 seconds. Asserting DTR does not reset this board.
-- **A crash does not appear on it.** The ESP32's crash report goes to a UART that is not
-  wired to anything; what the computer sees is the USB device disappearing. A board that
-  restarts on its own shows its uptime on the BUS page going back to zero.
-
-Opening the console does not reset the board, and it can be held open indefinitely.
+- **Read it from Linux, not Windows**:
+  [firmware/tools/console-log.sh](firmware/tools/console-log.sh) keeps it in
+  `build/console.log` across resets, sleeps and wakes, and
+  [firmware/tools/bench.py](firmware/tools/bench.py) reads it for a while:
+  `bluecan/firmware/tools/bench.py 10` for 10 seconds. A plain `cat /dev/ttyACM0` works
+  too. None of them resets the board, and the port can be held open indefinitely.
+  Opened from Windows, it reset the board every time on 2026-10-19 (`rst:0x15`),
+  whatever DTR and RTS were set to.
+- **A restart shows.** The chip's ROM prints its boot lines on this port, with the reason
+  for the reset (`rst:0x15 (USB_UART_CHIP_RESET)`, for one). Whether a crash report gets
+  there too has not been tried; on the Feather, a board that restarts also shows its
+  uptime on the BUS page going back to zero.
+- A computer that is plugged in and not reading holds a write for at most about 20 ms; see
+  `setup()` in [bluecan.ino](firmware/bluecan/bluecan.ino). With nothing plugged in, as on
+  the bike, a write returns at once.
 
 ## Checking the decoder
 

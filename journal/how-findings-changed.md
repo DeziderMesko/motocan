@@ -125,6 +125,14 @@ here. The pages as they stood with every correction written into them are at com
 - The same page said on 2026-10-18 and 2026-10-19 to leave the Unit Mini CAN's `HPWR+`
   unconnected and power the Atom over USB. The variant is meant to run from the bike's
   12 V through it, from the diagnostic connector's pin 4; corrected 2026-10-19.
+- Its build page gave the Feather's build options as PSRAM enabled and TinyUSB, the board
+  running as `239a:8123`, built by `./build.sh bluecan` or by `reflash-bluecan.sh` with
+  `--like-lite`, `--lite` and `--standby`, until 2026-10-19. From then Bluecan is built by
+  profile, `feather`, `atom` or `feather-as-atom`, and the Feather without PSRAM on the
+  chip's own USB serial port, as the Lite has it ([patch 37](../bluecan/history/firmware.md#patch-37--build-profiles-one-file-per-board-the-feather-built-as-the-lite--applied-run-on-the-feather)).
+  The same page said that asserting DTR does not reset the board and that a crash does
+  not show on the console; both were about TinyUSB, and were rewritten for the chip's own
+  port the same day.
 
 ## The service-manual candidates
 

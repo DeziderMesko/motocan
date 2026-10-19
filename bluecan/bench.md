@@ -135,10 +135,10 @@ In [firmware/tools/](firmware/tools/). Each script's header says more.
 | `led-state.py` | prints what the LED is showing, in words, and can generate traffic to change it (`--rate 20`). Needs a debug build |
 | `bluecan-soak.py` | holds the console open under load for as long as asked and reports whether the board restarted. Needs a debug build |
 | `r9-decode-check.py` | checks the firmware's R9 decoder against [analysis/r9.dbc](../analysis/r9.dbc) over every captured frame; see [build.md](build.md#checking-the-decoder) |
-| `reflash-bluecan.sh` | builds and uploads the Bluecan firmware under WSL2. `--debug` for a debug build; `--like-lite`, `--lite`, `--sd`, `--sd-emulate`, `--recording` and `--standby` as in [build.md](build.md#build-time-settings) |
+| `reflash-bluecan.sh` | builds and uploads the Bluecan firmware under WSL2. takes a profile, `feather`, `atom` or `feather-as-atom`, and the bench flags `--debug`, `--sd`, `--sd-emulate`, `--recording`, `--no-standby` and `--no-upload`, as in [build.md](build.md#profiles) |
 | `usb-attach.sh` | attaches the Feather and the CANable into WSL2 through usbipd. `--list` shows what Windows sees |
 | `console-log.sh` | keeps the console in `build/console.log`, each line with the computer's time, across resets and the sleeps and wakes of a standby build: usbipd re-attaches the board on every wake. `tail -f` the file to watch it |
-| `serial-monitor.sh` | reads the console through Windows when USB is not attached to WSL2 |
+| `serial-monitor.sh` | reads a bench sketch's console through Windows when USB is not attached to WSL2. Not for Bluecan, whose port resets the board when Windows opens it; `console-log.sh` reads that |
 | `check-numbers.sh` | lists every place in both repositories that quotes a measured figure from [history/numbers.md](history/numbers.md). For keeping documents consistent after a change |
 | `build.sh`, `reflash.sh` | build and flash the sketches in this folder |
 | `soak.sh`, `soak-report.py` | an hour-long two-node soak with the `bluecan_bench` sketch |

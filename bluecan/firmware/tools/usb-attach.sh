@@ -28,7 +28,8 @@ USBIPD="/mnt/c/Program Files/usbipd-win/usbipd.exe"
 # VID:PID of the devices this project cares about.
 #   239a:8123  Feather ESP32-S3 Reverse TFT, running a sketch (USB CDC)
 #   239a:0123  ...same board in TinyUF2 bootloader mode (mass storage)
-#   303a:1001  ...same board in ESP32-S3 ROM download mode
+#   303a:1001  ...same board in ESP32-S3 ROM download mode, or running Bluecan, which
+#              is built on the chip's own USB serial port; the AtomS3 Lite likewise
 #   1d50:606f  CANable with candleLight firmware -> becomes can0
 #   16d0:117e  CANable variants also claimed by gs_usb
 #   0483:df11  ...same adapter in STM32 ROM bootloader mode (DFU), for reflashing --

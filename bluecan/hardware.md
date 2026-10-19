@@ -159,8 +159,8 @@ as the CANable 2.0 Pro are the safer way to look at an unknown bus.
 
 ### The M5Stack AtomS3 Lite
 
-A smaller board the firmware builds for, not yet bought or run. Build settings are in
-[build.md](build.md#the-m5stack-atoms3-lite).
+A smaller board the firmware builds for, not yet bought or run. It is the `atom` profile in
+[build.md](build.md#profiles).
 
 | | Feather #6303 | [AtomS3 Lite](https://docs.m5stack.com/en/core/AtomS3%20Lite) |
 |---|---|---|
@@ -169,7 +169,7 @@ A smaller board the firmware builds for, not yet bought or run. Build settings a
 | RGB LED | NeoPixel, with a power switch | WS2812C on G35, always powered |
 | Battery | charger and MAX17048 gauge | none |
 | Antenna | w.FL, sold without one | built in |
-| USB | TinyUSB, and a UF2 bootloader | the chip's own USB serial port, `303a:1001`; flashed with esptool only |
+| USB | the chip's own USB serial port or TinyUSB, and a UF2 bootloader; Bluecan uses the former, as on the Lite | the chip's own USB serial port, `303a:1001`; flashed with esptool only |
 | Size | 51 × 23 mm | 24 × 24 × 9.5 mm |
 
 The firmware does not use PSRAM, so its absence costs nothing. What the Lite loses is the

@@ -9,7 +9,8 @@ page is for working on the code.
 | | |
 |---|---|
 | `bluecan.ino` | `setup()` on core 1: the display, the Bluetooth task, then the CAN controller. The Bluetooth task's loop, which drains the frame queue to the phone |
-| `src/racechrono-canbus.hpp` | build-time settings and board pin definitions — see [build.md](../../build.md#build-time-settings) |
+| `src/racechrono-canbus.hpp` | build-time settings — see [build.md](../../build.md#build-time-settings) |
+| `src/boards/` | one file per board profile: its pins and what it has, picked by `board.hpp`; `check.hpp` refuses combinations that cannot work — see [build.md](../../build.md#profiles) |
 | `src/canbus/controller.*` | the CAN controller, driven at register level: the receive interrupt, the frame queue, listen-only and acknowledging, the supervisor that trips it back to listen-only and proves the bus again |
 | `src/canbus/decoder.*` | the base class for RaceChrono's filter requests |
 | `src/canbus/decoder_yamahar9.cpp` | the R9 decoder: the run-time allow-list the app fills, and the latest payload of the seven ids the LIVE page decodes |

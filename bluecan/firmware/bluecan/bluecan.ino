@@ -66,12 +66,25 @@ void setup()
     const bool woke = standby::on_boot();
 
 #if ARDUINO_USB_CDC_ON_BOOT
-    // The core defaults this to 250 ms, and a USB CDC write blocks until the host
-    // reads or the timeout expires. 250 ms of a blocked drain task is 250 ms of
-    // frames piling up in a queue that holds 2000, for the sake of a debug line.
-    // 20 ms is far more than a console that is actually reading ever needs, and a
-    // console that is not reading should cost a truncated line, not a backlog.
+    // A USB serial write blocks while a computer is plugged in and not reading, until
+    // this timeout. The core's defaults are 250 ms (TinyUSB) and 100 ms (the chip's
+    // own port), and a blocked drain task is frames piling up in a queue that holds
+    // 2000, for the sake of a debug line. 20 ms is far more than a console that is
+    // actually reading ever needs, and a console that is not reading should cost a
+    // truncated line, not a backlog. With nothing plugged in, as on the bike, a write
+    // returns at once on either.
+    //
+    // The two stacks take the number differently. TinyUSB's write gives up after
+    // one timeout; the chip's own port (HWCDC, USBMode=hwcdc) waits up to 20 timeouts
+    // without progress, so it is given a twentieth. Measured 2026-10-19 on the Feather,
+    // a debug build at 500 frames a second with the port closed after a console had
+    // read it: at 20 ms the drain task stalled long enough for 948 frames to queue,
+    // at 1 ms 47, as many as with the console reading.
+#if ARDUINO_USB_MODE
+    Serial.setTxTimeoutMs(1);
+#else
     Serial.setTxTimeoutMs(20);
+#endif
 #endif
 
     // Time for a console to attach. Not after a wake from standby: the engine control

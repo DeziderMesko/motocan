@@ -2147,6 +2147,43 @@ The Feather built as the Lite with standby and the stand-in card, twice through 
 traffic and sleep afterwards: acknowledging, writing, asleep 5 s after the traffic, no
 restart.
 
+## Patch 37 — build profiles: one file per board, the Feather built as the Lite — **applied, run on the Feather**
+
+2026-10-19, asked for by the owner: a Feather version and an Atom version that are not
+spaghetti, with the stand-in for the Lite easy to remove when a Lite arrives, and the
+Feather configured like the Lite.
+
+- **A profile is a board.** `src/boards/` has one file per profile: `feather_revtft.hpp`,
+  `atoms3_lite.hpp`, and `feather_as_atom.hpp`, which includes the Feather's file and
+  takes away what the Lite does not have. `board.hpp` picks one by the core's `ARDUINO_*`
+  and refuses any other board; the three that came from upstream (Huzzah32, Feather S3,
+  ESP32 Dev) were never built here and are gone. `check.hpp` refuses combinations that
+  cannot work, which used to be one `#error` in `standby.hpp`. `racechrono-canbus.hpp`
+  keeps only what holds on every board.
+- **The script takes a profile and bench flags.** `reflash-bluecan.sh feather|atom|feather-as-atom`
+  with `--debug`, `--sd`, `--sd-emulate`, `--recording`, `--no-standby`, `--no-upload`.
+  `--like-lite`, `--lite` and `--standby` are gone: standby comes with the profile.
+  `CONFIG_LIKE_ATOMS3_LITE` is now `BOARD_FEATHER_AS_ATOM`. The build options live in the
+  script and nowhere else: `build.sh` refuses Bluecan, and the script writes the `.uf2` it
+  used to.
+- **The Feather is built as the Lite**: PSRAM disabled and Serial on the chip's own USB
+  serial port (`USBMode=hwcdc`), so that what the bench measures is what the Lite will
+  run. `feather_revtft.hpp` says why and that it can be turned back with no other change.
+  The board now runs as `303a:1001`, the same identity as in download mode, and the
+  upload went through on the first attempt three times in three.
+- **One thing did depend on the USB stack**, found reading the core: HWCDC's write waits
+  up to 20 TX timeouts without progress, TinyUSB's one. At the 20 ms set for TinyUSB, a
+  console that had been read and then closed held the drain task long enough for 948
+  frames to queue at 500 a second; `setup()` gives HWCDC 1 ms, and the same test queued
+  47, as many as with the console reading. No reset either way, no frame dropped, can0's
+  error counter at 0. With nothing on USB, as on the bike, neither waits.
+
+Every profile and flag combination built before and after the change; program storage
+differed by 64–80 bytes each time, the length of the build paths in `assert` strings,
+static RAM by nothing. Run on the Feather: `feather --debug`, 186 712 bytes of heap free;
+`feather-as-atom --debug`, 195 416 free, acknowledging, asleep after 5 s of silence,
+awake on the next frame and acknowledging 508 ms after `setup()`.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

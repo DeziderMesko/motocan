@@ -33,10 +33,6 @@
 /// again once it is listening. Waking is a restart: setup() runs from the top.
 #if defined(CONFIG_STANDBY)
 
-#if defined(CONFIG_DISPLAY_TFT)
-#error "CONFIG_STANDBY does not put the display to sleep; build it for the AtomS3 Lite or with CONFIG_LIKE_ATOMS3_LITE"
-#endif
-
 /// seconds without a received frame before the chip goes to sleep. The R9 sends over
 /// 500 frames a second with the key on, so five seconds of nothing is the key off
 #ifndef CONFIG_STANDBY_TIMEOUT_S

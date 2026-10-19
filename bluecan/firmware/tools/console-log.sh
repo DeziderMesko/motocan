@@ -33,8 +33,8 @@ while [[ $# -gt 0 ]]; do
 done
 mkdir -p "$(dirname "$LOG")"
 
-# 239a:8123 is the Feather with TinyUSB, 303a:1001 the chip's own USB, as the Lite
-# and --like-lite have.
+# 303a:1001 is the chip's own USB serial port, which every Bluecan profile runs on;
+# 239a:8123 the Feather with TinyUSB, as the bench sketches have it.
 if [[ -z "$BUSID" ]]; then
     BUSID=$("$USBIPD" list 2>/dev/null | tr -d '\r' |
         awk '/^[0-9]+-[0-9]+/ && /239a:8123|303a:1001/ {print $1; exit}')

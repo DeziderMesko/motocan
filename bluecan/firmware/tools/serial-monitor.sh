@@ -13,6 +13,9 @@ BAUD="${2:-115200}"
 PORT="${1:-}"
 
 # The board enumerates as VID 239A / PID 8123 when running a sketch with USB CDC.
+# That is the bench sketches. Bluecan runs on the chip's own USB serial port, 303a:1001,
+# which this does not look for: opening that port from Windows reset the board every
+# time on 2026-10-19. Read Bluecan with console-log.sh, from WSL.
 # In UF2 bootloader mode it is PID 0123 and exposes mass storage, not a COM port.
 if [[ -z "$PORT" ]]; then
     PORT=$("$PS" -NoProfile -Command \

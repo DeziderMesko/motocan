@@ -110,20 +110,21 @@ private:
      * be here:
      *
      * 1. **No critical section.** This used to wrap the write in
-     *    portENTER_CRITICAL/portEXIT_CRITICAL. On this board Serial is USB CDC:
-     *    USBCDC::write takes a FreeRTOS semaphore, and then spins on
-     *    tud_cdc_n_write_available() until the *host* reads, for up to
-     *    tx_timeout_ms. Doing that with interrupts disabled stops the USB
-     *    interrupt that would drain the buffer, so the wait can only end by
-     *    timing out -- 250 ms by default, against a 300 ms interrupt watchdog.
-     *    It also freezes every other task on that core for the duration, and it
-     *    calls into TinyUSB from a context TinyUSB does not expect.
+     *    portENTER_CRITICAL/portEXIT_CRITICAL. Serial is a USB serial port:
+     *    its write takes a FreeRTOS semaphore, and then waits until the *host*
+     *    reads, for up to the TX timeout -- USBCDC (TinyUSB) spinning on
+     *    tud_cdc_n_write_available(), HWCDC (the chip's own port) on its ring
+     *    buffer. Doing that with interrupts disabled stops the USB interrupt
+     *    that would drain the buffer, so the wait can only end by timing out --
+     *    250 ms by default, against a 300 ms interrupt watchdog. It also freezes
+     *    every other task on that core for the duration, and it calls into the
+     *    USB stack from a context it does not expect.
      *
      * 2. **One write() per line**, newline included, instead of write() +
      *    println(). That is what the removed flush() was really buying: a line
-     *    from one core could not be cut in half by a line from the other. Both
-     *    USBCDC and HardwareSerial hold their own lock for the whole of a single
-     *    write(), so a whole line goes out whole. flush() itself only waited for
+     *    from one core could not be cut in half by a line from the other.
+     *    USBCDC, HWCDC and HardwareSerial all hold their own lock for the whole of
+     *    a single write(), so a whole line goes out whole. flush() itself only waited for
      *    the host and is not needed -- write() already hands the bytes to the
      *    USB stack.
      *
