@@ -69,6 +69,12 @@
 #define CONFIG_SDLOG_SYNC_S 5
 #endif
 
+/// how often a card that is not open is tried again, in seconds: none at start-up, or
+/// one closed after a failed write
+#ifndef CONFIG_SDLOG_RETRY_S
+#define CONFIG_SDLOG_RETRY_S 5
+#endif
+
 /// emulated card: time it busy-polls after each 512-byte block
 #ifndef CONFIG_SDLOG_EMU_BLOCK_BUSY_US
 #define CONFIG_SDLOG_EMU_BLOCK_BUSY_US 300
@@ -116,8 +122,9 @@ public:
 
 #if defined(CONFIG_SDLOG)
     /**
-     * Mount the card, or start the emulation, and start the writer task.
-     * @return false when there is neither, and nothing is logged
+     * Mount the card, or start the emulation, and start the writer task. Without a
+     * card the task goes on trying to mount one.
+     * @return false if the task could not be started, and nothing is logged
      */
     bool start() noexcept;
 
@@ -129,8 +136,11 @@ public:
 
     /**
      * Write out what the ring holds, partial sector included, close the file and stop
-     * the task. For a board about to lose its power or go to sleep; waits up to a
-     * second, which a card that stalls the longest the specification allows fits in.
+     * the task. For a board about to lose its power or go to sleep. Waits up to three
+     * seconds: closing a file is several single-block writes, each of which the
+     * specification lets a card take 250 ms over (500 ms for SDXC), and the SD library
+     * retries. Not longer, because it is called from loop(), which the task watchdog
+     * restarts after five.
      */
     void stop() noexcept;
 #else
@@ -145,6 +155,8 @@ private:
 #if defined(CONFIG_SDLOG)
     static void task(void* self);
     void run() noexcept;
+    bool open_card() noexcept;
+    void close_card() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
     void write_rest() noexcept;
     void sync() noexcept;
@@ -166,12 +178,15 @@ private:
     uint32_t _sectors;              //!< sectors written
     uint32_t _worst_us;             //!< slowest sector write
     uint32_t _errors;               //!< failed writes
+    uint32_t _reopens;              //!< files opened after the first attempt
     mode_t _mode;
+    bool _open;                     //!< card mode: a file is open; the task's alone
     std::atomic<bool> _stop;        //!< asked by stop()
     std::atomic<bool> _stopped;     //!< answered by the task
     TaskHandle_t _handle;
     void* _charge;                  //!< emulation: the heap a mounted card would hold
     utils::timer _sync_timer;
+    utils::timer _retry_timer;
 #if defined(DEBUG)
     utils::timer _stats_timer;
 #endif

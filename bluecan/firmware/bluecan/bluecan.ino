@@ -31,6 +31,8 @@
 
 #include <cstdint>
 
+#include <esp_task_wdt.h>
+
 using namespace logging;
 
 namespace
@@ -155,6 +157,14 @@ void setup()
         errorln("ERROR: CAN bus driver install failed!");
         esp_restart();
     }
+
+    // loop() -- the bus supervisor and standby -- under the task watchdog: five seconds
+    // without a pass restarts the board. Nothing in it is known to block for that
+    // long; this is for whatever is not known. The core resets the watchdog between
+    // passes. The microSD task is left out on purpose: the SD library may wait
+    // seconds on a card that is slow to mount or stalls, and the card is not worth
+    // restarting the link to the phone for.
+    enableLoopWDT();
 }
 
 namespace
@@ -171,10 +181,17 @@ void core0(void*)
     {
         core0_started = true;
 
+        // The frame path to the phone under the task watchdog, as loop() is: a pass
+        // takes at most core0_wait or core0_batch frames, so five seconds without one
+        // is a task that has stopped, and a restart is the way back.
+        esp_task_wdt_add(nullptr);
+
         uint32_t drained = 0;
 
         while (true)
         {
+            esp_task_wdt_reset();
+
             // Blocking, not polling. Above tskIDLE_PRIORITY a spin on an empty queue
             // would keep core 0's idle task off the CPU forever, and the task watchdog
             // panics after five seconds of that. The wait only applies when there is

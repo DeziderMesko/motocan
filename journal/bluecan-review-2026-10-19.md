@@ -123,3 +123,36 @@ turning it on.
 - The frame queue and the card's ring both drop and count rather than block when full.
 - The brownout detector is on; a stack overflow and a spinning task on core 0 both
   reset the board.
+
+## What became of it, 2026-10-19
+
+The owner: fix 1, 2 and 3; 4 when a Lite is on the bench; 5 is fine as it is; 6–9 to a
+second reviewer. The fixes are [patch 36](../bluecan/history/firmware.md#patch-36--the-reviews-fixes-rejoin-after-a-trip-no-error-loop-while-listening-a-watchdog-a-card-that-recovers--applied-run-on-the-feather).
+
+- **1** fixed: the controller rejoins once the bus is proved again. Testing it found
+  worse than this finding said: a listening controller that saw a bus error looped on
+  its own error flags and received nothing at all, so a trip left the board deaf, not
+  on two ids. Fixed with it.
+- **2** fixed, not yet run with a card.
+- **3** fixed for the Bluetooth drain task and `loop()`; the card's task left out on
+  purpose.
+- **6** the second reviewer: the second's wait was short, and the comment on it wrong —
+  closing a file is several writes, each allowed 250 ms; the sleep-state worry mostly
+  wrong, since a completed stop sends the card CMD0 and chip select is tied low awake
+  and asleep alike. Holding the SPI pins in sleep would add three more RTC holds to
+  release. Done: the wait is 3 s and the comment says why. Left: a card asleep in the
+  middle of a multi-block write may ignore the next mount's CMD0, and on unswitched
+  12 V it is never power-cycled; to watch for at the first card sessions.
+- **7** kept and fixed. The reviewer's correction: the controller would more likely
+  trip on REC, reading its own acknowledgement back recessive, than believe it was
+  acknowledging. The data would be lost either way.
+- **8** dropped for now: nothing writes flash during a ride, and the S3 does not
+  support the overrun interrupt (IDF's `twai_ll.h`). What is missing instead is a check
+  of the FIFO's miss bit, so that an overrun's garbage is not passed on as a frame;
+  about five lines, worth doing if anything ever pauses core 1 for over a millisecond.
+- **9** (a) a number to read at the first card session; (b) dropped, `_mode` never
+  changes after start-up; (c) dropped until the format changes.
+- The reviewer found two things the review missed. Cards over 32 GB come formatted
+  exFAT, which the core's FatFs cannot mount; hardware.md says so now. And the file-name
+  search opened every file on every start, slower with every ride; fixed in patch 36.
+

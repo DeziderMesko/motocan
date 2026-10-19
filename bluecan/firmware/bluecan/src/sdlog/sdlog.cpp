@@ -25,6 +25,7 @@
 #include "sdlog.hpp"
 
 #if defined(CONFIG_SDLOG)
+#include <cstdlib>
 #include <cstring>
 
 #include <FS.h>
@@ -123,16 +124,78 @@ sdlog::sdlog() noexcept
     , _sectors(0U)
     , _worst_us(0U)
     , _errors(0U)
+    , _reopens(0U)
     , _mode(mode_off)
+    , _open(false)
     , _stop(false)
     , _stopped(false)
     , _handle(nullptr)
     , _charge(nullptr)
     , _sync_timer{}
+    , _retry_timer{}
 #if defined(DEBUG)
     , _stats_timer{}
 #endif
 {
+}
+
+bool sdlog::open_card() noexcept
+{
+    // One file open at a time is all this needs, and each one FatFs is allowed costs
+    // a FIL, sector buffer included, whether it is used or not.
+    // -1, a board with no chip select, reaches the library as 255, and its writes to
+    // that pin do nothing -- which is what M5Stack's example relies on as well.
+    if (!SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", 1))
+    {
+        return false;
+    }
+
+    // The number after the highest there, found in one pass over the root directory.
+    // Trying each name in turn opened every file on the card on every start, and
+    // every wake adds one. Never a file that exists: FILE_WRITE truncates.
+    unsigned next = 0U;
+    File root = SD.open("/");
+    if (root)
+    {
+        for (String entry = root.getNextFileName(); entry.length() > 0; entry = root.getNextFileName())
+        {
+            if (strncmp(entry.c_str(), "/bluecan-", 9) != 0)
+            {
+                continue;
+            }
+            const char* digits = entry.c_str() + 9;
+            char* end = nullptr;
+            const unsigned long n = strtoul(digits, &end, 10);
+            if (end != digits && strcmp(end, ".bin") == 0 && n >= next)
+            {
+                next = n + 1U;
+            }
+        }
+        root.close();
+    }
+
+    char name[24];
+    snprintf(name, sizeof(name), "/bluecan-%04u.bin", next);
+    if (next <= 9999U && !SD.exists(name))
+    {
+        file = SD.open(name, FILE_WRITE);
+    }
+    if (!file)
+    {
+        errorln("ERROR: SD log could not open %s", name);
+        SD.end();
+        return false;
+    }
+
+    bootln("SD log: writing %s", name);
+    return true;
+}
+
+void sdlog::close_card() noexcept
+{
+    file.close();
+    SD.end();
+    _open = false;
 }
 
 bool sdlog::start() noexcept
@@ -141,37 +204,12 @@ bool sdlog::start() noexcept
 
     sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
 
-    // One file open at a time is all this needs, and each one FatFs is allowed costs
-    // a FIL, sector buffer included, whether it is used or not.
-    // -1, a board with no chip select, reaches the library as 255, and its writes to
-    // that pin do nothing -- which is what M5Stack's example relies on as well.
-    if (SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", 1))
-    {
-        char name[24];
-        for (unsigned n = 0U; n < 10000U; n++)
-        {
-            snprintf(name, sizeof(name), "/bluecan-%04u.bin", n);
-            if (!SD.exists(name))
-            {
-                break;
-            }
-        }
-        file = SD.open(name, FILE_WRITE);
-        if (file)
-        {
-            _mode = mode_card;
-            bootln("SD log: writing %s", name);
-        }
-        else
-        {
-            errorln("ERROR: SD log could not open %s", name);
-        }
-    }
+    _mode = mode_card;
+    _open = open_card();
 
 #if defined(CONFIG_SDLOG_EMULATE)
-    if (_mode == mode_off)
+    if (!_open)
     {
-        SD.end();
         // A mounted volume and one open file: FatFs's FATFS and FIL, each with a
         // sector buffer of its own in this configuration, plus the card's handle.
         _charge = malloc(sizeof(FATFS) + sizeof(FIL) + 64U);
@@ -179,7 +217,7 @@ bool sdlog::start() noexcept
         {
             memset(_charge, 0, sizeof(FATFS) + sizeof(FIL) + 64U);
         }
-        // SD.end() released the bus with the volume; take it back for the emulation.
+        // A failed SD.begin() released the bus; take it back for the emulation.
         sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
         if (SDLOG_CS >= 0)
         {
@@ -192,10 +230,9 @@ bool sdlog::start() noexcept
     }
 #endif
 
-    if (_mode == mode_off)
+    if (_mode == mode_card && !_open)
     {
-        warnln("SD log: no card, nothing will be logged");
-        return false;
+        warnln("SD log: no card, trying again every %u s", (unsigned)CONFIG_SDLOG_RETRY_S);
     }
 
     // Level with loop(), which spins on core 1: the two share the core by time slice,
@@ -278,6 +315,26 @@ void sdlog::run() noexcept
             vTaskSuspend(nullptr);
         }
 
+        // A card that is not open -- none at start-up, or one closed after a failed
+        // write -- is tried again now and then, with a new file each time. The ring
+        // goes on filling meanwhile, and counts what it cannot hold.
+        if (_mode == mode_card && !_open)
+        {
+            if (_retry_timer.elapsed(CONFIG_SDLOG_RETRY_S * 1000000UL) > 0UL && open_card())
+            {
+                _open = true;
+                _reopens++;
+            }
+            if (!_open)
+            {
+#if defined(DEBUG)
+                stats();
+#endif
+                vTaskDelay(pdMS_TO_TICKS(20));
+                continue;
+            }
+        }
+
         const uint32_t tail = _tail.load(std::memory_order_relaxed);
         const uint32_t waiting = _head.load(std::memory_order_acquire) - tail;
 
@@ -289,22 +346,24 @@ void sdlog::run() noexcept
         if (waiting >= sector)
         {
             const int64_t t0 = esp_timer_get_time();
-            if (write_sector(ring + (tail & mask)))
-            {
-                _sectors++;
-                dirty = true;
-            }
-            else
-            {
-                _errors++;
-            }
+            const bool written = write_sector(ring + (tail & mask));
             const uint32_t us = static_cast<uint32_t>(esp_timer_get_time() - t0);
             if (us > _worst_us)
             {
                 _worst_us = us;
             }
-            // Written or not, the sector is given up: a card that fails a write is
-            // not going to take the next one any better, and the ring must not jam.
+            if (!written)
+            {
+                // After a failed write the SD library's state is not to be trusted,
+                // so the card is closed and mounted again rather than written to
+                // blind. The sector stays in the ring and goes into the new file.
+                _errors++;
+                close_card();
+                dirty = false;
+                continue;
+            }
+            _sectors++;
+            dirty = true;
             _tail.store(tail + sector, std::memory_order_release);
             continue;
         }
@@ -354,7 +413,7 @@ void sdlog::stop() noexcept
     }
 
     _stop.store(true, std::memory_order_release);
-    for (int i = 0; i < 100 && !_stopped.load(std::memory_order_acquire); i++)
+    for (int i = 0; i < 300 && !_stopped.load(std::memory_order_acquire); i++)
     {
         vTaskDelay(pdMS_TO_TICKS(10));
     }
@@ -362,6 +421,11 @@ void sdlog::stop() noexcept
 
 void sdlog::write_rest() noexcept
 {
+    if (_mode == mode_card && !_open)
+    {
+        return;
+    }
+
     // Whole sectors first, as the loop would have, then whatever is left of the last.
     const uint32_t head = _head.load(std::memory_order_acquire);
     uint32_t tail = _tail.load(std::memory_order_relaxed);
@@ -396,8 +460,7 @@ void sdlog::write_rest() noexcept
 
     if (_mode == mode_card)
     {
-        file.close();
-        SD.end();
+        close_card();
     }
     else
     {
@@ -427,10 +490,10 @@ void sdlog::stats() noexcept
     {
         if (_stats_timer.elapsed(CONFIG_RC_STATS_TIMEOUT) > 0UL)
         {
-            infoln("            SD log: %s, %lu sectors, %lu errors, worst %lu us",
-                   _mode == mode_card ? "card" : "emulated",
+            infoln("            SD log: %s, %lu sectors, %lu errors, %lu reopened, worst %lu us",
+                   _mode == mode_emulated ? "emulated" : _open ? "card" : "no card",
                    (unsigned long)_sectors, (unsigned long)_errors,
-                   (unsigned long)_worst_us);
+                   (unsigned long)_reopens, (unsigned long)_worst_us);
             infoln("       SD log ring: %lu waiting, peak %lu of %u, %lu frames dropped",
                    (unsigned long)(_head.load(std::memory_order_relaxed) - _tail.load(std::memory_order_relaxed)),
                    (unsigned long)_peak, (unsigned)CONFIG_SDLOG_BUFFER,

@@ -206,7 +206,8 @@ The parts it is meant to be used with:
   converters or the Atom's RGB LED, and none of it has been measured yet.
 - **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
   under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
-  Arduino example for it. FAT32, up to 16 GB. Built with `CONFIG_SDLOG`
+  Arduino example for it. FAT32, up to 16 GB as M5Stack say; a card over 32 GB comes
+  formatted exFAT, which this firmware cannot mount. Built with `CONFIG_SDLOG`
   ([build.md](build.md#build-time-settings)). The Atomic CAN Base would put CAN on the
   same header instead, RX G6 and TX G5.
 

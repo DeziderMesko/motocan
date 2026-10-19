@@ -62,17 +62,19 @@ bool on_boot() noexcept
 {
     setup_ms = millis();
 
+    // Both pads are handed to the RTC domain to sleep: TX held recessive, RX as the
+    // wake source. They stay there until released, through any reset but a power-on,
+    // and a TX pad still under hold would keep every acknowledgement off the bus. So
+    // they are released on every start, not only after a wake: a reset between a wake
+    // and this line would otherwise leave the hold on. Harmless when there is none.
+    rtc_gpio_hold_dis(CAN_TX_PIN);
+    rtc_gpio_deinit(CAN_TX_PIN);
+    rtc_gpio_deinit(CAN_RX_PIN);
+
     if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_EXT0)
     {
         return false;
     }
-
-    // Both pads were handed to the RTC domain to sleep: TX held recessive, RX as the
-    // wake source. They stay there across the wake until released, and a pad still
-    // under hold ignores every level the CAN controller sets on it.
-    rtc_gpio_hold_dis(CAN_TX_PIN);
-    rtc_gpio_deinit(CAN_TX_PIN);
-    rtc_gpio_deinit(CAN_RX_PIN);
 
     bootln("Standby: woken by the CAN bus, wake %lu, setup() at %lu ms",
            (unsigned long)sleeps, (unsigned long)setup_ms);

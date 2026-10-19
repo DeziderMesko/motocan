@@ -97,11 +97,12 @@ public:
     uint32_t status() const noexcept;
 
     /**
-     * transmit and receive error counters. Both are frozen in listen-only mode,
-     * where the controller neither transmits nor acknowledges, so there they are
-     * context rather than a health signal -- status() is the health signal. Once the
-     * controller acknowledges, REC is live and supervise() watches it; TEC must stay
-     * at zero, because nothing here ever transmits a frame.
+     * transmit and receive error counters. Both stand still in listen-only mode, where
+     * TEC is parked at 191 to keep the controller error-passive (see set_counters() in
+     * controller.cpp), so there they are context rather than a health signal --
+     * status() is the health signal. Once the controller acknowledges, both start from
+     * zero; REC is live and supervise() watches it, and TEC must stay at zero, because
+     * nothing here ever transmits a frame.
      */
     uint32_t tec() const noexcept;
     uint32_t rec() const noexcept;
@@ -109,8 +110,9 @@ public:
     /**
      * Where the controller stands on acknowledging. It always boots listening; with
      * CONFIG_CANBUS_ACK it moves to acknowledging once supervise() has seen the bit
-     * rate proved, and to one of the tripped states -- listen-only again, until the
-     * next boot -- if the bus stops looking healthy afterwards.
+     * rate proved, and to one of the tripped states if the bus stops looking healthy
+     * afterwards. A tripped state is listen-only, and lasts until supervise() has
+     * proved the bus again, as at start-up; then it is acknowledging again.
      */
     enum class ack_state : uint8_t
     {
@@ -122,6 +124,15 @@ public:
     };
 
     __always_inline ack_state ack() const noexcept { return _ack.load(std::memory_order_relaxed); }
+
+    /**
+     * how many times acknowledging has stopped on a trip since start-up
+     */
+#if defined(CONFIG_CANBUS_ACK)
+    __always_inline uint32_t trips() const noexcept { return _trips.load(std::memory_order_relaxed); }
+#else
+    __always_inline uint32_t trips() const noexcept { return 0U; }
+#endif
 
     /**
      * Decide whether to start acknowledging, and whether to stop.
@@ -234,6 +245,10 @@ private:
     uint32_t _proof_frames;
     uint32_t _proof_errors;
     uint32_t _proof_ms;
+    /// when the last trip happened, for the pause before proving again
+    uint32_t _rearm_ms;
+    /// written by supervise(), read by stats() and the display
+    std::atomic<uint32_t> _trips;
 #endif
     intr_handle_t _isr_handle;
     /// frames the queue holds while core 0 is not draining it. At the R9's ~1050

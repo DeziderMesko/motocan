@@ -116,7 +116,11 @@ everything, can jump there too ([at-the-bike.md](at-the-bike.md)).
 
 To see a trip: with Bluecan acknowledging, bring the adapter down and up again at
 250 kbps and send. The BUS page goes to `TRIP-REC` in red and the LED starts its red
-flash. A board that starts against a 250 kbps adapter never begins acknowledging.
+flash. Bring it back to 500 kbps with `--one-shot` and send: about a second later
+Bluecan has proved the bus and acknowledges again, and the red flash stays. A board
+that starts against a 250 kbps adapter does the same once the adapter is put right.
+`--one-shot` because without it the CANable gives an unacknowledged frame 16 attempts
+and then stops, and a listening board then has nothing to prove the bus on.
 
 ## Tools
 

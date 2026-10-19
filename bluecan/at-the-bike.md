@@ -104,7 +104,7 @@ tile and the rates did. Whether the outlet is live with the key off.
 |---|---|---|
 | BUS stays `LISTEN-ONLY`, `rx 0`, `err 0`, key on | the pair is crossed, or it is not the pair. This is exactly what a female pigtail built the other way up looked like on the bench | key off, redo B2, swap `CAN H` and `CAN L` |
 | BUS stays `LISTEN-ONLY`, `rx` in the thousands, IDS shows 2 | frames arrive and the proof never completes — `err` will be climbing | key off. Note `err`. This has not been seen and wants the CANable on the bus to look at |
-| `TRIP-REC`, `TRIP-STATE` or `TRIP-TEC` in red, red flash on the light | the board took itself off the bus and is listening only. It stays that way until it is restarted | note which one and the `rec` figure. Restart the board once. If it trips again, stop |
+| `TRIP-REC`, `TRIP-STATE` or `TRIP-TEC` in red, red flash on the light | the board took itself off the bus and is listening only. It proves the bus again and rejoins by itself, about a second later on a clean bus; the red flash stays | note which one and the `rec` figure. If the word keeps coming back, stop |
 | A warning on the bike's dash | whatever it is, it was not there before | key off, unplug the board, key on and see whether it clears. Do not plug the board back in that day |
 | The app shows nothing and the header says `connected`, not `SUB` | connected without subscribing — the phone, not the bike | disconnect and reconnect in the app |
 | LIVE shows dashes for a moment and recovers | on the bench that was the replay stalling. The ECU does not stall, so on the bike it is a finding | note when, and what the BUS page's `rx` did |

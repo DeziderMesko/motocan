@@ -29,8 +29,9 @@ and, when it receives a broken frame, an error flag.
 
 ### When it stops acknowledging
 
-It goes back to listening only, **until it is restarted**, if any of these happens. It
-checks every 10 ms:
+It goes back to listening only if any of these happens, and starts again as it does at
+start-up: after a second it proves the bus — 32 intact frames over at least 200 ms with
+no error among them — and acknowledges again. It checks every 10 ms:
 
 | BUS page shows | Cause |
 |---|---|
@@ -38,10 +39,12 @@ checks every 10 ms:
 | `TRIP-STATE` | the controller reported error-warning or bus-off |
 | `TRIP-TEC` | its transmit error counter moved at all, which should be impossible for a node that never transmits |
 
-On the R9 this means telemetry stops: without an acknowledgement the bike's engine
-control unit repeats one frame, and only 2 of its 23 ids get through. The LED flashes red
-over its colour. To try again, restart the board (RESET or unplug it). If it trips again,
-leave it off the bike and look at the bus with a separate adapter.
+On the R9 telemetry stops while it listens: without an acknowledgement the bike's engine
+control unit repeats one frame, and only 2 of its 23 ids get through. On a clean bus that
+lasts a little over a second. The BUS page shows the trip in red until the board is
+acknowledging again; the LED's red flash stays until the board is restarted, as a record
+that it happened. If the trip word keeps coming back, the bus is not clean: leave the
+board off the bike and look at the bus with a separate adapter.
 
 ## The screen
 
@@ -112,7 +115,7 @@ draw 0.4ms max 254.0ms        up  12:34
 | `ble` | frames sent over Bluetooth, and per second. `lost` counts frames the Bluetooth stack refused because it was full; red when not zero |
 | `queue` | frames waiting between the CAN receiver and Bluetooth, the highest it has been, and its capacity. `peer` is the number of connected phones; red above 1 |
 | `drop` | frames lost because the queue was full. `err` counts CAN error interrupts. Both green at zero, red otherwise |
-| `ext`, `rtr` | 29-bit and remote frames received and discarded. `tec`, `rec`: the controller's transmit and receive error counters |
+| `ext`, `rtr` | 29-bit and remote frames received and discarded. `tec`, `rec`: the controller's transmit and receive error counters. While it only listens, `tec` reads 191: the counter is parked there to keep the controller from looping on its own error flags |
 | `free`, `min` | free heap now and its lowest. `disp stck`: free stack of the display task, in bytes |
 | `draw` | how long the last repaint took, the longest so far, and the uptime in minutes and seconds |
 
@@ -222,7 +225,7 @@ One phone at a time. A second connection lights the red flash.
 | The board powers but cannot be flashed or found on USB | a charge-only cable | use a data cable |
 | BUS stays `LISTEN-ONLY`, `rx 0`, `err 0`, with the key on | not connected to the CAN pair, or `CAN H` and `CAN L` swapped | key off, check the pins and the resistance ([hardware.md](hardware.md#termination)), swap H and L |
 | BUS stays `LISTEN-ONLY`, `rx` in the thousands per second, IDS shows 2 | frames are arriving but the bit-rate proof does not complete; `err` will be climbing | key off and note `err`. Not seen so far; look at the bus with a separate adapter |
-| `TRIP-REC`, `TRIP-STATE` or `TRIP-TEC` in red | the board took itself off the bus | note which, and `rec`. Restart once. If it trips again, stop |
+| `TRIP-REC`, `TRIP-STATE` or `TRIP-TEC` in red | the board took itself off the bus; it proves the bus again and rejoins by itself | note which, and `rec`. If the word keeps coming back, stop |
 | A warning on the bike's dash that was not there before | possibly the board | key off, unplug the board, key on and see whether it clears. Do not plug it back in that day |
 | Header `connected`, not `SUB`; the app shows nothing | the app has not subscribed. Usually Monitor was ticked when the device was added | remove the device in RaceChrono and add it again with CAN-Bus only; or disconnect and reconnect |
 | `ble lost` climbing while the app is configuring channels | the app asked for everything and the bus is faster than Bluetooth carries | expected above about 590 frames a second; does not happen on the R9's 506. Not a fault |

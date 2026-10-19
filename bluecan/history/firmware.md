@@ -2098,6 +2098,55 @@ both come that much sooner; the phone has not been timed in either.
 Not yet measured: the current asleep and awake, which needs the Lite, the Unit Mini CAN
 and a 12 V supply.
 
+## Patch 36 — the review's fixes: rejoin after a trip, no error loop while listening, a watchdog, a card that recovers — **applied, run on the Feather**
+
+2026-10-19, from [the reliability review of that day](../../journal/bluecan-review-2026-10-19.md),
+on the owner's decisions: findings 1–3 fixed, 4 (the Lite's light) when a Lite is on the
+bench, 5 (the filter after a wake) left as it is, 6–9 put to a second reviewer, who kept
+7, cut 6 to one constant and a comment, and found the file-name search.
+
+- **A trip no longer lasts until the next start.** `supervise()` puts the controller back
+  in listen-only as before, waits a second (`ack_rearm_ms`), and proves the bus again as
+  at start-up; on 32 intact frames over 200 ms it acknowledges again. The tripped state
+  stays until then, and the trips are counted (`trips()`, the debug statistics). On the
+  Feather the light's fault flash still latches until a restart.
+- **Listening, the controller is error-passive.** Found while testing the first fix: in
+  listen-only the controller answers a bus error with an error flag, reads it back
+  recessive because its TX pad is off the bus, takes that as a bit error and flags again,
+  for ever. Listen-only stops the counter that would take it passive. Measured
+  2026-10-19: 310 000 error interrupts a second after a trip, 215 000 from a cold start
+  against a 250 kbps bus, still going with the bus silent, and not one frame received
+  either way. This was there before patch 36: a trip, or a start on a bus with errors,
+  left the board deaf, not on two ids of 23. TEC is now set to 192 whenever the
+  controller listens, with the warning limit at 255 so the panel does not read it as
+  trouble; 128 was tried first and the counter read 127 after reset mode, active again,
+  and the loop came back. After the fix: 8 000 errors a second against 250 kbps (the
+  bus's own), and on switching the adapter to 500 kbps the proof completed and the board
+  acknowledged. A trip at 250 kbps, then 500 kbps: acknowledging again 1.4 s later,
+  trip count 1.
+- **The task watchdog covers the frame path.** The Bluetooth drain task and `loop()`
+  (the bus supervisor and standby) reset it on every pass; five seconds without one
+  restarts the board. The microSD task is left out: the SD library can wait seconds on
+  a card, and the card is not worth restarting the phone's link for.
+- **The microSD log recovers.** A failed write closes the card and mounts it again every
+  5 s (`CONFIG_SDLOG_RETRY_S`) into a new file, the failed sector kept for it. A card
+  missing at start-up is tried the same way rather than given up on. The next file
+  number comes from one pass over the root directory instead of an `SD.exists()` per
+  number, which opened every file on the card on every start; it stops at 9999 rather
+  than truncating the last. Built, and run without a card: "no card" every 5 s, no
+  watchdog reset, the bus unaffected. **Not run with a card**: the recovery wants a
+  card pulled out and put back while it logs. Mounting now happens on the card's own
+  task too, with FatFs's long-file-name buffer on its 6 KB stack; read the stack line
+  of the debug statistics at the first card session.
+- `standby::on_boot()` releases the CAN pads' RTC hold on every start, not only after a
+  wake, so that a reset between a wake and that line cannot leave TX held off the bus.
+- `sdlog::stop()` waits up to 3 s rather than 1: closing a file is several single-block
+  writes. Below the watchdog's 5 s, since it runs in `loop()`.
+
+The Feather built as the Lite with standby and the stand-in card, twice through a wake,
+traffic and sleep afterwards: acknowledging, writing, asleep 5 s after the traffic, no
+restart.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

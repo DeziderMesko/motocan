@@ -46,6 +46,27 @@ namespace
 
 twai_dev_t* dev = &TWAI;
 
+/// The error counters for a mode, written in reset mode.
+///
+/// Listening, the controller is made error-passive. In listen-only it still answers a
+/// bus error with an error flag, and with its TX pad held off the bus it reads that
+/// flag back recessive: a bit error, another flag, and so on without end, because
+/// listen-only stops the counters that would otherwise take it passive. On 2026-10-19
+/// that was over 200 000 error interrupts a second and nothing received, after a trip
+/// and from a cold start against a 250 kbps bus alike, and it went on with the bus
+/// silent. A passive flag is recessive and reads back as sent. 192 rather than 128:
+/// the counter reads one less after reset mode, and 127 is active again -- tried, and
+/// the loop came back. The warning limit goes to the top so that the high TEC does not
+/// raise the error-status bit the panel and the light read as trouble.
+///
+/// Acknowledging, everything from zero and the warning limit at its default.
+void set_counters(bool acknowledging) noexcept
+{
+    twai_ll_set_rec(dev, 0);
+    twai_ll_set_tec(dev, acknowledging ? 0 : 192);
+    twai_ll_set_err_warn_lim(dev, acknowledging ? 96 : 255);
+}
+
 #if defined(CONFIG_CANBUS_ACK)
 /// How often supervise() looks, in microseconds. This is also how long the controller
 /// stays on a bus that has turned bad. It does not bound the damage on a bus that
@@ -71,6 +92,11 @@ constexpr uint32_t ack_proof_ms = 200U;
 /// bad frames in a row and well short of the 96 where the controller raises its own
 /// warning. The same limit motocan's can-up-ack.sh holds the CANable to.
 constexpr uint32_t ack_rec_limit = 32U;
+/// After a trip, how long the controller only listens before it starts proving the bus
+/// again. The proof is what keeps a bad bus from being rejoined -- one error reopens
+/// it -- so this only spaces out the attempts on a bus that is bad now and then: at
+/// most one a second, each ended within ack_poll_us by the same limits as above.
+constexpr uint32_t ack_rearm_ms = 1000U;
 #endif
 
 }
@@ -101,6 +127,8 @@ controller::controller() noexcept
     , _proof_frames(0U)
     , _proof_errors(0U)
     , _proof_ms(0U)
+    , _rearm_ms(0U)
+    , _trips(0U)
 #endif
     , _isr_handle(nullptr)
     , _queue_storage{}
@@ -158,14 +186,15 @@ void controller::stats() noexcept
             // read off the peripheral, which is safe here: stats() only runs from
             // loop(), after install() has ungated its clock.
             ack_state a = ack();
-            infoln("           Bus mode: %s, TEC %u, REC %u, status 0x%02x, mode 0x%02x",
+            infoln("           Bus mode: %s, TEC %u, REC %u, status 0x%02x, mode 0x%02x, trips %lu",
                    a == ack_state::listening ? "listen-only"
                    : a == ack_state::acknowledging ? "acknowledging"
                    : a == ack_state::tripped_state ? "TRIPPED on controller state"
                    : a == ack_state::tripped_rec ? "TRIPPED on REC"
                    : "TRIPPED on TEC",
                    static_cast<unsigned>(tec()), static_cast<unsigned>(rec()),
-                   static_cast<unsigned>(status()), static_cast<unsigned>(dev->mode_reg.val));
+                   static_cast<unsigned>(status()), static_cast<unsigned>(dev->mode_reg.val),
+                   static_cast<unsigned long>(trips()));
         }
     }
 }
@@ -244,10 +273,7 @@ bool controller::install() noexcept
     // Every boot starts here, whatever the build. With CONFIG_CANBUS_ACK it is
     // supervise() that leaves it, and only on the evidence of frames received.
     twai_ll_set_mode(dev, true /* listen_only */, false /* no_ack */, false /* loopback */);
-    // reset RX and TX error counters
-    twai_ll_set_rec(dev, 0);
-    twai_ll_set_tec(dev, 0);
-    twai_ll_set_err_warn_lim(dev, 96);
+    set_counters(false);
 
     // configure bus timing, acceptance filter, CLKOUT, and interrupts
     // get timing and filter from car specific decoder
@@ -381,8 +407,7 @@ bool controller::set_ack(bool on) noexcept
     }
 
     twai_ll_set_mode(dev, !on /* listen_only */, false /* no_ack */, false /* loopback */);
-    twai_ll_set_rec(dev, 0);
-    twai_ll_set_tec(dev, 0);
+    set_counters(on);
 
     if (on)
     {
@@ -413,36 +438,10 @@ void controller::supervise() noexcept
         return;
     }
 
-    switch (ack())
-    {
-    case ack_state::listening:
-    {
-        uint32_t frames = _cb_count.load(std::memory_order_relaxed);
-        uint32_t errors = _er_count.load(std::memory_order_relaxed);
-        uint32_t now = millis();
+    const ack_state state = ack();
 
-        // Until the first frame the window keeps sliding, so that its time is served
-        // on frames: dated from start(), a board powered before the key would have
-        // its 200 ms behind it and take the first 32 frames as the whole proof.
-        if (errors != _proof_errors || frames == _proof_frames)
-        {
-            _proof_frames = frames;
-            _proof_errors = errors;
-            _proof_ms = now;
-        }
-        else if ((frames - _proof_frames) >= ack_proof_frames && (now - _proof_ms) >= ack_proof_ms)
-        {
-            if (set_ack(true))
-            {
-                _ack.store(ack_state::acknowledging, std::memory_order_relaxed);
-                bootln("CAN bus bit rate proved on %u frames (%u errors before them), acknowledging from here, %lu ms after start",
-                       static_cast<unsigned>(frames - _proof_frames), static_cast<unsigned>(errors),
-                       static_cast<unsigned long>(millis()));
-            }
-        }
-        break;
-    }
-
+    switch (state)
+    {
     case ack_state::acknowledging:
     {
         uint32_t status = twai_ll_get_status(dev);
@@ -459,20 +458,51 @@ void controller::supervise() noexcept
 
         if (why != ack_state::acknowledging)
         {
-            // Latched until the next boot. Listen-only is what the bus has whenever
-            // nothing is plugged into the connector, so falling back to it costs the
-            // rider the telemetry and the bike nothing; rejoining on a bus that has
-            // just looked wrong is the half of that trade not worth making.
+            // Back to listening, and to proving the bus as at start-up. Latching here
+            // until the next start cost the rest of a ride for one burst of errors:
+            // on the R9 a listening board gets two ids of 23. The tripped state stays
+            // until the bus is proved again, so the panel and the light can say why.
             (void) set_ack(false);
             _ack.store(why, std::memory_order_relaxed);
-            errorln("ERROR: CAN bus acknowledging stopped (status 0x%02x, TEC %u, REC %u), listen-only until reboot",
+            _trips.fetch_add(1U, std::memory_order_relaxed);
+            _rearm_ms = millis();
+            errorln("ERROR: CAN bus acknowledging stopped (status 0x%02x, TEC %u, REC %u), listening, proving the bus again",
                     static_cast<unsigned>(status), static_cast<unsigned>(tec), static_cast<unsigned>(rec));
         }
         break;
     }
 
     default:
+    {
+        // Listening: since start(), or since a trip.
+        uint32_t frames = _cb_count.load(std::memory_order_relaxed);
+        uint32_t errors = _er_count.load(std::memory_order_relaxed);
+        uint32_t now = millis();
+        const bool holding = state != ack_state::listening && (now - _rearm_ms) < ack_rearm_ms;
+
+        // Until the first frame the window keeps sliding, so that its time is served
+        // on frames: dated from start(), a board powered before the key would have
+        // its 200 ms behind it and take the first 32 frames as the whole proof. It
+        // slides through the pause after a trip as well.
+        if (holding || errors != _proof_errors || frames == _proof_frames)
+        {
+            _proof_frames = frames;
+            _proof_errors = errors;
+            _proof_ms = now;
+        }
+        else if ((frames - _proof_frames) >= ack_proof_frames && (now - _proof_ms) >= ack_proof_ms)
+        {
+            if (set_ack(true))
+            {
+                _ack.store(ack_state::acknowledging, std::memory_order_relaxed);
+                bootln("CAN bus bit rate proved on %u frames (%u errors before them), acknowledging from here, %lu ms after start, trip %lu",
+                       static_cast<unsigned>(frames - _proof_frames), static_cast<unsigned>(errors),
+                       static_cast<unsigned long>(millis()),
+                       static_cast<unsigned long>(_trips.load(std::memory_order_relaxed)));
+            }
+        }
         break;
+    }
     }
 }
 #endif
