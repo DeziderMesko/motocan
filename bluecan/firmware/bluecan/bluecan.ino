@@ -62,9 +62,9 @@ void setup()
 
     Serial.begin(115200);
 
-    // Before anything touches the CAN pins: a wake from standby leaves them held in
-    // the RTC domain.
-    const bool woke = standby::on_boot();
+    // Before anything else: a board in standby sleeps here, with nothing running yet,
+    // and carries on from this line when it wakes.
+    const bool woke = standby::on_boot() != standby::start::power_on;
 
 #if ARDUINO_USB_CDC_ON_BOOT
     // A USB serial write blocks while a computer is plugged in and not reading, until
@@ -266,6 +266,6 @@ void loop()
     CANCTLR.stats();
     // start acknowledging once the bit rate is proved, stop if the bus looks wrong
     CANCTLR.supervise();
-    // sleep once the bus has been silent long enough; wakes as a restart
+    // sleep once the bus has been silent long enough; going to sleep is a restart
     standby::check();
 }

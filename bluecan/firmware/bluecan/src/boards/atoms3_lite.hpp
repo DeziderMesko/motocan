@@ -47,6 +47,11 @@
 #define SDLOG_MISO 8
 #define SDLOG_CS   -1
 
+/// the button on the top of the case, G41, pulled up on the board: low when pressed.
+/// Wakes the board from standby. G41 is not an RTC pin, so this wake needs light sleep
+#define BUTTON_PIN     GPIO_NUM_41
+#define BUTTON_PRESSED 0
+
 /// on unswitched 12 V it would draw from the bike's battery all the time the key is
 /// off, so it sleeps while the bus is silent; CONFIG_NO_STANDBY keeps it awake
 #if !defined(CONFIG_NO_STANDBY)

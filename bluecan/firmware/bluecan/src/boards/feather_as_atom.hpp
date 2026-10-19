@@ -39,6 +39,11 @@
 #undef CONFIG_FUEL_GAUGE
 #undef BUILTIN_LED_PIN
 
+// the Lite's one button, G41, played by D2: high when pressed, as the display reads it
+// in the feather profile, where it freezes the screen
+#define BUTTON_PIN     GPIO_NUM_2
+#define BUTTON_PRESSED 1
+
 // as on the Lite: see atoms3_lite.hpp
 #if !defined(CONFIG_NO_STANDBY)
 #define CONFIG_STANDBY 1

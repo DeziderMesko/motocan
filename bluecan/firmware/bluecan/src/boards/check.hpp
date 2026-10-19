@@ -40,6 +40,10 @@
 #error "CONFIG_STANDBY does not put the display to sleep; build the atom or feather-as-atom profile"
 #endif
 
+#if defined(BUTTON_PIN) && !defined(BUTTON_PRESSED)
+#error "BUTTON_PIN needs BUTTON_PRESSED, the level the pin reads while the button is pressed"
+#endif
+
 #if defined(CONFIG_STATUS_LED) && !defined(STATUS_LED_PIN)
 #error "CONFIG_STATUS_LED needs the board file to give the pixel's pin, STATUS_LED_PIN"
 #endif

@@ -153,6 +153,27 @@ The six most recent forwarded frames, newest first: id, length, payload in hex.
 **RESET** restarts the board. Pressed twice quickly, it enters the UF2 bootloader
 ([build.md](build.md#by-uf2-with-no-tools-at-all)); press RESET once more to leave it.
 
+## Standby
+
+The AtomS3 Lite, and the Feather built as one (`feather-as-atom`), sleep while the bus is
+silent, since the Lite is powered from the bike's battery with the key off. The `feather`
+profile, with its screen, does not.
+
+- **A minute after the last frame** the board puts its LED out and sleeps: with the key
+  off, or with the connector pulled.
+- **The first frame wakes it**, as the key is turned on. It starts again from the top
+  and acknowledges about three quarters of a second after the frame: on the bench,
+  508–509 ms after the program started, behind about 250 ms of bootloader. The R9
+  repeats its first frame until something acknowledges it, so nothing that matters is
+  missed.
+- **A press of the button wakes it too**: the Lite's one button, or **D2** on the Feather
+  built as one. It then stays awake for a minute with the bus silent, as it does after
+  any frame, and sleeps again.
+
+The sleep is light sleep, not deep sleep: the Lite's button cannot wake the chip from
+deep sleep. What either costs the bike's battery is estimated in
+[hardware.md](hardware.md#current-while-asleep).
+
 ## The LED
 
 One RGB LED, readable at a glance. The colour is the state of the chain from the bus to

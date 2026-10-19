@@ -2216,6 +2216,55 @@ asleep after the bus went quiet, awake on the next frame and reporting again. No
 yet: the pixel itself in each state with this code, D0's dark position, the pixel dark
 while asleep, and the subscribed rungs, for want of the phone reconnecting during the run.
 
+## Patch 39 — standby in light sleep, woken by the button too, after a minute — **applied, run on the Feather**
+
+2026-10-19, asked for by the owner, as the first step towards a Wi-Fi mode for statistics
+and the card's files: a press of the button is to wake the board, and a long press,
+later, to switch it to Wi-Fi. The Lite's button is G41, which cannot wake the chip from
+deep sleep, so standby moved to light sleep. What that costs was estimated first, from
+the datasheets: 0.1 mA more from the bike, of 7.7 mA in the worst case, nearly all of
+it the Unit Mini CAN's ([hardware.md](../hardware.md#current-while-asleep)).
+
+- **Going to sleep is a restart.** `standby::check()` writes out the card and puts the
+  light out as before, then leaves a word in RTC memory (`RTC_NOINIT_ATTR`, with a magic
+  number, since nothing initialises it at a power-on) and restarts. The next start finds
+  it at the top of `setup()` and sleeps there, before Bluetooth, the CAN controller or
+  any task is running: nothing to take down first. TX is held recessive, CAN RX wakes
+  the chip on a low level, and so does the button, `BUTTON_PIN` in the board file at the
+  level `BUTTON_PRESSED`: G41, low, on the Lite; D2, high, on `feather-as-atom`.
+- **Waking is a restart too**, of the whole chip (`esp_rom_software_reset_system()`),
+  with what woke it left in RTC memory for the start after. Two attempts that kept the
+  chip's own USB port came back with it unusable: continuing `setup()` after the wake,
+  the board woke and acknowledged, but no console returned and Windows reported a failed
+  USB device; a system reset straight after the wake did no better. What works is
+  taking the port off the bus before sleeping (`usb_serial_jtag_ll_phy_enable_pad(false)`),
+  which the sleep then leaves off, and letting the reset bring it back. On the Lite on
+  the bike nothing is plugged into that port; on the bench this is the console.
+- **The silence before sleeping is 60 s, not 5** (`CONFIG_STANDBY_TIMEOUT_S`), asked for
+  by the owner during the bench run: five seconds put the Feather to sleep between the
+  attempts of an upload. A minute is also the time to use the board after waking it
+  with the button, for which a separate 60 s had been written and was then removed.
+- The debug statistics name what this start is — `power-on`, `woken by the bus`, `woken
+  by the button` — and count the sleeps since power-on. `setup()` at ms is gone from
+  them: a wake now has the bootloader in front of it, like a power-on.
+
+Run on the Feather built as the Lite, 2026-10-19 and 20, the CANable in one-shot mode
+playing the bike:
+
+- Asleep 60 s after the last frame five times, one of them seen only in the sleep count
+  and the light going out; 5 s after it once, with the first build. With the bus
+  silent, no wake.
+- Woken by traffic twice with the final build, acknowledging **508 and 509 ms** after the
+  program started, as patch 35's deep sleep did; once with the first build, which
+  acknowledged with no console.
+- Woken by a press of D2 once, by the owner, the light coming back blue; the console then
+  said `woken by the button, 3 sleeps`, and the board slept again 60 s later.
+
+Not working on the bench: [console-log.sh](../firmware/tools/console-log.sh) did not get
+the board back after a light-sleep wake. usbipd went on listing it as attached, the old
+`/dev/ttyACM0` stayed and gave nothing; detaching it and attaching it again by hand
+brought the console back every time, with the board running.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

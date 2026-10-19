@@ -25,18 +25,24 @@
 
 #include <cstdint>
 
-/// CONFIG_STANDBY puts the chip into deep sleep once the bus has been silent for
-/// CONFIG_STANDBY_TIMEOUT_S, and wakes it on the first dominant bit on CAN RX. It is for
-/// a board powered from the diagnostic connector's unswitched 12 V: with the key off
-/// the bus is silent, and with the key on the engine control unit repeats its first
-/// frame until something acknowledges it, so the frame that wakes the board is sent
-/// again once it is listening. Waking is a restart: setup() runs from the top.
+/// CONFIG_STANDBY puts the chip into light sleep once the bus has been silent for
+/// CONFIG_STANDBY_TIMEOUT_S. The first dominant bit on CAN RX wakes it, and so does the
+/// board's button where the board file gives one (BUTTON_PIN). It is for a board powered
+/// from the diagnostic connector's unswitched 12 V: with the key off the bus is silent,
+/// and with the key on the engine control unit repeats its first frame until something
+/// acknowledges it, so the frame that wakes the board is sent again once it is listening.
+///
+/// Going to sleep is a restart: the chip sleeps at the top of setup(), before anything
+/// else is running, and restarts again when it wakes. Light sleep rather than
+/// deep because the Lite's button, G41, cannot wake the chip from deep sleep; what that
+/// costs is in bluecan/hardware.md, "Current while asleep".
 #if defined(CONFIG_STANDBY)
 
 /// seconds without a received frame before the chip goes to sleep. The R9 sends over
-/// 500 frames a second with the key on, so five seconds of nothing is the key off
+/// 500 frames a second with the key on, so a second of nothing is the key off; the
+/// rest is time to use the board after waking it with the button, or on the bench
 #ifndef CONFIG_STANDBY_TIMEOUT_S
-#define CONFIG_STANDBY_TIMEOUT_S 5
+#define CONFIG_STANDBY_TIMEOUT_S 60
 #endif
 
 #endif // CONFIG_STANDBY
@@ -44,13 +50,22 @@
 namespace standby
 {
 
+/// what this start is. Kept through a restart as a number, so the numbers are fixed,
+/// and power_on, the one that means no wake, is 0
+enum class start : uint8_t
+{
+    power_on = 0,   //!< a power-on or a reset; not a wake
+    bus = 1,        //!< woken by CAN RX
+    button = 2,     //!< woken by the button
+};
+
 #if defined(CONFIG_STANDBY)
 /**
- * First thing in setup(): give the CAN pins back to the GPIO matrix if the chip has
- * just woken from standby, and say so.
- * @return true when this start is a wake from standby rather than a power-on
+ * First thing in setup(). If the last start asked to sleep, sleep here and restart when
+ * woken; does not return then. Otherwise give the CAN pins back to the GPIO matrix and
+ * return what this start is: a power-on, or the start after a wake and what woke it.
  */
-bool on_boot() noexcept;
+start on_boot() noexcept;
 
 /**
  * From loop(): sleep once no frame has arrived for CONFIG_STANDBY_TIMEOUT_S.
@@ -58,7 +73,7 @@ bool on_boot() noexcept;
  */
 void check() noexcept;
 #else
-inline bool on_boot() noexcept { return false; }
+inline start on_boot() noexcept { return start::power_on; }
 inline void check() noexcept {}
 #endif
 

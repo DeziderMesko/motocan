@@ -198,9 +198,10 @@ The parts it is meant to be used with:
   | 3, ground | 1, `GND` |
 
   Pin 4 is unswitched, so this variant is powered whenever it is plugged in, key off
-  included. Its firmware sleeps five seconds after the bus goes quiet and wakes on the
-  first frame ([build.md](build.md#build-time-settings), `CONFIG_STANDBY`). Asleep, the
-  chip draws microamperes; the Unit Mini CAN does not sleep (its transceiver's `S` pin
+  included. Its firmware sleeps a minute after the bus goes quiet, in light sleep, and
+  wakes on the first frame or a press of the button ([usage.md](usage.md#standby),
+  `CONFIG_STANDBY`). Asleep, the chip draws a quarter of a milliampere; the Unit Mini CAN
+  does not sleep (its transceiver's `S` pin
   is tied to ground, and its power LED is always lit), nor do the two boards'
   converters or the Atom's RGB LED. None of it has been measured yet; what the
   datasheets put it at is under [Current while asleep](#current-while-asleep).

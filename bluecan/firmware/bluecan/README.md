@@ -19,7 +19,7 @@ page is for working on the code.
 | `src/racechrono/device.*` | the Bluetooth LE server: RaceChrono's service, the connection interval, the counters |
 | `src/display/display.*` | the four pages and the buttons, on their own task |
 | `src/status/status_light.*` | the status light, on its own task, on any board with a pixel (`CONFIG_STATUS_LED`): what colour, from the counters, every 25 ms |
-| `src/standby/standby.*` | deep sleep while the bus is silent, and the wake on CAN RX, built in with `CONFIG_STANDBY` |
+| `src/standby/standby.*` | light sleep while the bus is silent, and the wake on CAN RX or the button, built in with `CONFIG_STANDBY` |
 | `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG`: a ring the CAN interrupt fills, and a task on core 1 that writes it out. Also its stand-in for a board with no card |
 | `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LED drivers, on the pins the board file gives; the MAX17048 battery gauge; the serial logger; a timer |
 

@@ -32,8 +32,11 @@
 #include "../status/status_light.hpp"
 #include "../utils/timer.hpp"
 
+#include <driver/gpio.h>
 #include <driver/rtc_io.h>
+#include <esp_rom_sys.h>
 #include <esp_sleep.h>
+#include <hal/usb_serial_jtag_ll.h>
 
 namespace standby
 {
@@ -41,45 +44,144 @@ namespace standby
 namespace
 {
 
-/// survives deep sleep; zeroed only at power-on
-RTC_DATA_ATTR uint32_t sleeps = 0U;
+// Kept in RTC memory through a restart, which is how check() asks the next start to
+// sleep. Not initialised by anything: after a power-on it holds whatever the memory
+// came up with, so it counts only once its magic number is in place.
+constexpr uint32_t kept_magic = 0x42435342U;   // "BCSB"
+constexpr uint32_t sleep_asked = 0x534C5050U;  // "SLPP"
+struct kept_t
+{
+    uint32_t magic;
+    uint32_t sleep;    //!< sleep_asked when the next start is to sleep
+    uint32_t woke;     //!< what woke the chip, for the start after the wake; 0 otherwise
+    uint32_t sleeps;   //!< sleeps since power-on
+};
+RTC_NOINIT_ATTR kept_t kept;
 
+start this_start = start::power_on;
 uint32_t frames_last = 0U;
 uint32_t quiet_since_ms = 0U;
 
-// When this start reached each step, in ms since the chip came out of reset -- which
-// for a wake is the wake, since millis() counts from there and not from setup(). For
-// the debug statistics: a woken board's boot lines are gone before a console attaches.
-uint32_t setup_ms = 0U;
+// When this start reached each step, in ms of millis(): for the debug statistics, since
+// a woken board's boot lines are gone before a console attaches.
 uint32_t ack_ms = 0U;
 uint32_t sub_ms = 0U;
 #if defined(DEBUG)
 utils::timer stats_timer;
 #endif
 
+#if defined(BUTTON_PIN)
+constexpr gpio_int_type_t button_wake = BUTTON_PRESSED ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL;
+#endif
+
+const char* name(start s) noexcept
+{
+    switch (s)
+    {
+    case start::bus:    return "woken by the bus";
+    case start::button: return "woken by the button";
+    default:            return "power-on";
+    }
+}
+
+/// Light sleep until CAN RX goes dominant or the button is pressed, with nothing else
+/// running yet. Returns what woke the chip.
+start sleep() noexcept
+{
+    // TX recessive for as long as the chip sleeps, held so that nothing can change it.
+    gpio_set_level(CAN_TX_PIN, 1);
+    gpio_set_direction(CAN_TX_PIN, GPIO_MODE_OUTPUT);
+    gpio_hold_en(CAN_TX_PIN);
+
+    // Wake on the first dominant bit. The transceiver drives RX either way while it is
+    // powered; the pull-up only keeps a board whose transceiver is not from waking on
+    // a floating pin.
+    gpio_set_direction(CAN_RX_PIN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(CAN_RX_PIN, GPIO_PULLUP_ONLY);
+    gpio_wakeup_enable(CAN_RX_PIN, GPIO_INTR_LOW_LEVEL);
+
+#if defined(BUTTON_PIN)
+    gpio_set_direction(BUTTON_PIN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON_PIN, BUTTON_PRESSED ? GPIO_PULLDOWN_ONLY : GPIO_PULLUP_ONLY);
+    gpio_wakeup_enable(BUTTON_PIN, button_wake);
+#endif
+
+    esp_sleep_enable_gpio_wakeup();
+    Serial.flush();
+
+    // Off the USB bus for the sleep and until the restart after it; see on_boot().
+    usb_serial_jtag_ll_phy_enable_pad(false);
+
+    const esp_err_t err = esp_light_sleep_start();
+
+    // Which pin it was, read while a press that woke the chip is still being held: a
+    // light-sleep wake is a millisecond or so.
+    start woke = start::bus;
+#if defined(BUTTON_PIN)
+    if (gpio_get_level(BUTTON_PIN) == BUTTON_PRESSED)
+    {
+        woke = start::button;
+    }
+    gpio_wakeup_disable(BUTTON_PIN);
+#endif
+    gpio_wakeup_disable(CAN_RX_PIN);
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_GPIO);
+    gpio_hold_dis(CAN_TX_PIN);
+
+    if (err != ESP_OK)
+    {
+        errorln("Standby: light sleep refused: %s", esp_err_to_name(err));
+    }
+    return woke;
+}
+
 } // namespace
 
-bool on_boot() noexcept
+start on_boot() noexcept
 {
-    setup_ms = millis();
-
-    // Both pads are handed to the RTC domain to sleep: TX held recessive, RX as the
-    // wake source. They stay there until released, through any reset but a power-on,
-    // and a TX pad still under hold would keep every acknowledgement off the bus. So
-    // they are released on every start, not only after a wake: a reset between a wake
-    // and this line would otherwise leave the hold on. Harmless when there is none.
-    rtc_gpio_hold_dis(CAN_TX_PIN);
+    // TX may be under a hold: from a sleep below that a reset cut short, or in the RTC
+    // domain, where the deep sleep of an earlier build left it. A held TX pad would keep
+    // every acknowledgement off the bus, so both are released on every start. Harmless
+    // when there is none.
+    gpio_hold_dis(CAN_TX_PIN);
     rtc_gpio_deinit(CAN_TX_PIN);
     rtc_gpio_deinit(CAN_RX_PIN);
 
-    if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_EXT0)
+    if (kept.magic != kept_magic)
     {
-        return false;
+        kept = {kept_magic, 0U, 0U, 0U};
     }
 
-    bootln("Standby: woken by the CAN bus, wake %lu, setup() at %lu ms",
-           (unsigned long)sleeps, (unsigned long)setup_ms);
-    return true;
+    // The start after a wake.
+    if (kept.woke != 0U)
+    {
+        this_start = static_cast<start>(kept.woke);
+        kept.woke = 0U;
+        bootln("Standby: %s, sleep %lu", name(this_start), (unsigned long)kept.sleeps);
+        return this_start;
+    }
+
+    if (kept.sleep != sleep_asked)
+    {
+        return start::power_on;
+    }
+
+    // Cleared before sleeping, so that a reset while asleep starts the board normally.
+    kept.sleep = 0U;
+    kept.sleeps++;
+    kept.woke = static_cast<uint32_t>(sleep());
+
+    // And woken, it restarts once more, the whole chip this time, so that the chip's own
+    // USB port comes back as it does at a power-on. Left to itself, light sleep takes the
+    // port off the bus and puts it back on waking, and on the Feather on 2026-10-19 it
+    // came back unusable: the board woke and acknowledged, but no console returned and
+    // Windows reported a failed USB device. A system reset straight after the wake,
+    // with the port put back by the sleep, did no better. So sleep() takes the port off
+    // the bus itself, which the sleep then leaves off, and it stays off until the reset
+    // brings it up. The reset costs the bootloader, about 250 ms, as a wake from deep
+    // sleep did.
+    esp_rom_software_reset_system();
+    return start::power_on;   // not reached
 }
 
 void check() noexcept
@@ -98,9 +200,8 @@ void check() noexcept
 #if defined(DEBUG)
     if (stats_timer.elapsed(CONFIG_RC_STATS_TIMEOUT) > 0UL)
     {
-        infoln("           Standby: %s %lu, setup() at %lu ms, acknowledging at %lu ms, phone at %lu ms",
-               esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0 ? "wake" : "power-on, sleeps",
-               (unsigned long)sleeps, (unsigned long)setup_ms,
+        infoln("           Standby: %s, %lu sleeps, acknowledging at %lu ms, phone at %lu ms",
+               name(this_start), (unsigned long)kept.sleeps,
                (unsigned long)ack_ms, (unsigned long)sub_ms);
     }
 #endif
@@ -126,23 +227,11 @@ void check() noexcept
     // Lite that is the whole time the bike stands.
     LIGHT.stop();
 
-    // TX recessive for as long as the chip sleeps: the digital pads lose their state
-    // in deep sleep, and a transmit input left to float can hold the bus dominant.
-    rtc_gpio_init(CAN_TX_PIN);
-    rtc_gpio_set_direction(CAN_TX_PIN, RTC_GPIO_MODE_OUTPUT_ONLY);
-    rtc_gpio_set_level(CAN_TX_PIN, 1);
-    rtc_gpio_hold_en(CAN_TX_PIN);
-
-    // Wake on the first dominant bit. The transceiver drives RX either way while it is
-    // powered; the pull-up only keeps a board whose transceiver is not from waking on
-    // a floating pin.
-    esp_sleep_enable_ext0_wakeup(CAN_RX_PIN, 0);
-    rtc_gpio_pullup_en(CAN_RX_PIN);
-    rtc_gpio_pulldown_dis(CAN_RX_PIN);
-
-    sleeps++;
+    // The next start sleeps before it brings anything up: no Bluetooth, no CAN
+    // controller and no task to stop here first.
+    kept.sleep = sleep_asked;
     Serial.flush();
-    esp_deep_sleep_start();
+    esp_restart();
 }
 
 } // namespace standby
