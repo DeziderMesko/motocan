@@ -202,7 +202,8 @@ The parts it is meant to be used with:
   first frame ([build.md](build.md#build-time-settings), `CONFIG_STANDBY`). Asleep, the
   chip draws microamperes; the Unit Mini CAN does not sleep (its transceiver's `S` pin
   is tied to ground, and its power LED is always lit), nor do the two boards'
-  converters or the Atom's RGB LED, and none of it has been measured yet.
+  converters or the Atom's RGB LED. None of it has been measured yet; what the
+  datasheets put it at is under [Current while asleep](#current-while-asleep).
 - **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
   under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
   Arduino example for it. FAT32, up to 16 GB as M5Stack say; a card over 32 GB comes
@@ -210,3 +211,45 @@ The parts it is meant to be used with:
   ([build.md](build.md#build-time-settings)). The Atomic CAN Base would put CAN on the
   same header instead, RX G6 and TX G5.
 
+
+#### Current while asleep
+
+Estimated on 2026-10-19 from the datasheets and the schematics, not measured: the
+[Unit Mini CAN's](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/631/SCH_UNIT_Mini_CAN_V1.0.pdf)
+and the [AtomS3's](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/471/Sch_M5_AtomS3_v1.0.pdf),
+which is the one M5Stack link from the Lite's page.
+
+| Part | Rail | Current | From |
+|---|---|---|---|
+| TJA1051T/3 transceiver, normal mode, bus recessive | 5 V | 5 mA typical, 2.5–10 mA | [NXP datasheet](https://mouser.com/datasheet/2/302/TJA1051-119511.pdf) |
+| ME3116 converter, 12 V to 5 V, on, no load | 12 V | 1.35 mA typical, 1.85 mA maximum | [Microne datasheet V03](https://radiodetali.com/media/files/146913/pdf-146913.pdf), at 12 V in |
+| ME3116 feedback divider, R3 + R4 = 62.3 kΩ | 5 V | 0.08 mA | schematic |
+| Unit Mini CAN's white power LED, through the MST5333 regulator and 1 kΩ | 5 V | about 0.5 mA | 3.3 V less a forward voltage of about 2.8 V, over 1 kΩ |
+| WS2812C-2020, dark | 3.3 V | 0.6 mA | a distributor's listing ([JLCPCB](https://jlcpcb.com/partdetail/Worldsemi-WS2812C/C114587)); Worldsemi's datasheet gives none |
+| SY8089 converter, 5 V to 3.3 V | 5 V | 0.055 mA | a distributor's listing ([LCSC](https://www.lcsc.com/product-detail/C78988.html)) |
+| SY8089 feedback divider, R11 + R12 = 122.1 kΩ | 3.3 V | 0.027 mA | schematic |
+| ESP32-S3 in deep sleep, RTC peripherals on for the wake on CAN RX | 3.3 V | 0.008 mA | Espressif's datasheet |
+| ESP32-S3 in light sleep | 3.3 V | 0.24 mA | Espressif's datasheet |
+
+Both converters are taken at 80 % efficiency; the ME3116's datasheet plots it only from
+0.1 A up. The current from the bike is then
+`(I5 + 3.3 × I3.3 / 0.8 / 5) × 5 / 0.8 / 12 + I(ME3116)`, with `I5` and `I3.3` the
+sums of each rail's rows.
+
+| Asleep | From 12 V | 4 Ah lasts |
+|---|---|---|
+| deep sleep, typical | 4.6 mA | 36.6 days |
+| light sleep, typical | 4.7 mA | 35.8 days |
+| deep sleep, worst case (transceiver and ME3116 at their maximum) | 7.7 mA | 21.8 days |
+| light sleep, worst case | 7.8 mA | 21.5 days |
+| the Unit Mini CAN alone, the Atom drawing nothing, worst case | 7.4 mA | 22.6 days |
+
+The R9's battery is 9 Ah. At most 4 Ah of it is counted as Bluecan's to use, and the
+worst case is the one to plan on.
+
+The Unit Mini CAN is 7.4 mA of the worst case's 7.7 mA, and the depth of the chip's sleep
+moves the total by 0.1 mA. Its largest term is the transceiver, held in normal mode by its
+`S` pin; in silent mode the TJA1051 draws 0.1–2.5 mA, 1 mA typical, and still receives.
+
+Not counted: the R9's own draw with the key off, a microSD card, the AtomS3's reset
+circuit (a GS321 comparator), and the 0.3 V across the Unit Mini CAN's output diode, D4.
