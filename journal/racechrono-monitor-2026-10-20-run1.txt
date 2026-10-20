@@ -1,0 +1,29 @@
+devuser@Ryzen:~/projects/motocan/bluecan/firmware$ ./tools/bench.py 600
+>> connected, interval 50.00 ms, latency 0
+>> interval 15.00 ms, latency 0, status 0
+>> 0x0001 subscription notify, 99249.209 ms
+>> 0x0005 subscription indicate, 99279.281 ms
+>> interval 15.00 ms, latency 1, status 0
+>> 0x0002 ALLOW all, 50 ms
+>> configuring monitors
+>> indication not confirmed, status 7
+>> 0x0001 subscription off, 124284.565 ms
+>> 0x0005 subscription off, 124284.600 ms
+>> disconnected, advertising
+>> connected, interval 50.00 ms, latency 0
+>> interval 15.00 ms, latency 0, status 0
+>> 0x0001 subscription notify, 125876.671 ms
+>> 0x0005 subscription indicate, 125906.696 ms
+>> 0x0002 DENY all
+>> interval 15.00 ms, latency 1, status 0
+>> 0x0002 ALLOW 0x512, 50 ms
+>> 0x0002 ALLOW 0x765, 50 ms
+>> 0x0002 ALLOW 0x756, 50 ms
+>> 0x0002 ALLOW 0x758, 50 ms
+>> 0x0002 ALLOW 0x759, 50 ms
+>> 0x0002 ALLOW 0x27c, 50 ms
+>> configuring monitors
+>> indication not confirmed, status 7
+>> 0x0001 subscription off, 140234.349 ms
+>> 0x0005 subscription off, 140234.394 ms
+>> disconnected, advertising

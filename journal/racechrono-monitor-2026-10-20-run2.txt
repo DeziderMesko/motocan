@@ -1,0 +1,132 @@
+link connected | 0x0001 notify | 0x0005 indicate | filter writes 7 | value writes 3 | dropped 0
+  m0 ts      ok        | 1 values, 1 invalid | channel(device(gps), timestamp)
+  m1 ts/1000 ok        | 1 values, 1 invalid | channel(device(gps), timestamp) / 1000
+  m2 speed   ok        | 1 values, 1 invalid | channel(device(gps), speed) * 100
+  m3 ts ms   not added yet
+>> 0x0001 subscription off, 57519.479 ms
+>> 0x0005 subscription off, 57519.511 ms
+>> disconnect reason 0x213, the phone ended it
+>> disconnected, advertising
+>> connected, interval 50.00 ms, latency 0
+>> interval 15.00 ms, latency 0, status 0
+>> 0x0001 subscription notify, 66014.051 ms
+>> 0x0005 subscription indicate, 66044.110 ms
+>> 0x0002 ALLOW all, 50 ms
+>> interval 15.00 ms, latency 1, status 0
+>> configuring monitors
+>> 0x0005 indication of 3 bytes confirmed in 61 ms
+>> 0x0005 indication of 20 bytes confirmed in 45 ms
+>> 0x0005 indication of 17 bytes confirmed in 45 ms
+>> 0x0005 answer: 00 00
+>> m0 added: channel(device(gps), timestamp)
+>> 0x0005 indication of 20 bytes confirmed in 44 ms
+>> 0x0005 indication of 20 bytes confirmed in 60 ms
+>> 0x0005 indication of 7 bytes confirmed in 45 ms
+>> 0x0005 answer: 00 01
+>> m1 added: channel(device(gps), timestamp) / 1000
+>> 0x0005 indication of 20 bytes confirmed in 44 ms
+>> 0x0005 indication of 19 bytes confirmed in 45 ms
+>> 0x0005 answer: 00 02
+>> m2 added: channel(device(gps), speed) * 100
+>> 0x0001 subscription off, 83704.310 ms
+>> 0x0005 subscription off, 83704.342 ms
+>> disconnect reason 0x213, the phone ended it
+>> disconnected, advertising
+>> connected, interval 50.00 ms, latency 0
+>> interval 15.00 ms, latency 0, status 0
+>> 0x0001 subscription notify, 239025.760 ms
+>> 0x0005 subscription indicate, 239100.638 ms
+>> 0x0002 DENY all
+>> interval 15.00 ms, latency 1, status 0
+>> 0x0002 ALLOW 0x512, 50 ms
+>> 0x0002 ALLOW 0x765, 50 ms
+>> 0x0002 ALLOW 0x756, 50 ms
+>> 0x0002 ALLOW 0x758, 50 ms
+>> 0x0002 ALLOW 0x759, 50 ms
+>> 0x0002 ALLOW 0x27c, 50 ms
+>> configuring monitors
+>> 0x0005 indication of 3 bytes confirmed in 67 ms
+>> 0x0005 indication of 20 bytes confirmed in 254 ms
+>> 0x0001 subscription off, 252510.281 ms
+>> 0x0005 subscription off, 252510.307 ms
+>> disconnect reason 0x208, supervision timeout
+>> disconnected, advertising
+>> connected, interval 50.00 ms, latency 0
+>> interval 15.00 ms, latency 0, status 0
+>> 0x0001 subscription notify, 270596.296 ms
+>> 0x0005 subscription indicate, 270626.307 ms
+>> interval 15.00 ms, latency 1, status 0
+>> 0x0002 DENY all
+>> 0x0002 ALLOW 0x512, 50 ms
+>> 0x0002 ALLOW 0x765, 50 ms
+>> 0x0002 ALLOW 0x756, 50 ms
+>> 0x0002 ALLOW 0x758, 50 ms
+>> 0x0002 ALLOW 0x759, 50 ms
+>> 0x0002 ALLOW 0x27c, 50 ms
+>> configuring monitors
+>> 0x0005 indication of 3 bytes confirmed in 46 ms
+>> 0x0005 indication of 20 bytes confirmed in 45 ms
+>> 0x0005 indication of 17 bytes confirmed in 60 ms
+>> 0x0005 answer: 00 00
+>> m0 added: channel(device(gps), timestamp)
+>> 0x0005 indication of 20 bytes confirmed in 59 ms
+m0 ts      t 271936.747 ms   2147483647  invalid
+m0 ts      t 271951.379 ms   1792532499  2026-10-20 21:41:39.000Z
+>> timestamp reads as seconds; adding m3 with base 1792532497
+>> 0x0005 indication of 20 bytes confirmed in 75 ms
+m0 ts      t 272446.357 ms   1792532500  2026-10-20 21:41:40.000Z
+>> 0x0005 indication of 7 bytes confirmed in 30 ms
+>> 0x0005 answer: 00 01
+>> m1 added: channel(device(gps), timestamp) / 1000
+>> 0x0005 indication of 20 bytes confirmed in 29 ms
+m1 ts/1000 t 272671.753 ms   2147483647  invalid
+m1 ts/1000 t 272761.409 ms      1792533
+>> 0x0005 answer: 00 02
+>> 0x0005 indication of 19 bytes confirmed in 47 ms
+>> m2 added: channel(device(gps), speed) * 100
+>> 0x0005 indication of 20 bytes confirmed in 43 ms
+m2 speed   t 273061.761 ms   2147483647  invalid
+m2 speed   t 273076.400 ms            0
+>> 0x0005 indication of 20 bytes confirmed in 45 ms
+m0 ts      t 273451.383 ms   1792532501  2026-10-20 21:41:41.000Z
+>> 0x0005 indication of 20 bytes confirmed in 45 ms
+>> 0x0005 indication of 5 bytes confirmed in 45 ms
+>> 0x0005 answer: 00 03
+>> m3 added: (channel(device(gps), timestamp) - 1792532497) * 1000
+m3 ts ms   t 274127.065 ms   2147483647  invalid
+>> 0x0005 indication of 20 bytes confirmed in 44 ms
+m3 ts ms   t 274156.378 ms         4000  2026-10-20 21:41:41.000Z
+m0 ts      t 274441.966 ms   1792532502  2026-10-20 21:41:42.000Z
+m2 speed   t 274441.966 ms          113
+m3 ts ms   t 274441.966 ms         5000  2026-10-20 21:41:42.000Z
+>> 0x0005 indication of 20 bytes confirmed in 45 ms
+>> 0x0005 indication of 20 bytes confirmed in 45 ms
+>> 0x0005 indication of 5 bytes confirmed in 45 ms
+>> 0x0005 answer: 00 03
+>> m3 added: (channel(device(gps), timestamp) - 1792532497) * 1000
+m3 ts ms   t 275221.383 ms         5000  2026-10-20 21:41:42.000Z
+m0 ts      t 275477.009 ms   1792532503  2026-10-20 21:41:43.000Z
+m2 speed   t 275477.009 ms            0
+m3 ts ms   t 275477.009 ms         6000  2026-10-20 21:41:43.000Z
+m0 ts      t 276481.976 ms   1792532504  2026-10-20 21:41:44.000Z
+m3 ts ms   t 276481.976 ms         7000  2026-10-20 21:41:44.000Z
+m0 ts      t 277516.508 ms   1792532505  2026-10-20 21:41:45.000Z
+m3 ts ms   t 277516.508 ms         8000  2026-10-20 21:41:45.000Z
+m0 ts      t 278521.497 ms   1792532506  2026-10-20 21:41:46.000Z
+m3 ts ms   t 278521.497 ms         9000  2026-10-20 21:41:46.000Z
+m0 ts      t 279526.962 ms   1792532507  2026-10-20 21:41:47.000Z
+m3 ts ms   t 279526.962 ms        10000  2026-10-20 21:41:47.000Z
+m0 ts      t 297316.644 ms   1792532507  2026-10-20 21:41:47.000Z
+m1 ts/1000 t 297316.644 ms      1792533
+m2 speed   t 297316.644 ms            0
+m3 ts ms   t 297316.644 ms        10000  2026-10-20 21:41:47.000Z
+link connected | 0x0001 notify | 0x0005 indicate | filter writes 22 | value writes 21 | dropped 0
+  m0 ts      ok        | 12 values, 2 invalid | interval min 14.6 mean 26069.0 max 261379.3 ms | channel(device(gps), timestamp)
+  m1 ts/1000 ok        | 4 values, 2 invalid | interval min 89.7 mean 95357.1 max 261426.5 ms | channel(device(gps), timestamp) / 1000
+  m2 speed   ok        | 6 values, 2 invalid | interval min 14.6 mean 57129.4 max 261392.2 ms | channel(device(gps), speed) * 100
+  m3 ts ms   ok        | 10 values, 1 invalid | interval min 29.3 mean 2576.6 max 17789.7 ms | (channel(device(gps), timestamp) - 1792532497) * 1000
+  m3 phone time - board time, spread: -17160.3 .. 714.4 ms
+>> 0x0001 subscription off, 324151.639 ms
+>> 0x0005 subscription off, 324151.671 ms
+>> disconnect reason 0x213, the phone ended it
+>> disconnected, advertising

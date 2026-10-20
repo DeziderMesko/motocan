@@ -18,3 +18,5 @@ nothing in this folder from outside it that you would mind losing.
   source have been reviewed, and what each review found.
 - [bluecan-wifi-bench-2026-10-20.md](bluecan-wifi-bench-2026-10-20.md) — the bench checks
   the Wi-Fi mode and the light-sleep standby left for a hand at the button and a phone.
+- [racechrono-monitor-2026-10-20.md](racechrono-monitor-2026-10-20.md) — whether the
+  phone's time reaches the board through RaceChrono's Monitor API, with both console logs.
