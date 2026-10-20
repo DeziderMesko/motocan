@@ -174,6 +174,17 @@ The sleep is light sleep, not deep sleep: the Lite's button cannot wake the chip
 deep sleep. What either costs the bike's battery is estimated in
 [hardware.md](hardware.md#current-while-asleep).
 
+## The microSD log
+
+With a microSD card on the board's card pins, the AtomS3 Lite's TF-Card Base
+([hardware.md](hardware.md#the-m5stack-atoms3-lite)) or, on the Feather, a card on SCK
+A2, MOSI A3, MISO A4 and CS A5, the board logs every frame it receives to the
+card, whatever RaceChrono has asked for: a new file, `bluecan-NNNN.bin`, at every start.
+It looks for the card once, as it starts, and without one goes on with no log; a card
+put in later is used from the next start, which on the bike is the next wake. The files
+are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). The card must be FAT32. It has not
+yet been run with a card.
+
 ## The Wi-Fi mode
 
 In place of Bluetooth, the board can put up a Wi-Fi network of its own with a web page on
@@ -203,7 +214,7 @@ to stay on it.
 | Bus | whether the board acknowledges, frames a second and in total, error interrupts, TEC and REC, trips, 29-bit and remote frames, frames dropped |
 | Bike | engine speed, gear, both wheel speeds, water and air temperature, from the frames the LIVE page decodes; `-` when a frame has not arrived for two seconds |
 | Ids | every id seen since the start: how many a second, how many in all, how long since the last, its last payload |
-| Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it |
+| Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it. Only when the board found a card as it started the mode |
 | Board | free memory, and how many devices are on the network |
 
 While the page is out of sight, behind another app or in a background tab, it stops

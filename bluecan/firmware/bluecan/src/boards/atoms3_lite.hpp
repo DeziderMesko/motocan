@@ -41,7 +41,9 @@
 #define STATUS_LED_PIN 35
 
 /// the Atomic TF-Card Base, as M5Stack's Arduino example for it has it: no chip
-/// select, the base holds the card selected
+/// select, the base holds the card selected. The log is built in; a board without the
+/// base finds no card at start-up and goes without (src/sdlog)
+#define CONFIG_SDLOG 1
 #define SDLOG_SCK  7
 #define SDLOG_MOSI 6
 #define SDLOG_MISO 8

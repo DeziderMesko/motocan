@@ -2450,6 +2450,42 @@ bytes of heap free in the normal mode. In the Wi-Fi mode, the owner's phone on t
 The census task's stack had 692 bytes of 3 KB left, the debug statistics listing the
 phone being the deepest it goes; it is 4 KB now.
 
+## Patch 44 — the microSD log in every build, the card looked for at start-up — **applied, run on the Feather without a card**
+
+2026-10-20, asked for by the owner: one build for a board with the card base and without
+it, the firmware finding out which and offering the card or not. Of the two ways put to
+the owner, looking once at start-up or every 5 s for as long as there is none, the owner
+chose the first.
+
+- **`CONFIG_SDLOG` is set by the board files**, next to the card's pins, and `--sd` is
+  gone from the build script. `--sd-emulate` sets only `CONFIG_SDLOG_EMULATE`.
+- **The card is looked for once, on the log's own task.** `sdlog::start()` only creates
+  the task and returns; the task mounts the card and, with one, takes its 32 KB ring from
+  the heap and publishes it to the CAN interrupt, which logs nothing until then. Without
+  a card it says so and ends, and its 6 KB stack, now from the heap too, goes back. The
+  retry every 5 s for a card missing at start-up, from patch 36, is gone; the one after a
+  failed write stays. The ring and the stack were static, 40 KB whether a card was there
+  or not.
+- **The start no longer waits for the card.** `setup()` started the card before
+  Bluetooth and CAN, and `SD.begin()` takes about 1.5 s to give up on a card that is not
+  there (patch 35).
+- **The Wi-Fi mode looks for the card once too**, as its server task starts, rather than
+  at every request for the list while there was none. The page shows its Card section
+  only when one was found; there is no "no card" text and no "this build has no card
+  log".
+
+Built for every profile and with the stand-in: `feather-as-atom` and `atom` 1242 KB of
+program and 93.9 KB of static RAM, against 1183 KB and 93.0 KB without the log, and 133
+KB of static RAM with it; `feather` 1277 KB and 99.9 KB. On the Feather built as the
+Lite, no card, the CANable sending: from a reset, `looking for a card` and 1.6 s later
+`no card, nothing is logged until the next start`, the bus statistics going on in
+between; 164 376 bytes of heap free. Woken from standby by traffic, acknowledging 524 ms
+after `setup()` began, where the build with the stand-in took 2 029–2 031 ms in patch 35.
+With the stand-in (`--sd-emulate`): 120 sectors written in the first minute, none
+dropped, 114 072 bytes free. The page, in headless Chromium against a mock server:
+without a card no Card section, with one the list. **Not run with a card**, nor in the
+Wi-Fi mode on the board, which needs the button.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

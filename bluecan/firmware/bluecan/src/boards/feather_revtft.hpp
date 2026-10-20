@@ -40,8 +40,10 @@
 #define CAN_TX_PIN GPIO_NUM_17   // A1
 #define BLE_PWR_LVL ESP_PWR_LVL_P12
 
-/// a microSD card for CONFIG_SDLOG, on header pins nothing else here uses. Not the
-/// board's own SPI pins: those are the display's, and its supply is off without it
+/// a microSD card for the log, on header pins nothing else here uses. Not the board's
+/// own SPI pins: those are the display's, and its supply is off without it. Built in;
+/// with no card wired, none is found at start-up and the board goes without (src/sdlog)
+#define CONFIG_SDLOG 1
 #define SDLOG_SCK  16   // A2
 #define SDLOG_MOSI 15   // A3
 #define SDLOG_MISO 14   // A4

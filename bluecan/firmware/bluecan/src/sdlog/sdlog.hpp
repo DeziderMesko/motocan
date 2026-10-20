@@ -27,11 +27,15 @@
 #include <atomic>
 #include <cstdint>
 
-/// CONFIG_SDLOG builds in a log of every received frame to a microSD card on SPI, as
-/// on M5Stack's Atomic TF-Card Base. The CAN interrupt copies each standard data frame
-/// into a ring in RAM before the app's filter sees it, and a task of its own writes the
-/// ring out in 4096-byte sectors, so a card that stalls costs ring space, never a frame
-/// on its way to the phone.
+/// CONFIG_SDLOG, set by a board file that gives the card's pins, builds in a log of
+/// every received frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base.
+/// The CAN interrupt copies each standard data frame into a ring in RAM before the app's
+/// filter sees it, and a task of its own writes the ring out in 4096-byte sectors, so a
+/// card that stalls costs ring space, never a frame on its way to the phone.
+///
+/// Whether a card is there is found out once, at start-up. Without one there is no
+/// ring and no task: the board carries the code and nothing else. A card put in later
+/// is found at the next start, which on the bike is the next wake.
 ///
 /// CONFIG_SDLOG_EMULATE stands in for a card that is not there: if none mounts, the
 /// task still drives the SPI bus as the SD library would for every sector -- the same
@@ -69,8 +73,7 @@
 #define CONFIG_SDLOG_SYNC_S 5
 #endif
 
-/// how often a card that is not open is tried again, in seconds: none at start-up, or
-/// one closed after a failed write
+/// how often a card closed after a failed write is mounted again, in seconds
 #ifndef CONFIG_SDLOG_RETRY_S
 #define CONFIG_SDLOG_RETRY_S 5
 #endif
@@ -122,9 +125,11 @@ public:
 
 #if defined(CONFIG_SDLOG)
     /**
-     * Mount the card, or start the emulation, and start the writer task. Without a
-     * card the task goes on trying to mount one.
-     * @return false if the task could not be started, and nothing is logged
+     * Start the writer task, which looks for the card first. With a card, or the
+     * emulation, it takes the ring from the heap and logs; without one it ends, and
+     * nothing is logged until the next start. Returns at once: the SD library takes
+     * about 1.5 s to give up on a card that is not there.
+     * @return false if the task could not be started
      */
     bool start() noexcept;
 
@@ -147,7 +152,7 @@ public:
     /**
      * Mount the card to read its files, in place of start(), for the Wi-Fi mode: no
      * ring, no writer task, nothing written. The files are then the SD library's, under
-     * "/". Safe to call again after a failure, to try a card put in since.
+     * "/". Tried once; later calls say what that found.
      * @return true if the card is mounted
      */
     bool mount_for_reading() noexcept;
@@ -163,6 +168,7 @@ private:
 #if defined(CONFIG_SDLOG)
     static void task(void* self);
     void run() noexcept;
+    bool find_card() noexcept;
     bool open_card() noexcept;
     void close_card() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
@@ -179,6 +185,9 @@ private:
         mode_emulated,
     };
 
+    /// the ring, taken from the heap once a card is found; null until then and without
+    /// one. Published by the task after everything else is set, read by note()
+    std::atomic<uint8_t*> _ring;
     std::atomic<uint32_t> _head;    //!< bytes ever put in, by note()
     std::atomic<uint32_t> _tail;    //!< bytes ever written out, by the task
     std::atomic<uint32_t> _dropped; //!< frames that found the ring full
@@ -189,7 +198,8 @@ private:
     uint32_t _reopens;              //!< files opened after the first attempt
     mode_t _mode;
     bool _open;                     //!< card mode: a file is open; the task's alone
-    bool _reading;                  //!< mounted by mount_for_reading(), in the Wi-Fi mode
+    bool _read_tried;               //!< mount_for_reading() has looked for the card
+    bool _reading;                  //!< and found it
     std::atomic<bool> _stop;        //!< asked by stop()
     std::atomic<bool> _stopped;     //!< answered by the task
     TaskHandle_t _handle;

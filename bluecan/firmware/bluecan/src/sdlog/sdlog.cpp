@@ -61,12 +61,8 @@ static_assert((CONFIG_SDLOG_BUFFER & (CONFIG_SDLOG_BUFFER - 1)) == 0, "ring must
 constexpr uint32_t sector = 4096U;
 constexpr uint32_t mask = CONFIG_SDLOG_BUFFER - 1U;
 
-alignas(4) uint8_t ring[CONFIG_SDLOG_BUFFER];
-
 // FatFs keeps its long-file-name buffer on the stack in this core's configuration.
 constexpr uint32_t stack_size = 6 * 1024;
-StaticTask_t task_buffer;
-StackType_t task_stack[stack_size];
 
 SPIClass sd_spi(FSPI);
 File file;
@@ -117,7 +113,8 @@ void emulate_block(uint8_t const* p) noexcept
 } // namespace
 
 sdlog::sdlog() noexcept
-    : _head(0U)
+    : _ring(nullptr)
+    , _head(0U)
     , _tail(0U)
     , _dropped(0U)
     , _peak(0U)
@@ -127,6 +124,7 @@ sdlog::sdlog() noexcept
     , _reopens(0U)
     , _mode(mode_off)
     , _open(false)
+    , _read_tried(false)
     , _reading(false)
     , _stop(false)
     , _stopped(false)
@@ -201,7 +199,23 @@ void sdlog::close_card() noexcept
 
 bool sdlog::start() noexcept
 {
-    bootln("SD log starting...");
+    // Level with loop(), which spins on core 1: the two share the core by time slice,
+    // and a card that busy-polls for a quarter of a second does not hold back the bus
+    // supervisor in loop() for all of it. From the heap, so that a board without a card
+    // gets the stack back when the task ends.
+    if (xTaskCreatePinnedToCore(task, "sdlog", stack_size, this, tskIDLE_PRIORITY + 1,
+                                &_handle, CONFIG_SDLOG_CORE) != pdPASS)
+    {
+        errorln("ERROR: SD log task creation failed!");
+        _handle = nullptr;
+        return false;
+    }
+    return true;
+}
+
+bool sdlog::find_card() noexcept
+{
+    bootln("SD log: looking for a card...");
 
     sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
 
@@ -233,37 +247,33 @@ bool sdlog::start() noexcept
 
     if (_mode == mode_card && !_open)
     {
-        warnln("SD log: no card, trying again every %u s", (unsigned)CONFIG_SDLOG_RETRY_S);
+        _mode = mode_off;
+        bootln("SD log: no card, nothing is logged until the next start");
+        return false;
     }
 
-    // Level with loop(), which spins on core 1: the two share the core by time slice,
-    // and a card that busy-polls for a quarter of a second does not hold back the bus
-    // supervisor in loop() for all of it.
-    _handle = xTaskCreateStaticPinnedToCore(
-        task,
-        "sdlog",
-        stack_size,
-        this,
-        tskIDLE_PRIORITY + 1,
-        task_stack,
-        &task_buffer,
-        CONFIG_SDLOG_CORE
-    );
-
-    if (_handle == nullptr)
+    uint8_t* ring = static_cast<uint8_t*>(malloc(CONFIG_SDLOG_BUFFER));
+    if (ring == nullptr)
     {
-        errorln("ERROR: SD log task creation failed!");
+        errorln("ERROR: SD log could not take %u bytes for its ring", (unsigned)CONFIG_SDLOG_BUFFER);
+        if (_open)
+        {
+            close_card();
+        }
         _mode = mode_off;
         return false;
     }
 
+    // Last: from here on the CAN interrupt writes into it.
+    _ring.store(ring, std::memory_order_release);
     bootln("SD log started!");
     return true;
 }
 
 void sdlog::note(canbus::frame const& f) noexcept
 {
-    if (RCUNLIKELY(_mode == mode_off))
+    uint8_t* const ring = _ring.load(std::memory_order_acquire);
+    if (RCUNLIKELY(ring == nullptr))
     {
         return;
     }
@@ -305,6 +315,13 @@ void sdlog::task(void* self)
 
 void sdlog::run() noexcept
 {
+    if (!find_card())
+    {
+        _stopped.store(true, std::memory_order_release);
+        vTaskDelete(nullptr);
+    }
+
+    uint8_t* const ring = _ring.load(std::memory_order_relaxed);
     bool dirty = false;
 
     while (true)
@@ -316,9 +333,9 @@ void sdlog::run() noexcept
             vTaskSuspend(nullptr);
         }
 
-        // A card that is not open -- none at start-up, or one closed after a failed
-        // write -- is tried again now and then, with a new file each time. The ring
-        // goes on filling meanwhile, and counts what it cannot hold.
+        // A card closed after a failed write is mounted again now and then, with a
+        // new file each time. The ring goes on filling meanwhile, and counts what it
+        // cannot hold.
         if (_mode == mode_card && !_open)
         {
             if (_retry_timer.elapsed(CONFIG_SDLOG_RETRY_S * 1000000UL) > 0UL && open_card())
@@ -408,24 +425,24 @@ bool sdlog::write_sector(uint8_t const* p) noexcept
 
 bool sdlog::mount_for_reading() noexcept
 {
-    if (_reading)
+    if (_read_tried)
     {
-        return true;
+        return _reading;
     }
+    _read_tried = true;
 
     // A directory being listed and a file being sent are two open at once.
     sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
     _reading = SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", 2);
-    if (_reading)
-    {
-        bootln("SD log: card mounted for reading");
-    }
+    bootln("SD log: %s", _reading ? "card mounted for reading" : "no card");
     return _reading;
 }
 
 void sdlog::stop() noexcept
 {
-    if (_mode == mode_off || _handle == nullptr)
+    // Also when the task is still looking for the card, or found none and ended:
+    // either way it says so.
+    if (_handle == nullptr)
     {
         return;
     }
@@ -443,6 +460,8 @@ void sdlog::write_rest() noexcept
     {
         return;
     }
+
+    uint8_t* const ring = _ring.load(std::memory_order_relaxed);
 
     // Whole sectors first, as the loop would have, then whatever is left of the last.
     const uint32_t head = _head.load(std::memory_order_acquire);

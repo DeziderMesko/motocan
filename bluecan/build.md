@@ -76,13 +76,16 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 1222 KB | 99.1 KB | not measured with the Wi-Fi mode built in |
-| `feather-as-atom`, `atom` | 1183 KB | 93.0 KB | 166 KB in the normal mode, measured on the Feather in a debug build, nothing connected |
-| ...with the microSD log | 1242 KB | 133 KB | not measured with the Wi-Fi mode built in |
+| `feather` | 1277 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
+| `feather-as-atom`, `atom` | 1242 KB | 93.9 KB | 164 KB in the normal mode with no card, measured on the Feather in a debug build, nothing connected; 114 KB with the stand-in for a card (`--sd-emulate`) |
 
-The Wi-Fi mode is about 570 KB of the program and 22 KB of the static RAM, which the
+The microSD log is in every build, and costs about 59 KB of the program and 1 KB of the
+static RAM. Its ring and its task's stack, 38 KB, are taken from the heap only when a
+card is found at start-up, and the stand-in holds what a mounted card would besides.
+
+The Wi-Fi mode is about 570 KB of the program and 21 KB of the static RAM, which the
 Wi-Fi driver sets aside whether the mode runs or not: built without it
-(`CONFIG_NO_WIFI`), `feather-as-atom` is 612 KB and 71.3 KB.
+(`CONFIG_NO_WIFI`), `feather-as-atom` is 670 KB and 72.6 KB.
 
 ## Building
 
@@ -118,7 +121,7 @@ A clean build takes about half a minute.
 A release build writes only a few lines to the serial console: start-up, warnings and
 errors. A debug build adds a block of statistics every 5 seconds — frame counts, queue,
 Bluetooth, bus state, the LED's state in words, display cost, internal heap, and the
-microSD log when it is built in — and a line for each change of bus state. Add this to the compile command:
+microSD log when there is a card — and a line for each change of bus state. Add this to the compile command:
 
 ```bash
 --build-property "compiler.cpp.extra_flags=-DDEBUG"
@@ -129,8 +132,7 @@ flags are for the bench, and combine with it and with each other:
 
 | Flag | Sets | |
 |---|---|---|
-| `--sd` | `CONFIG_SDLOG` | the microSD log, on the profile's card pins |
-| `--sd-emulate` | `CONFIG_SDLOG`, `CONFIG_SDLOG_EMULATE` | the same, standing in for a card that is not there |
+| `--sd-emulate` | `CONFIG_SDLOG_EMULATE` | stands in for a card when none is found at start-up |
 | `--recording` | `CONFIG_RC_BENCH_RECORDING` | the filter RaceChrono sends when it records |
 | `--no-standby` | `CONFIG_NO_STANDBY` | keeps `atom` and `feather-as-atom` awake on a silent bus |
 | `--quick` | `CONFIG_WIFI_IDLE_S=30`, `CONFIG_STANDBY_TIMEOUT_S=15` | short timeouts, to try them out without waiting: the Wi-Fi mode gives way after 30 s without a request, standby sleeps after 15 s of silence |
@@ -154,14 +156,14 @@ with the display, is refused at compile time by
 | `CONFIG_CANBUS_ACK` | on | lets the controller acknowledge once the bit rate is proved. Undefined, the board only ever listens, which on the R9's diagnostic connector gets almost nothing |
 | `CONFIG_BLE_CONN_ITVL_MIN` / `_MAX` | `6` / `10` (7.5–12.5 ms) | the Bluetooth connection interval asked of the phone, in 1.25 ms units. **For an iPhone, change these to `12` / `24`** (15–30 ms): iOS rejects a request below 15 ms or with less than 15 ms between minimum and maximum, and then uses an interval of its own choosing. `12` / `24` works on Android too |
 | `CONFIG_CELL_FITTED` | off, in `boards/feather_revtft.hpp` | show the battery's state of charge and whether it is charging. Define it only with a cell plugged in; with none, the gauge reports a full, discharging battery that is not there. Untested with a cell |
-| `CONFIG_SDLOG` | off | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. A card that is missing, or fails a write, is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. `--sd` sets it. Not yet run with a card |
-| `CONFIG_SDLOG_EMULATE` | off | with `CONFIG_SDLOG` and no card, drives the SPI bus and holds the heap as a card would, so that its cost can be measured on a board without one. `--sd-emulate` sets both |
+| `CONFIG_SDLOG` | on, in both board files, with the card's pins | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. The card is looked for once at start-up, on the log's own task, without holding up Bluetooth or CAN; with none, the task ends and nothing is logged until the next start. A card that fails a write is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. Not yet run with a card |
+| `CONFIG_SDLOG_EMULATE` | off | with no card at start-up, drives the SPI bus and holds the heap as a card would, so that its cost can be measured on a board without one. `--sd-emulate` sets it |
 | `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |
 | `CONFIG_SDLOG_SPI_HZ` | 25 MHz | the card's SPI clock, as M5Stack's example for the base has it |
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
 | `CONFIG_STANDBY` | on for `atom` and `feather-as-atom`, off for `feather` | light sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX, or the board file's button (`BUTTON_PIN`), wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
 | `CONFIG_STANDBY_TIMEOUT_S` | 60 s | the silence before it sleeps. The R9 sends over 500 frames a second with the key on, so a second would do; the rest is time to use the board after waking it with the button, and on the bench |
-| `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 22 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |
+| `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 21 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |
 | `CONFIG_WIFI_PASSWORD` | random, in `src/web/secret.hpp` | the access point's WPA2 password. `reflash-bluecan.sh` writes the file with a random twelve characters the first time it builds, and prints them; git ignores the file, so the password stays on the computer that built the board. Edit the file to change it, eight characters or more |
 | `CONFIG_BUTTON_HOLD_S` | 5 s | how long the button is held to switch between the normal and the Wi-Fi mode |
 | `CONFIG_WIFI_IDLE_S` | 300 s | the time without a request to the page after which the Wi-Fi mode gives way to the normal one. An open page asks every second |

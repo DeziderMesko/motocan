@@ -359,6 +359,13 @@ void web::server_task(void* self)
 
 void web::serve() noexcept
 {
+#if defined(CONFIG_SDLOG)
+    // The card is looked for once, before the first request: without one the SD
+    // library takes about 1.5 s to give up, which is better spent here than on every
+    // look at the page. A phone takes longer than that to join.
+    SDLOG.mount_for_reading();
+#endif
+
     static WebServer s(80);
     server = &s;
 
@@ -552,7 +559,7 @@ void web::files() noexcept
     server->sendContent("]}");
     server->sendContent("");
 #else
-    server->send(200, "application/json", "{\"card\":null,\"files\":[]}");
+    server->send(200, "application/json", "{\"card\":false,\"files\":[]}");
 #endif
 }
 

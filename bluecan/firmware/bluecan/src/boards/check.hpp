@@ -33,7 +33,7 @@
 #endif
 
 #if defined(CONFIG_SDLOG_EMULATE) && !defined(CONFIG_SDLOG)
-#error "CONFIG_SDLOG_EMULATE stands in for the card of CONFIG_SDLOG; set both"
+#error "CONFIG_SDLOG_EMULATE stands in for the card of CONFIG_SDLOG, which this board file does not set"
 #endif
 
 #if defined(CONFIG_STANDBY) && defined(CONFIG_DISPLAY_TFT)

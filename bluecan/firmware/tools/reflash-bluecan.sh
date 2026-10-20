@@ -14,8 +14,7 @@
 # The flags are for the bench, and combine:
 #
 #   --debug       adds -DDEBUG: 5 s stats over serial
-#   --sd          log every frame to a microSD card on the board's card pins
-#   --sd-emulate  ...and drive the SPI bus as one would if none is there
+#   --sd-emulate  with no card at start-up, drive the SPI bus as one would
 #   --recording   filter as RaceChrono does when it records, whatever it asks for
 #   --no-standby  keep atom and feather-as-atom awake on a silent bus
 #   --quick       short timeouts, for trying them out: the Wi-Fi mode gives way after
@@ -37,7 +36,7 @@ BLUECAN="bluecan"
 
 PROFILE="feather"
 DEBUG=""
-SD=""
+SD_EMULATE=""
 RECORDING=""
 NO_STANDBY=""
 QUICK=""
@@ -46,8 +45,7 @@ for a in "$@"; do
     case "$a" in
         feather|atom|feather-as-atom) PROFILE="$a" ;;
         --debug)      DEBUG=1 ;;
-        --sd)         SD="sd" ;;
-        --sd-emulate) SD="sd-emulate" ;;
+        --sd-emulate) SD_EMULATE=1 ;;
         --recording)  RECORDING=1 ;;
         --no-standby) NO_STANDBY=1 ;;
         --quick)      QUICK=1 ;;
@@ -75,10 +73,10 @@ case "$PROFILE" in
         OPTS="PartitionScheme=default_8MB,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=8M" ;;
 esac
 BUILD="build/bluecan-$PROFILE"
-case "$SD" in
-    sd)         FLAGS+=(-DCONFIG_SDLOG); BUILD="$BUILD-sd" ;;
-    sd-emulate) FLAGS+=(-DCONFIG_SDLOG -DCONFIG_SDLOG_EMULATE); BUILD="$BUILD-sdemu" ;;
-esac
+if [[ -n "$SD_EMULATE" ]]; then
+    FLAGS+=(-DCONFIG_SDLOG_EMULATE)
+    BUILD="$BUILD-sdemu"
+fi
 if [[ -n "$NO_STANDBY" ]]; then
     FLAGS+=(-DCONFIG_NO_STANDBY)
     BUILD="$BUILD-nostandby"

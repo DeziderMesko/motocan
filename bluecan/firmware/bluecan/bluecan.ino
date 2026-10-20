@@ -184,8 +184,8 @@ namespace
 // The normal mode's half of setup(): the card's log and the Bluetooth task.
 void start_normal()
 {
-    // Before the frame path starts, so that no frame is noted into a ring nobody
-    // will empty. A board with no card carries on without a log.
+    // Returns at once: the card is looked for on the log's own task, and frames are
+    // logged from when it is found. A board with no card carries on without a log.
     SDLOG.start();
 
     core0_handle = xTaskCreateStaticPinnedToCore(

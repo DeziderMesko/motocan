@@ -208,7 +208,8 @@ The parts it is meant to be used with:
 - **A microSD log**, optional: the [Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
   under the Atom, on SPI: **SCK G7, MISO G8, MOSI G6**, no chip select, as in M5Stack's
   Arduino example for it. FAT32, up to 16 GB as M5Stack say; a card over 32 GB comes
-  formatted exFAT, which this firmware cannot mount. Built with `CONFIG_SDLOG`
+  formatted exFAT, which this firmware cannot mount. The firmware looks for the card at
+  each start and logs to it if it finds one; a Lite without the base runs the same build
   ([build.md](build.md#build-time-settings)). The Atomic CAN Base would put CAN on the
   same header instead, RX G6 and TX G5.
 

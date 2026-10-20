@@ -61,7 +61,7 @@ button, after a while without this page, or because the bike moved &ndash; or th
 This page no longer updates. To come back, hold the board's button for 5&nbsp;s and join its network again.</div>
 <h1>Bluecan, Wi-Fi mode</h1>
 <div class="sub"><span id="ssid">-</span> &middot; up <span id="up">-</span> &middot; <span id="link">connecting</span></div>
-<p class="sub">Bluetooth is off in this mode, and the card is not being written. The board goes back to the normal mode
+<p class="sub">Bluetooth is off in this mode, and nothing is logged. The board goes back to the normal mode
 when you press the button below, hold its button for 5 s, leave this page closed for <span id="idle">5 minutes</span>,
 or ride off.</p>
 <button class="main" id="leave">Back to the normal mode</button>
@@ -96,6 +96,7 @@ or ride off.</p>
 </table></div>
 <div class="sub" id="idsnote"></div>
 
+<div id="cardbox" hidden>
 <h2>Card</h2>
 <div id="card" class="sub">-</div>
 <div class="wrap"><table>
@@ -103,6 +104,7 @@ or ride off.</p>
 <tbody id="files"></tbody>
 </table></div>
 <p><button id="refresh">Refresh the list</button></p>
+</div>
 
 <h2>Board</h2>
 <div class="grid">
@@ -160,8 +162,7 @@ async function files(){
   $('card').textContent='reading the card...';
   try{
     const r=await fetch('/files.json',{cache:'no-store'});const f=await r.json();
-    if(f.card===null){$('card').textContent='This build has no card log.';$('files').innerHTML='';return}
-    if(!f.card){$('card').textContent='No card.';$('files').innerHTML='';return}
+    $('cardbox').hidden=!f.card;if(!f.card)return;
     const l=f.files.sort((a,c)=>c.name.localeCompare(a.name));
     $('card').textContent=l.length+' log files, '+size(l.reduce((t,a)=>t+a.size,0))+'. Newest first.';
     $('files').innerHTML=l.map(a=>'<tr><td>'+a.name+'</td><td>'+size(a.size)+

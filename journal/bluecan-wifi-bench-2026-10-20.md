@@ -62,7 +62,9 @@ In the Wi-Fi mode:
   table filling. Seen with the replay of `session-2026-10-11_200550`: 476 frames a
   second, 23 ids, the values moving. The page's button: the request at 09:58:40.465,
   the restart 0.4 s later, Bluetooth up at 09:58:47.
-- [ ] Card: `No card.`, or, in a build with `--sd` and a card wired to A2–A5, the list.
+- [ ] Card: no Card section without a card; with a card wired to A2–A5 when the mode
+  started, the list. Since patch 44 every build has the log, and looks for the card once
+  as it starts.
 - [x] The page's *Back to the normal mode*: a confirmation, then the note that it is
   restarting; the LED blue within a few seconds.
 - [x] RaceChrono, if it was connected before the switch, connects again by itself.
@@ -73,14 +75,16 @@ In the Wi-Fi mode:
 
 ## 4. A download, if a card is at hand
 
-Needs a microSD card on A2–A5 and a build with `--sd`:
+Needs a microSD card, FAT32, on A2–A5 before the board starts; any build since patch 44:
 
 ```bash
-bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug --sd
+bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug
 ```
 
 - [ ] In the normal mode, traffic for a minute: the console says `SD log: writing
-  /bluecan-NNNN.bin`.
+  /bluecan-NNNN.bin`, and the debug statistics count sectors, none dropped.
+- [ ] Without the card, a start says `SD log: no card, nothing is logged until the next
+  start`, and the Wi-Fi page has no Card section.
 - [ ] Switch to Wi-Fi; the page lists the file with a size.
 - [ ] Download it on the phone or a laptop; the size matches.
 - [ ] `bluecan/firmware/tools/sdlog-to-candump.py bluecan-NNNN.bin | head` shows the
