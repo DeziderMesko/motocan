@@ -15,6 +15,7 @@ page is for working on the code.
 | `src/canbus/decoder.*` | the base class for RaceChrono's filter requests |
 | `src/canbus/decoder_yamahar9.cpp` | the R9 decoder: the run-time allow-list the app fills, and the latest payload of the seven ids the LIVE page decodes |
 | `src/canbus/r9.hpp` | the R9 signal equations for the LIVE page, written from [analysis/r9.dbc](../../../analysis/r9.dbc). Check them with [r9-decode-check.py](../tools/r9-decode-check.py) after changing either |
+| `src/canbus/census.*` | which ids are on the bus, with each one's count, rate and last payload: one class, which the display's IDS page and the Wi-Fi mode's page each keep an instance of |
 | `src/canbus/frame.hpp` | one CAN frame, laid out so the notification to the phone is a pointer into it |
 | `src/racechrono/device.*` | the Bluetooth LE server: RaceChrono's service, the connection interval, the counters |
 | `src/display/display.*` | the four pages and the buttons, on their own task |
@@ -55,7 +56,7 @@ the Wi-Fi driver, a web server task, and a census task that drains the frame que
 instead, counting each id for the page. Neither card task nor ring runs; the server
 reads the card itself. The CAN side on core 1 is the same in both modes. Everything the
 Wi-Fi mode needs is allocated when it starts, so that the normal mode does not carry
-it, except what the Wi-Fi driver sets aside statically, about 21 KB.
+it, except what the Wi-Fi driver sets aside statically, about 22 KB.
 
 **All CAN work is on core 1 and all Bluetooth and display work on core 0.** The display
 must never be drawn from the CAN side: a full repaint takes about 250 ms, and on core 1

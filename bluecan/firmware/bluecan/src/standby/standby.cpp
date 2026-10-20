@@ -80,7 +80,7 @@ const char* name(start s) noexcept
     {
     case start::bus:    return "woken by the bus";
     case start::button: return "woken by the button";
-    default:            return "power-on";
+    default:            return "power-on or reset";
     }
 }
 

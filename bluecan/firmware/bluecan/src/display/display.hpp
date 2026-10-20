@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../racechrono-canbus.hpp"
+#include "../canbus/census.hpp"
 #include "../canbus/frame.hpp"
 #include "../utils/timer.hpp"
 
@@ -72,7 +73,7 @@ public:
      * Record a frame for the ID census and the recent-frame ring.
      *
      * Called from the core 0 drain task, once per forwarded frame. Cost is a linear
-     * scan of at most id_slots entries -- at the R9's ~1050 msg/s that is noise, and
+     * scan of at most canbus::census::slots entries -- at the R9's ~1050 msg/s that is noise, and
      * it deliberately does not run in the ISR, where it would not be.
      *
      * The census therefore counts what reaches RaceChrono, not what reaches the
@@ -178,12 +179,6 @@ private:
         doze_over = 3,   //!< D0 has been pressed; nothing here runs again
     };
 
-    /// arbitration ids tracked by the census. The R9's diagnostic connector carries
-    /// 23 (motocan/analysis/r9-signals.md), and the 20 this used to be was sized
-    /// against another Yamaha: a replay of the R9's own traffic overflowed it. 32 is
-    /// also as many ids as the allow-list holds. The IDS page shows fewer than this --
-    /// see id_cells in page_ids() -- and says so when it is hiding any.
-    static constexpr int id_slots = 32;
     /// recent frames kept for the LAST page
     static constexpr int ring_slots = 6;
     /// change-detection cache: one entry per drawable line, in fixed regions.
@@ -217,17 +212,14 @@ private:
     // put the CAN drain behind the panel, which is the one thing this module exists
     // to avoid.
     //
-    // The two indices are the exception, and they are atomic rather than volatile:
-    // each one publishes the slot written just before it, and volatile orders nothing
-    // against a plain store, so the compiler is free to sink the slot's contents past
-    // it. Released here, acquired by every reader, which is the whole synchronisation
-    // in this module.
-    uint32_t _ids[id_slots];
-    uint32_t _hits[id_slots];
-    uint32_t _hits_prev[id_slots];
-    uint16_t _rates[id_slots];
-    std::atomic<int> _id_used;
-    uint32_t _id_overflow;
+    // The census publishes its own slots (canbus/census.hpp). The ring's index is the
+    // exception here, and atomic rather than volatile: it publishes the slot written
+    // just before it, and volatile orders nothing against a plain store, so the
+    // compiler is free to sink the slot's contents past it. Released here, acquired by
+    // every reader, which is the whole synchronisation in this module. The IDS page
+    // shows fewer ids than the census holds -- see id_cells in page_ids() -- and says
+    // so when it is hiding any.
+    canbus::census _census;
 
     canbus::frame _ring[ring_slots];
     std::atomic<uint32_t> _ring_pos;

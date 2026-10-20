@@ -37,13 +37,21 @@ first time it is, follow [at-the-bike.md](at-the-bike.md).
   on it and the last frames received.
 - **Shows the state of the link on an RGB LED** that can be read at a glance: booting,
   waiting for a phone, configuring, recording, frames stopped, something lost.
+- **Sleeps while the bus is silent**, as the AtomS3 Lite does on the bike's unswitched
+  12 V: a minute after the last frame. The first frame wakes it as the key is turned on,
+  and so does its button ([usage.md](usage.md#standby)).
+- **Has a Wi-Fi mode, in place of Bluetooth.** Held for five seconds, the button switches
+  the board to a Wi-Fi network of its own and a page with the bus's statistics, the
+  decoded values and the microSD card's files to download; a phone opens the page by
+  itself on joining. It goes back to Bluetooth on the same hold, from the page, after
+  five minutes unused, or as soon as the bike moves ([usage.md](usage.md#the-wi-fi-mode)).
 
 ## What it does not do
 
-- **It does not record anything.** RaceChrono on the phone records; the board keeps
-  nothing. A build with a microSD log exists for the AtomS3 Lite
-  ([hardware.md](hardware.md#the-m5stack-atoms3-lite)) and has not yet been run with a
-  card.
+- **It does not record anything** in the default build. RaceChrono on the phone records;
+  the board keeps nothing. A build with a microSD log exists for the AtomS3 Lite
+  ([hardware.md](hardware.md#the-m5stack-atoms3-lite)), its files downloaded from the
+  Wi-Fi mode, and has not yet been run with a card.
 - **It has no GPS.** RaceChrono needs its own position source, the phone's or an external
   receiver.
 - **It decodes only what has been worked out.** Brake pressure and lean angle are not
@@ -87,7 +95,7 @@ The parts, the wiring and the power are in [hardware.md](hardware.md).
 |---|---|
 | [hardware.md](hardware.md) | Parts, pins, wiring, the R9's connector, termination, power, ground |
 | [build.md](build.md) | Toolchain, build settings, flashing on Linux, WSL2 and by UF2, the serial console |
-| [usage.md](usage.md) | What it does when it starts, the screen page by page, the buttons, the LED, RaceChrono, limits, troubleshooting |
+| [usage.md](usage.md) | What it does when it starts, the screen page by page, the buttons, standby, the Wi-Fi mode, the LED, RaceChrono, limits, troubleshooting |
 | [racechrono-channels.md](racechrono-channels.md) | The R9's channels as RaceChrono accepts them: PID, equation, which channel to map onto |
 | [racechrono/](racechrono/) | The R9's vehicle profile as exported from RaceChrono, with those channels in it |
 | [at-the-bike.md](at-the-bike.md) | The checklist for the first time it is plugged into the R9 |

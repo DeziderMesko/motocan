@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../racechrono-canbus.hpp"
+#include "../canbus/census.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -59,11 +60,6 @@
 #endif
 
 #endif // CONFIG_WIFI
-
-namespace canbus
-{
-struct frame;
-}
 
 namespace net
 {
@@ -111,7 +107,9 @@ private:
     static void census_task(void*);
     void serve() noexcept;
     void count() noexcept;
-    void note(canbus::frame const& f) noexcept;
+#if defined(DEBUG)
+    void stats_line(uint32_t now) noexcept;
+#endif
 
     void page() noexcept;
     void stats() noexcept;
@@ -126,21 +124,9 @@ private:
     std::atomic<uint32_t> _leave_ms;
     std::atomic<uint32_t> _stations;
 
-    // --- the frame census: written by the census task, read by the server task, both
-    // on core 0. No lock, as in the display's: every field is a counter or a byte of
-    // payload, and a torn read is one stale number on a page that asks again in a
-    // second. The count of used slots is the exception: it publishes the slot written
-    // before it.
-    static constexpr int id_slots = 32;
-    uint32_t _ids[id_slots];
-    uint32_t _hits[id_slots];
-    uint32_t _hits_prev[id_slots];
-    uint16_t _rates[id_slots];
-    uint8_t _data[id_slots][8];
-    uint8_t _dlc[id_slots];
-    uint32_t _seen_ms[id_slots];
-    std::atomic<int> _id_used;
-    uint32_t _id_overflow;
+    /// the ids on the bus: written by the census task, read by the server task, both on
+    /// core 0
+    canbus::census _census;
 
     // --- loop() only
     uint32_t _moving_since_ms;

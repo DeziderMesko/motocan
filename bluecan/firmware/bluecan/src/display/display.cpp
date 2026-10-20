@@ -130,12 +130,7 @@ display& display::get() noexcept
 }
 
 display::display() noexcept
-    : _ids{}
-    , _hits{}
-    , _hits_prev{}
-    , _rates{}
-    , _id_used(0)
-    , _id_overflow(0U)
+    : _census{}
     , _ring{}
     , _ring_pos(0U)
     , _handle(nullptr)
@@ -193,39 +188,7 @@ bool display::start() noexcept
 
 void display::note(canbus::frame const& f) noexcept
 {
-    uint32_t id = f.id;
-    // Relaxed: this task is the only writer of either index.
-    int used = _id_used.load(std::memory_order_relaxed);
-    bool known = false;
-
-    for (int i = 0; i < used; i++)
-    {
-        if (_ids[i] == id)
-        {
-            _hits[i]++;
-            known = true;
-            break;
-        }
-    }
-
-    if (!known)
-    {
-        if (used < id_slots)
-        {
-            // fill the slot before publishing it, so the display task cannot read a
-            // half-written entry: _id_used is what makes the slot visible, and the
-            // release is what stops the four stores above being sunk past it
-            _ids[used] = id;
-            _hits[used] = 1;
-            _hits_prev[used] = 0;
-            _rates[used] = 0;
-            _id_used.store(used + 1, std::memory_order_release);
-        }
-        else
-        {
-            _id_overflow++;
-        }
-    }
+    _census.note(f);
 
     uint32_t pos = _ring_pos.load(std::memory_order_relaxed);
     _ring[pos % ring_slots] = f;
@@ -350,8 +313,8 @@ void display::stats() noexcept
             infoln("     Display stack: %lu bytes free",
                    (unsigned long)(_handle ? uxTaskGetStackHighWaterMark(_handle) : 0));
             infoln("        Census ids: %d, %lu over",
-                   _id_used.load(std::memory_order_acquire),
-                   (unsigned long)_id_overflow);
+                   _census.used(),
+                   (unsigned long)_census.overflow());
 
 #if defined(CONFIG_CANBUS_DECODER_YAMAHAR9)
             // What the decoder is holding for the panel, decoded, with its age. The
@@ -513,13 +476,7 @@ void display::sample_rates() noexcept
     _fwd_prev = c.forwarded;
     _ble_prev = ble;
 
-    int used = _id_used.load(std::memory_order_acquire);
-    for (int i = 0; i < used; i++)
-    {
-        uint32_t hits = _hits[i];
-        _rates[i] = static_cast<uint16_t>(((hits - _hits_prev[i]) * 1000UL) / elapsed);
-        _hits_prev[i] = hits;
-    }
+    _census.sample(elapsed);
 
     _draw_us_shown = _draw_us;
 
@@ -1270,9 +1227,9 @@ void display::page_live() noexcept
 
 void display::page_ids() noexcept
 {
-    int used = _id_used.load(std::memory_order_acquire);
+    int used = _census.used();
 
-    // The census holds id_slots entries and this page has room for fewer, so there are
+    // The census holds canbus::census::slots entries and this page has room for fewer, so there are
     // two ways to be hiding an id. Both have to raise the marker, or a truncated list
     // reads as the whole bus -- which is the one question this page exists to answer.
     //
@@ -1285,7 +1242,7 @@ void display::page_ids() noexcept
     static constexpr int id_cells = (rows - 1) * id_columns;
 
     row(0, ST77XX_CYAN, "ids seen %d%s", used,
-        (_id_overflow || used > id_cells) ? " (+more)" : "");
+        (_census.overflow() || used > id_cells) ? " (+more)" : "");
 
     // Newest-discovered last, filling across each row.
     for (int r = 0; r < rows - 1; r++)
@@ -1298,7 +1255,7 @@ void display::page_ids() noexcept
             if (i < used)
             {
                 snprintf(cells[col], sizeof(cells[col]), "%03lX %4u/s",
-                         (unsigned long)_ids[i], _rates[i]);
+                         (unsigned long)_census.id(i), _census.rate(i));
             }
             else
             {
@@ -1355,12 +1312,7 @@ display& display::get() noexcept
 }
 
 display::display() noexcept
-    : _ids{}
-    , _hits{}
-    , _hits_prev{}
-    , _rates{}
-    , _id_used(0)
-    , _id_overflow(0U)
+    : _census{}
     , _ring{}
     , _ring_pos(0U)
     , _handle(nullptr)

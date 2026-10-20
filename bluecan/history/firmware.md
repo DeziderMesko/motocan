@@ -2423,6 +2423,30 @@ the board slept, then traffic again:
 - The page's button *Back to the normal mode*: the request at 09:58:40.465 by the console,
   the restart 0.4 s later, Bluetooth up at 09:58:47.
 
+## Patch 43 — a review of patches 39–42: one census, smaller pieces — **applied, run on the Feather**
+
+2026-10-20, asked for by the owner: a review of everything since patch 39 for code that
+is modular, clean and as simple as works.
+
+- **One census.** The Wi-Fi mode had its own copy of the display's census of ids, with
+  the same arrays and the same lock-free publishing, and a rate rounded where the
+  display's was truncated. Both now keep an instance of `canbus::census`
+  (`src/canbus/census.*`), which also keeps each id's last payload and when it came,
+  for the page. The display's rates are now rounded too.
+- `web.cpp`: the debug lines in a function of their own (`stats_line()`); the bike's
+  values in the JSON read through one `fresh()` test instead of five copies of it; the
+  request line says `request`, not `GET`, since `/leave` is a POST.
+- `sdlog`: the card mounted for reading is a member, `_reading`, rather than a static
+  inside the function, as the rest of the class keeps its state.
+- `standby`: a start that is not a wake is named `power-on or reset` on the console; it
+  said `power-on` after a reset as well.
+- The comment over the loop's watchdog names what `loop()` does now.
+
+Built for every profile, with and without the card, and with `CONFIG_NO_WIFI`: the
+Feather without the Wi-Fi mode is 652 KB, as before patch 39. Run on the Feather built
+as the Lite with the R9's replayed traffic: 470 frames a second, acknowledging, 166 184
+bytes of heap free in the normal mode.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

@@ -189,6 +189,7 @@ private:
     uint32_t _reopens;              //!< files opened after the first attempt
     mode_t _mode;
     bool _open;                     //!< card mode: a file is open; the task's alone
+    bool _reading;                  //!< mounted by mount_for_reading(), in the Wi-Fi mode
     std::atomic<bool> _stop;        //!< asked by stop()
     std::atomic<bool> _stopped;     //!< answered by the task
     TaskHandle_t _handle;

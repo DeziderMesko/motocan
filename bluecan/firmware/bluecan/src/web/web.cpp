@@ -167,15 +167,7 @@ web::web() noexcept
     : _last_ms(0U)
     , _leave_ms(0U)
     , _stations(0U)
-    , _ids{}
-    , _hits{}
-    , _hits_prev{}
-    , _rates{}
-    , _data{}
-    , _dlc{}
-    , _seen_ms{}
-    , _id_used(0)
-    , _id_overflow(0U)
+    , _census{}
     , _moving_since_ms(0U)
 {
 }
@@ -289,7 +281,7 @@ void web::count() noexcept
 
         while (CANCTLR.recv(f, census_wait))
         {
-            note(f);
+            _census.note(f);
             DISP.note(f);
             if (++drained >= census_batch)
             {
@@ -304,13 +296,7 @@ void web::count() noexcept
         const uint32_t elapsed = now - sample_ms;
         if (elapsed >= 1000U)
         {
-            const int used = _id_used.load(std::memory_order_acquire);
-            for (int i = 0; i < used; i++)
-            {
-                const uint32_t hits = _hits[i];
-                _rates[i] = static_cast<uint16_t>(((hits - _hits_prev[i]) * 1000U + elapsed / 2U) / elapsed);
-                _hits_prev[i] = hits;
-            }
+            _census.sample(elapsed);
             const uint32_t frames = CANCTLR.counters().frames;
             bus_rate.store(((frames - frames_prev) * 1000U + elapsed / 2U) / elapsed, std::memory_order_relaxed);
             frames_prev = frames;
@@ -320,67 +306,49 @@ void web::count() noexcept
 #if defined(DEBUG)
         if (stats_timer.elapsed(CONFIG_RC_STATS_TIMEOUT) > 0UL)
         {
-            infoln("              Wi-Fi: %s at %s, %lu on it, last request %lu s ago, %d ids",
-                   ssid, WiFi.softAPIP().toString().c_str(),
-                   (unsigned long)_stations.load(std::memory_order_relaxed),
-                   (unsigned long)((now - _last_ms.load(std::memory_order_relaxed)) / 1000U),
-                   _id_used.load(std::memory_order_relaxed));
-            // Each device on the network, and the address DHCP gave it: a device that
-            // joined and got none, and one that got one and asks for nothing, are
-            // different faults, and the page cannot tell them apart.
-            wifi_sta_list_t list = {};
-            if (esp_wifi_ap_get_sta_list(&list) == ESP_OK && list.num > 0)
-            {
-                esp_netif_pair_mac_ip_t pairs[ESP_WIFI_MAX_CONN_NUM] = {};
-                const int n = list.num < ESP_WIFI_MAX_CONN_NUM ? list.num : ESP_WIFI_MAX_CONN_NUM;
-                for (int i = 0; i < n; i++)
-                {
-                    memcpy(pairs[i].mac, list.sta[i].mac, 6);
-                }
-                esp_netif_dhcps_get_clients_by_mac(esp_netif_get_handle_from_ifkey("WIFI_AP_DEF"), n, pairs);
-                for (int i = 0; i < n; i++)
-                {
-                    infoln("       Wi-Fi station: %02x:%02x:%02x:%02x:%02x:%02x at " IPSTR ", RSSI %d",
-                           pairs[i].mac[0], pairs[i].mac[1], pairs[i].mac[2],
-                           pairs[i].mac[3], pairs[i].mac[4], pairs[i].mac[5],
-                           IP2STR(&pairs[i].ip), list.sta[i].rssi);
-                }
-            }
-            infoln("        Wi-Fi heap: %lu bytes free, least %lu; stacks free: web %lu, census %lu",
-                   (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
-                   (unsigned long)uxTaskGetStackHighWaterMark(server_handle),
-                   (unsigned long)uxTaskGetStackHighWaterMark(census_handle));
+            stats_line(now);
         }
 #endif
     }
 }
 
-void web::note(canbus::frame const& f) noexcept
+#if defined(DEBUG)
+void web::stats_line(uint32_t now) noexcept
 {
-    const int used = _id_used.load(std::memory_order_relaxed);
-    int i = 0;
-    while (i < used && _ids[i] != f.id)
+    infoln("              Wi-Fi: %s at %s, %lu on it, last request %lu s ago, %d ids",
+           ssid, WiFi.softAPIP().toString().c_str(),
+           (unsigned long)_stations.load(std::memory_order_relaxed),
+           (unsigned long)((now - _last_ms.load(std::memory_order_relaxed)) / 1000U),
+           _census.used());
+
+    // Each device on the network, and the address DHCP gave it: a device that joined
+    // and got none, and one that got one and asks for nothing, are different faults,
+    // and the page cannot tell them apart.
+    wifi_sta_list_t list = {};
+    if (esp_wifi_ap_get_sta_list(&list) == ESP_OK && list.num > 0)
     {
-        i++;
-    }
-    if (i == used)
-    {
-        if (used == id_slots)
+        esp_netif_pair_mac_ip_t pairs[ESP_WIFI_MAX_CONN_NUM] = {};
+        const int n = list.num < ESP_WIFI_MAX_CONN_NUM ? list.num : ESP_WIFI_MAX_CONN_NUM;
+        for (int i = 0; i < n; i++)
         {
-            _id_overflow++;
-            return;
+            memcpy(pairs[i].mac, list.sta[i].mac, 6);
         }
-        _ids[i] = f.id;
-        _hits[i] = 0U;
-        _hits_prev[i] = 0U;
-        _rates[i] = 0U;
-        _id_used.store(used + 1, std::memory_order_release);
+        esp_netif_dhcps_get_clients_by_mac(esp_netif_get_handle_from_ifkey("WIFI_AP_DEF"), n, pairs);
+        for (int i = 0; i < n; i++)
+        {
+            infoln("       Wi-Fi station: %02x:%02x:%02x:%02x:%02x:%02x at " IPSTR ", RSSI %d",
+                   pairs[i].mac[0], pairs[i].mac[1], pairs[i].mac[2],
+                   pairs[i].mac[3], pairs[i].mac[4], pairs[i].mac[5],
+                   IP2STR(&pairs[i].ip), list.sta[i].rssi);
+        }
     }
-    _hits[i]++;
-    _dlc[i] = f.info.dlc;
-    memcpy(_data[i], f.data.u8, 8);
-    _seen_ms[i] = millis();
+
+    infoln("        Wi-Fi heap: %lu bytes free, least %lu; stacks free: web %lu, census %lu",
+           (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
+           (unsigned long)uxTaskGetStackHighWaterMark(server_handle),
+           (unsigned long)uxTaskGetStackHighWaterMark(census_handle));
 }
+#endif
 
 void web::server_task(void* self)
 {
@@ -418,7 +386,7 @@ void web::serve() noexcept
     // Every request in the console, before it is handled: whether anything arrives at
     // all is the first question when the page does not open.
     s.addMiddleware([](WebServer& srv, Middleware::Callback next) {
-        infoln("         Wi-Fi GET: %s from %s", srv.uri().c_str(),
+        infoln("     Wi-Fi request: %s from %s", srv.uri().c_str(),
                srv.client().remoteIP().toString().c_str());
         return next();
     });
@@ -471,43 +439,46 @@ void web::stats() noexcept
         (unsigned long)CANCTLR.trips(), (unsigned long)c.frames,
         (unsigned long)bus_rate.load(std::memory_order_relaxed), (unsigned long)c.errors,
         (unsigned long)c.extended, (unsigned long)c.remote, (unsigned long)c.dropped,
-        (unsigned long)_id_overflow);
+        (unsigned long)_census.overflow());
 
     put("\"bike\":{");
 #if defined(CONFIG_CANBUS_DECODER_YAMAHAR9)
     {
         // Each value null until its frame has arrived, or once it is over two seconds
         // old: the bus has gone quiet, and a number from before would read as now.
+        namespace r9 = canbus::r9;
         uint8_t d[8];
-        uint32_t age_ms = 0U;
-        const bool engine = CANDEC.latest(canbus::r9::id_engine, d, age_ms) && age_ms < 2000U;
-        if (engine)
+        auto fresh = [&d](uint32_t id) {
+            uint32_t age_ms = 0U;
+            return CANDEC.latest(id, d, age_ms) && age_ms < 2000U;
+        };
+        if (fresh(r9::id_engine))
         {
-            put("\"rpm\":%lu,\"gear\":%u,", (unsigned long)canbus::r9::rpm(d), (unsigned)canbus::r9::gear(d));
+            put("\"rpm\":%lu,\"gear\":%u,", (unsigned long)r9::rpm(d), (unsigned)r9::gear(d));
         }
         else
         {
             put("\"rpm\":null,\"gear\":null,");
         }
-        if (CANDEC.latest(canbus::r9::id_rear, d, age_ms) && age_ms < 2000U)
+        if (fresh(r9::id_rear))
         {
-            put("\"rear_x100\":%u,", (unsigned)canbus::r9::rear_kmh_x100(d));
+            put("\"rear_x100\":%u,", (unsigned)r9::rear_kmh_x100(d));
         }
         else
         {
             put("\"rear_x100\":null,");
         }
-        if (CANDEC.latest(canbus::r9::id_front, d, age_ms) && age_ms < 2000U)
+        if (fresh(r9::id_front))
         {
-            put("\"front_x100\":%u,", (unsigned)canbus::r9::front_kmh_x100(d));
+            put("\"front_x100\":%u,", (unsigned)r9::front_kmh_x100(d));
         }
         else
         {
             put("\"front_x100\":null,");
         }
-        if (CANDEC.latest(canbus::r9::id_temps, d, age_ms) && age_ms < 2000U)
+        if (fresh(r9::id_temps))
         {
-            put("\"water_x10\":%d,\"air_x10\":%d", (int)canbus::r9::water_tenths(d), (int)canbus::r9::air_tenths(d));
+            put("\"water_x10\":%d,\"air_x10\":%d", (int)r9::water_tenths(d), (int)r9::air_tenths(d));
         }
         else
         {
@@ -517,19 +488,18 @@ void web::stats() noexcept
 #endif
     put("},\"ids\":[");
 
-    const int used = _id_used.load(std::memory_order_acquire);
+    const int used = _census.used();
     for (int i = 0; i < used; i++)
     {
-        char hex[17];
-        const uint8_t dlc = _dlc[i] > 8U ? 8U : _dlc[i];
-        for (uint8_t b = 0; b < dlc; b++)
+        char hex[17] = {};
+        const uint8_t* d = _census.data(i);
+        for (uint8_t b = 0; b < _census.dlc(i); b++)
         {
-            snprintf(hex + 2 * b, 3, "%02X", _data[i][b]);
+            snprintf(hex + 2 * b, 3, "%02X", d[b]);
         }
-        hex[2 * dlc] = '\0';
         put("%s{\"id\":%lu,\"n\":%lu,\"hz\":%u,\"data\":\"%s\",\"age_ms\":%lu}",
-            i == 0 ? "" : ",", (unsigned long)_ids[i], (unsigned long)_hits[i],
-            (unsigned)_rates[i], hex, (unsigned long)(now - _seen_ms[i]));
+            i == 0 ? "" : ",", (unsigned long)_census.id(i), (unsigned long)_census.hits(i),
+            (unsigned)_census.rate(i), hex, (unsigned long)(now - _census.seen_ms(i)));
     }
     put("]}");
 

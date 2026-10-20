@@ -168,7 +168,8 @@ void setup()
         esp_restart();
     }
 
-    // loop() -- the bus supervisor and standby -- under the task watchdog: five seconds
+    // loop() -- the bus supervisor, the button, and standby or the Wi-Fi mode's exits --
+    // under the task watchdog: five seconds
     // without a pass restarts the board. Nothing in it is known to block for that
     // long; this is for whatever is not known. The core resets the watchdog between
     // passes. The microSD task is left out on purpose: the SD library may wait

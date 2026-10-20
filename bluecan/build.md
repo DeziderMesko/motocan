@@ -76,11 +76,11 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 1215 KB | 98.5 KB | not measured with the Wi-Fi mode built in |
-| `feather-as-atom`, `atom` | 1175 KB | 92.5 KB | 167 KB in the normal mode, 162 KB in the Wi-Fi mode, measured on the Feather in a debug build, nothing connected |
-| ...with the microSD log | 1234 KB | 133 KB | not measured with the Wi-Fi mode built in |
+| `feather` | 1222 KB | 99.1 KB | not measured with the Wi-Fi mode built in |
+| `feather-as-atom`, `atom` | 1183 KB | 93.0 KB | 166 KB in the normal mode, measured on the Feather in a debug build, nothing connected |
+| ...with the microSD log | 1242 KB | 133 KB | not measured with the Wi-Fi mode built in |
 
-The Wi-Fi mode is about 560 KB of the program and 21 KB of the static RAM, which the
+The Wi-Fi mode is about 570 KB of the program and 22 KB of the static RAM, which the
 Wi-Fi driver sets aside whether the mode runs or not: built without it
 (`CONFIG_NO_WIFI`), `feather-as-atom` is 612 KB and 71.3 KB.
 
@@ -161,7 +161,7 @@ with the display, is refused at compile time by
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
 | `CONFIG_STANDBY` | on for `atom` and `feather-as-atom`, off for `feather` | light sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX, or the board file's button (`BUTTON_PIN`), wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
 | `CONFIG_STANDBY_TIMEOUT_S` | 60 s | the silence before it sleeps. The R9 sends over 500 frames a second with the key on, so a second would do; the rest is time to use the board after waking it with the button, and on the bench |
-| `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 21 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |
+| `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 22 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |
 | `CONFIG_WIFI_PASSWORD` | random, in `src/web/secret.hpp` | the access point's WPA2 password. `reflash-bluecan.sh` writes the file with a random twelve characters the first time it builds, and prints them; git ignores the file, so the password stays on the computer that built the board. Edit the file to change it, eight characters or more |
 | `CONFIG_BUTTON_HOLD_S` | 5 s | how long the button is held to switch between the normal and the Wi-Fi mode |
 | `CONFIG_WIFI_IDLE_S` | 300 s | the time without a request to the page after which the Wi-Fi mode gives way to the normal one. An open page asks every second |
