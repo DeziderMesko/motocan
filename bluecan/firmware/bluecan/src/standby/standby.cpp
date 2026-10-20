@@ -113,7 +113,11 @@ start sleep() noexcept
     esp_sleep_enable_gpio_wakeup();
     Serial.flush();
 
-    // Off the USB bus for the sleep and until the restart after it; see on_boot().
+    // Off the USB bus for the sleep and until the restart after it; see on_boot(). The
+    // pull-up on D+ goes too, or the computer goes on seeing a device that is plugged in
+    // and does not answer: Windows then reports a failed USB device at every sleep.
+    const usb_serial_jtag_pull_override_vals_t no_pulls = {};
+    usb_serial_jtag_ll_phy_enable_pull_override(&no_pulls);
     usb_serial_jtag_ll_phy_enable_pad(false);
 
     // A sleep refused, because a wake came while it was being prepared, is a wake all

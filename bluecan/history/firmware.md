@@ -2339,7 +2339,7 @@ button. This computer reaches the internet only over its Wi-Fi, which joining th
 network would have cut. Also not seen: the hold on the button, the white and purple of the
 light by eye, the Feather's header, and anything on a Lite.
 
-## Patch 41 — a wake goes through a deep sleep of a millisecond — **built, not run**
+## Patch 41 — a wake goes through a deep sleep of a millisecond, and the USB port leaves cleanly — **applied, run on the Feather**
 
 2026-10-20, found on the bench the night after patch 39: its wake did not keep the
 chip's own USB port working. After patch 40 was flashed, the Feather went to sleep, was
@@ -2372,8 +2372,21 @@ on its buttons to be flashed again.
   filled, the gear 0 shown as N, a missing value as `-`, the files newest first. The
   payload column made the id table wider than the screen; it now wraps.
 
-Built for every profile. Not run: the Feather is in the failed state and needs its
-buttons for download mode before anything can be flashed.
+Run on the Feather built as the Lite, 2026-10-20 in the morning, flashed by the owner
+from download mode; the CANable in one-shot mode, traffic for 5 s, then silence until
+the board slept, then traffic again:
+
+- **Every wake came back.** Five in five: the console back by itself through
+  `console-log.sh`, acknowledging 515 ms after the program started.
+- **Every sleep did not leave.** While the board slept, usbipd listed it as `Unknown USB
+  Device (Device Descriptor Request Failed)`, and Windows showed the owner *USB device not
+  recognized*. Taking the port off the bus (`usb_serial_jtag_ll_phy_enable_pad(false)`)
+  had left the pull-up on D+, so the computer saw a device still plugged in that no
+  longer answered. The pulls are now overridden off before the pad goes:
+  `usb_serial_jtag_ll_phy_enable_pull_override()` with all four false. The deep-sleep
+  reset puts the override back to the default for the wake.
+- With that, four cycles in four: nothing listed while asleep, the console back 5–6 s
+  after the traffic, acknowledging at 515–517 ms.
 
 ## Open questions before the bike
 
