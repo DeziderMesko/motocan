@@ -204,8 +204,9 @@ bool sdlog::open_card() noexcept
     // A card the oldest logs could not make room on is left alone: a file opened on
     // it would fail its first write, and the next try open another, every 5 s. Said
     // by find_card() at start-up, and by the debug statistics after.
+    uint64_t total = 0U;
     uint64_t room = 0U;
-    if (free_bytes(room) && room < full_below)
+    if (space(total, room) && room < full_below)
     {
         _found = card::full;
         SD.end();
@@ -272,10 +273,10 @@ sdlog::logs sdlog::scan() noexcept
     return l;
 }
 
-bool sdlog::free_bytes(uint64_t& room) noexcept
+bool sdlog::space(uint64_t& total, uint64_t& room) noexcept
 {
     // Zero is what the library says when FatFs could not count, never a size.
-    const uint64_t total = SD.totalBytes();
+    total = SD.totalBytes();
     if (total == 0U)
     {
         return false;
@@ -286,12 +287,11 @@ bool sdlog::free_bytes(uint64_t& room) noexcept
 
 void sdlog::make_room() noexcept
 {
-    const uint64_t want = static_cast<uint64_t>(CONFIG_SDLOG_KEEP_FREE_MB) * 1024U * 1024U;
-
     // Never on a card that cannot say how full it is: a free space read as zero would
     // delete every log on it.
+    uint64_t total = 0U;
     uint64_t room = 0U;
-    while (free_bytes(room) && room < want)
+    while (space(total, room) && room < total / 100U * CONFIG_SDLOG_KEEP_FREE_PCT)
     {
         const logs l = scan();
         if (l.oldest[0] == '\0')

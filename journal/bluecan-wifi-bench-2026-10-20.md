@@ -97,9 +97,9 @@ bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug
   traffic sent.
 - [ ] How long a large file takes, if there is one: MB per second.
 - [ ] The circle (patch 46): on a computer, fill the card with one large file of
-  your own until less than 1 GB is free, with two or three `bluecan-NNNN.bin` on it.
+  your own until less than 5% of it is free, with two or three `bluecan-NNNN.bin` on it.
   Start the board: the console says `SD log: deleted /bluecan-NNNN.bin, the oldest, for
-  room`, lowest number first, until 1 GB is free; your own file stays. Then fill it to
+  room`, lowest number first, until 5% is free; your own file stays. Then fill it to
   the brim with your file: `no room on the card once the oldest logs are gone`, and no
   new file appears.
 

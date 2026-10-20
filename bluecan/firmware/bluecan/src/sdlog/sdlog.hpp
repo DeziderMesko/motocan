@@ -75,11 +75,13 @@
 #define CONFIG_SDLOG_SYNC_S 5
 #endif
 
-/// the room kept free on the card, in MB: before a log file is opened, the oldest are
-/// deleted until there is this much. 1 GB is about 23 hours of the R9's bus, more than
-/// any one start lasts, so the card does not fill while a file is open
-#ifndef CONFIG_SDLOG_KEEP_FREE_MB
-#define CONFIG_SDLOG_KEEP_FREE_MB 1024
+/// the room kept free on the card, in percent of its size: before a log file is
+/// opened, the oldest are deleted until there is this much. A share rather than a size,
+/// so that a small card keeps most of itself for logs. On a 16 GB card 5% is 800 MB,
+/// about 18 hours of the R9's bus; on a 1 GB card, about an hour, and a longer start
+/// fills it under the open file, whose failed write makes room the same way
+#ifndef CONFIG_SDLOG_KEEP_FREE_PCT
+#define CONFIG_SDLOG_KEEP_FREE_PCT 5
 #endif
 
 /// how often a card closed after a failed write is mounted again, in seconds
@@ -206,11 +208,11 @@ private:
         char oldest[24]; //!< the lowest-numbered one's path; empty with none
     };
     static logs scan() noexcept;
-    /// the oldest log files deleted until CONFIG_SDLOG_KEEP_FREE_MB is free, or none is
-    /// left. Only with no file open, and only files this firmware names
+    /// the oldest log files deleted until CONFIG_SDLOG_KEEP_FREE_PCT is free, or none
+    /// is left. Only with no file open, and only files this firmware names
     static void make_room() noexcept;
-    /// false if the card would not say
-    static bool free_bytes(uint64_t& room) noexcept;
+    /// the card's size and its free bytes; false if it would not say
+    static bool space(uint64_t& total, uint64_t& room) noexcept;
     void close_card() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
     void write_rest() noexcept;

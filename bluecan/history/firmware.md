@@ -2524,10 +2524,13 @@ owner was offered stopping with a "card full" until the next start, or deleting 
 oldest logs, and chose the circle.
 
 - **Room first.** `open_card()`, at start-up and on every reopen after a failed write,
-  deletes the lowest-numbered `bluecan-NNNN.bin` until `CONFIG_SDLOG_KEEP_FREE_MB`,
-  1024, is free, or none is left. 1 GB is about 23 hours of the R9's 12 KB a second, so
-  a card does not fill under an open file in any start that can happen; if one does,
-  the failed write and the reopen make room in the same way.
+  deletes the lowest-numbered `bluecan-NNNN.bin` until `CONFIG_SDLOG_KEEP_FREE_PCT`, 5%
+  of the card, is free, or none is left. At the R9's 12 KB a second that is about 18
+  hours on a 16 GB card and an hour on a 1 GB one; a start longer than that fills the
+  card under its open file, and the failed write and the reopen make room in the same
+  way. First built keeping a fixed 1 GB free; the owner pointed out
+  that a 1 GB card would then lose every log at each fill and a 2 GB card half of
+  itself, and asked for a share of the card instead.
 - Only the firmware's own names are deleted, the file being written is closed before
   any deletion, and the Wi-Fi mode deletes nothing. A card that cannot say how full it
   is (`SD.totalBytes()` reading 0) has nothing deleted, since that would read as no

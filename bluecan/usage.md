@@ -186,12 +186,13 @@ are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). It has not yet been run w
 card.
 
 **The card is used in a circle.** Before it opens a new file, the board deletes the
-oldest logs, the lowest numbers first, until 1 GB of the card is free: about 23 hours
-of the R9's bus, more than one start lasts. It deletes only its own `bluecan-NNNN.bin`
-files, never the one it is writing, and never in the Wi-Fi mode. Anything else on the
-card is left alone; if that leaves no room, nothing is logged. A card that does fill
-while a file is open (a start longer than the free space) fails a write, and the board
-mounts it again 5 s later, makes room the same way and goes on in a new file. The
+oldest logs, the lowest numbers first, until 5% of the card is free. The R9's bus is
+about 44 MB an hour, so that is about 18 hours on a 16 GB card and about an hour on a
+1 GB one. It deletes only its own `bluecan-NNNN.bin` files, never the one it is writing,
+and never in the Wi-Fi mode. Anything else on the card is left alone; if that leaves
+no room, nothing is logged. A card that fills while a file is open, a start longer than
+the free space, fails a write; the board mounts it again 5 s later, makes room the
+same way, and goes on in a new file, with those seconds missing from the log. The
 numbers go up to 9999; after that no new file is opened, and the old ones have to be
 deleted by hand.
 
