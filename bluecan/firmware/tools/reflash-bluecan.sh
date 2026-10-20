@@ -18,6 +18,8 @@
 #   --sd-emulate  ...and drive the SPI bus as one would if none is there
 #   --recording   filter as RaceChrono does when it records, whatever it asks for
 #   --no-standby  keep atom and feather-as-atom awake on a silent bus
+#   --quick       short timeouts, for trying them out: the Wi-Fi mode gives way after
+#                 30 s without a request instead of 5 min, standby sleeps after 15 s
 #   --no-upload   compile only
 #
 # Why this exists next to reflash.sh: that one goes through build.sh, which has no debug
@@ -38,6 +40,7 @@ DEBUG=""
 SD=""
 RECORDING=""
 NO_STANDBY=""
+QUICK=""
 UPLOAD=1
 for a in "$@"; do
     case "$a" in
@@ -47,6 +50,7 @@ for a in "$@"; do
         --sd-emulate) SD="sd-emulate" ;;
         --recording)  RECORDING=1 ;;
         --no-standby) NO_STANDBY=1 ;;
+        --quick)      QUICK=1 ;;
         --no-upload)  UPLOAD="" ;;
         *)            echo "unknown profile or option: $a" >&2; exit 2 ;;
     esac
@@ -78,6 +82,10 @@ esac
 if [[ -n "$NO_STANDBY" ]]; then
     FLAGS+=(-DCONFIG_NO_STANDBY)
     BUILD="$BUILD-nostandby"
+fi
+if [[ -n "$QUICK" ]]; then
+    FLAGS+=(-DCONFIG_WIFI_IDLE_S=30 -DCONFIG_STANDBY_TIMEOUT_S=15)
+    BUILD="$BUILD-quick"
 fi
 if [[ -n "$RECORDING" ]]; then
     FLAGS+=(-DCONFIG_RC_BENCH_RECORDING)

@@ -57,12 +57,12 @@ a{color:var(--accent)}
 </head>
 <body>
 <div id="dead"><b>Bluecan is not answering.</b> It has most likely gone back to the normal mode &ndash; by its
-button, after five minutes without this page, or because the bike moved &ndash; or this phone has left its network.
+button, after a while without this page, or because the bike moved &ndash; or this phone has left its network.
 This page no longer updates. To come back, hold the board's button for 5&nbsp;s and join its network again.</div>
 <h1>Bluecan, Wi-Fi mode</h1>
 <div class="sub"><span id="ssid">-</span> &middot; up <span id="up">-</span> &middot; <span id="link">connecting</span></div>
 <p class="sub">Bluetooth is off in this mode, and the card is not being written. The board goes back to the normal mode
-when you press the button below, hold its button for 5 s, leave this page closed for <span id="idle">5</span> minutes,
+when you press the button below, hold its button for 5 s, leave this page closed for <span id="idle">5 minutes</span>,
 or ride off.</p>
 <button class="main" id="leave">Back to the normal mode</button>
 <div id="gone">Restarting in the normal mode. RaceChrono can connect again in a few seconds; this page can be closed.</div>
@@ -130,7 +130,7 @@ async function stats(){
     const r=await fetch('/stats.json',{cache:'no-store',signal:ctl.signal});clearTimeout(t);const s=await r.json();
     failed=0;$('dead').style.display='none';
     $('link').textContent='live';$('link').className='ok';
-    $('ssid').textContent=s.ssid;$('up').textContent=dur(s.up_s);$('idle').textContent=Math.round(s.idle_s/60);
+    $('ssid').textContent=s.ssid;$('up').textContent=dur(s.up_s);$('idle').textContent=s.idle_s<120?s.idle_s+' s':Math.round(s.idle_s/60)+' minutes';
     const b=s.bus;
     $('state').textContent=b.state;$('state').className='v '+(b.state=='acknowledging'?'ok':b.state.startsWith('tripped')?'bad':'');
     $('rate').textContent=n(b.rate);$('frames').textContent=n(b.frames);$('errors').textContent=n(b.errors);

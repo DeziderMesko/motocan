@@ -133,6 +133,7 @@ flags are for the bench, and combine with it and with each other:
 | `--sd-emulate` | `CONFIG_SDLOG`, `CONFIG_SDLOG_EMULATE` | the same, standing in for a card that is not there |
 | `--recording` | `CONFIG_RC_BENCH_RECORDING` | the filter RaceChrono sends when it records |
 | `--no-standby` | `CONFIG_NO_STANDBY` | keeps `atom` and `feather-as-atom` awake on a silent bus |
+| `--quick` | `CONFIG_WIFI_IDLE_S=30`, `CONFIG_STANDBY_TIMEOUT_S=15` | short timeouts, to try them out without waiting: the Wi-Fi mode gives way after 30 s without a request, standby sleeps after 15 s of silence |
 | `--no-upload` | | compile only |
 
 A debug build waits 5 seconds at start-up before doing anything, so that a console can be
