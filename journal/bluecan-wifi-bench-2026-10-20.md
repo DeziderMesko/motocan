@@ -83,8 +83,14 @@ bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug
 
 - [ ] In the normal mode, traffic for a minute: the console says `SD log: writing
   /bluecan-NNNN.bin`, and the debug statistics count sectors, none dropped.
-- [ ] Without the card, a start says `SD log: no card, nothing is logged until the next
-  start`, and the Wi-Fi page has no Card section.
+- [ ] Nothing on A2–A5: a start says `SD log: nothing on the card pins, nothing is
+  logged until the next start`, and the Wi-Fi page has no Card section. Seen on the
+  console on 2026-10-20 (patch 45); the page not yet.
+- [ ] A 4.7 kΩ resistor from A4 (MISO) to 3V, standing in for the TF-Card Base without
+  a card: `no card in the socket, or one that does not answer`, and the page says the
+  socket is empty.
+- [ ] A card formatted exFAT, or not at all: `a card that does not mount: not FAT32, or
+  faulty`, and the page says so. Nothing on the card changes.
 - [ ] Switch to Wi-Fi; the page lists the file with a size.
 - [ ] Download it on the phone or a laptop; the size matches.
 - [ ] `bluecan/firmware/tools/sdlog-to-candump.py bluecan-NNNN.bin | head` shows the

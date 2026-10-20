@@ -31,8 +31,10 @@
 #include <FS.h>
 #include <SD.h>
 #include <SPI.h>
+#include <diskio.h>
 #include <esp_timer.h>
 #include <ff.h>
+#include <sd_diskio.h>
 #endif
 
 storage::sdlog& SDLOG = storage::sdlog::get();
@@ -124,8 +126,7 @@ sdlog::sdlog() noexcept
     , _reopens(0U)
     , _mode(mode_off)
     , _open(false)
-    , _read_tried(false)
-    , _reading(false)
+    , _found(card::not_looked)
     , _stop(false)
     , _stopped(false)
     , _handle(nullptr)
@@ -138,13 +139,58 @@ sdlog::sdlog() noexcept
 {
 }
 
+const char* sdlog::name(card c) noexcept
+{
+    switch (c)
+    {
+    case card::no_base:    return "nothing on the card pins";
+    case card::empty:      return "no card in the socket, or one that does not answer";
+    case card::unreadable: return "a card that does not mount: not FAT32, or faulty";
+    case card::mounted:    return "card mounted";
+    default:               return "not looked for";
+    }
+}
+
+sdlog::card sdlog::mount(uint8_t files) noexcept
+{
+    sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
+
+    // Whether anything answers, apart from whether it holds a file system: SD.begin()
+    // says neither. Registering the drive does not touch the card; initialising it
+    // does, and is what takes about 1.5 s when nothing answers.
+    // -1, a board with no chip select, reaches the library as 255, and its writes to
+    // that pin do nothing -- which is what M5Stack's example relies on as well.
+    const uint8_t drive = sdcard_init(SDLOG_CS, &sd_spi, CONFIG_SDLOG_SPI_HZ);
+    if (drive == 0xFF)
+    {
+        return card::unreadable;
+    }
+    const bool answered = (disk_initialize(drive) & STA_NOINIT) == 0;
+    sdcard_uninit(drive);
+
+    if (!answered)
+    {
+        // The Atomic TF-Card Base pulls MISO up through 4.7 kOhm, card or no card.
+        // With nothing on the pins the chip's own pull-down, about 45 kOhm, takes it
+        // low.
+        sd_spi.end();
+        pinMode(SDLOG_MISO, INPUT_PULLDOWN);
+        delayMicroseconds(100);
+        const bool pulled_up = digitalRead(SDLOG_MISO) == HIGH;
+        pinMode(SDLOG_MISO, INPUT);
+        return pulled_up ? card::empty : card::no_base;
+    }
+
+    // The card is initialised again here, which with a card takes milliseconds.
+    return SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", files) ? card::mounted : card::unreadable;
+}
+
 bool sdlog::open_card() noexcept
 {
     // One file open at a time is all this needs, and each one FatFs is allowed costs
     // a FIL, sector buffer included, whether it is used or not.
-    // -1, a board with no chip select, reaches the library as 255, and its writes to
-    // that pin do nothing -- which is what M5Stack's example relies on as well.
-    if (!SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", 1))
+    _found = mount(1);
+    if (_found != card::mounted)
     {
         return false;
     }
@@ -217,8 +263,6 @@ bool sdlog::find_card() noexcept
 {
     bootln("SD log: looking for a card...");
 
-    sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
-
     _mode = mode_card;
     _open = open_card();
 
@@ -232,7 +276,7 @@ bool sdlog::find_card() noexcept
         {
             memset(_charge, 0, sizeof(FATFS) + sizeof(FIL) + 64U);
         }
-        // A failed SD.begin() released the bus; take it back for the emulation.
+        // A failed look may have released the bus; take it back for the emulation.
         sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
         if (SDLOG_CS >= 0)
         {
@@ -240,15 +284,15 @@ bool sdlog::find_card() noexcept
             digitalWrite(SDLOG_CS, HIGH);
         }
         _mode = mode_emulated;
-        bootln("SD log: no card, emulating one (%u bytes of heap held)",
-               (unsigned)(sizeof(FATFS) + sizeof(FIL) + 64U));
+        bootln("SD log: %s, emulating a card (%u bytes of heap held)",
+               name(_found), (unsigned)(sizeof(FATFS) + sizeof(FIL) + 64U));
     }
 #endif
 
     if (_mode == mode_card && !_open)
     {
         _mode = mode_off;
-        bootln("SD log: no card, nothing is logged until the next start");
+        bootln("SD log: %s, nothing is logged until the next start", name(_found));
         return false;
     }
 
@@ -425,17 +469,13 @@ bool sdlog::write_sector(uint8_t const* p) noexcept
 
 bool sdlog::mount_for_reading() noexcept
 {
-    if (_read_tried)
+    if (_found == card::not_looked)
     {
-        return _reading;
+        // A directory being listed and a file being sent are two open at once.
+        _found = mount(2);
+        bootln("SD log: %s, for reading", name(_found));
     }
-    _read_tried = true;
-
-    // A directory being listed and a file being sent are two open at once.
-    sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
-    _reading = SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", 2);
-    bootln("SD log: %s", _reading ? "card mounted for reading" : "no card");
-    return _reading;
+    return _found == card::mounted;
 }
 
 void sdlog::stop() noexcept

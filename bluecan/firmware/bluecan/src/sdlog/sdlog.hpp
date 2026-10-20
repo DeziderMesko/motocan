@@ -35,7 +35,9 @@
 ///
 /// Whether a card is there is found out once, at start-up. Without one there is no
 /// ring and no task: the board carries the code and nothing else. A card put in later
-/// is found at the next start, which on the bike is the next wake.
+/// is found at the next start, which on the bike is the next wake. The look tells four
+/// things apart, see sdlog::card: nothing on the pins, a socket with no card, a card
+/// that does not mount, and one that does.
 ///
 /// CONFIG_SDLOG_EMULATE stands in for a card that is not there: if none mounts, the
 /// task still drives the SPI bus as the SD library would for every sector -- the same
@@ -124,6 +126,23 @@ public:
     ~sdlog() noexcept = default;
 
 #if defined(CONFIG_SDLOG)
+    /// what the last look for the card found
+    enum class card : uint8_t
+    {
+        not_looked, //!< none yet
+        no_base,    //!< nothing on the card pins: MISO is not pulled up
+        empty,      //!< MISO pulled up, as the TF-Card Base does, but nothing answers
+        unreadable, //!< a card answers, but no FAT file system mounts on it
+        mounted,
+    };
+
+    /// a phrase for the console
+    static const char* name(card c) noexcept;
+
+    /// what the last look found: start()'s task, or mount_for_reading(). Read it from
+    /// the task that looked
+    card found() const noexcept { return _found; }
+
     /**
      * Start the writer task, which looks for the card first. With a card, or the
      * emulation, it takes the ring from the heap and logs; without one it ends, and
@@ -169,6 +188,7 @@ private:
     static void task(void* self);
     void run() noexcept;
     bool find_card() noexcept;
+    card mount(uint8_t files) noexcept;
     bool open_card() noexcept;
     void close_card() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
@@ -198,8 +218,7 @@ private:
     uint32_t _reopens;              //!< files opened after the first attempt
     mode_t _mode;
     bool _open;                     //!< card mode: a file is open; the task's alone
-    bool _read_tried;               //!< mount_for_reading() has looked for the card
-    bool _reading;                  //!< and found it
+    card _found;
     std::atomic<bool> _stop;        //!< asked by stop()
     std::atomic<bool> _stopped;     //!< answered by the task
     TaskHandle_t _handle;

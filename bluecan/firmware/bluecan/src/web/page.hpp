@@ -162,7 +162,10 @@ async function files(){
   $('card').textContent='reading the card...';
   try{
     const r=await fetch('/files.json',{cache:'no-store'});const f=await r.json();
-    $('cardbox').hidden=!f.card;if(!f.card)return;
+    $('cardbox').hidden=f.sd==='none';if(f.sd==='none')return;
+    if(f.sd!=='mounted'){$('files').innerHTML='';$('card').textContent=f.sd==='empty'?
+      'The card socket is empty, or its card does not answer.':
+      'There is a card, but it does not mount: not FAT32, or faulty.';return}
     const l=f.files.sort((a,c)=>c.name.localeCompare(a.name));
     $('card').textContent=l.length+' log files, '+size(l.reduce((t,a)=>t+a.size,0))+'. Newest first.';
     $('files').innerHTML=l.map(a=>'<tr><td>'+a.name+'</td><td>'+size(a.size)+

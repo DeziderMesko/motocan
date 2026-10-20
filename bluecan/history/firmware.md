@@ -2486,6 +2486,35 @@ dropped, 114 072 bytes free. The page, in headless Chromium against a mock serve
 without a card no Card section, with one the list. **Not run with a card**, nor in the
 Wi-Fi mode on the board, which needs the button.
 
+## Patch 45 — the look for the card tells four cases apart — **applied, run on the Feather with nothing on the pins**
+
+2026-10-20, asked for by the owner, who found "no card" for a card that will not mount
+misleading, and expected an empty base to look different from no base at all.
+
+[M5Stack's schematic of the Atomic TF-Card Base](https://docs.m5stack.com/en/atom/Atomic_TFCard_Base)
+shows nothing on it to talk to: the socket, a 100 nF capacitor, and a 4.7 kΩ resistor
+network pulling MISO, CLK and MOSI up and CS down. The card is its own controller. An
+empty base and no base both leave nothing that answers, which is why patch 44 could not
+tell them apart.
+
+- **Whether anything answers, first.** `SD.begin()` folds a card that does not answer
+  and one with no FAT file system into one `false`. `sdlog::mount()` registers the
+  drive (`sdcard_init()`, which does not touch the card), initialises the card through
+  FatFs's `disk_initialize()`, unregisters it, and only then calls `SD.begin()`. With a
+  card that is a second initialisation of a few milliseconds.
+- **The base by its pull-up.** When nothing answers, MISO is read with the chip's own
+  pull-down, about 45 kΩ, on: high through the base's 4.7 kΩ, low with nothing there.
+- `sdlog::card` names the four outcomes, `found()` gives the last, and the console line
+  says which: `nothing on the card pins`, `no card in the socket, or one that does not
+  answer`, `a card that does not mount: not FAT32, or faulty`, `card mounted`.
+- `/files.json` sends `sd`: `none`, `empty`, `unreadable` or `mounted`, in place of
+  `card`. The page has no Card section for `none`, and a sentence for the two between.
+
+Built for every profile: `feather-as-atom` and `atom` 1243 KB, the static RAM as it
+was. On the Feather built as the Lite, nothing on A2–A5: `nothing on the card pins`, 1.4
+s after `looking for a card`; 164 672 bytes free. The page in headless Chromium against
+a mock server, all four answers. **Not run** with the base, an empty socket or a card.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

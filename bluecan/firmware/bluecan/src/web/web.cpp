@@ -522,14 +522,21 @@ void web::files() noexcept
 #if defined(CONFIG_SDLOG)
     if (!SDLOG.mount_for_reading())
     {
-        server->send(200, "application/json", "{\"card\":false,\"files\":[]}");
+        // What the page says in place of the list; with nothing on the pins it shows
+        // no card section at all.
+        using card = storage::sdlog::card;
+        const card c = SDLOG.found();
+        server->send(200, "application/json",
+                     c == card::empty        ? "{\"sd\":\"empty\",\"files\":[]}"
+                     : c == card::unreadable ? "{\"sd\":\"unreadable\",\"files\":[]}"
+                                             : "{\"sd\":\"none\",\"files\":[]}");
         return;
     }
 
     // Sent in pieces: a card can hold thousands of files, and the list has no fixed size.
     server->setContentLength(CONTENT_LENGTH_UNKNOWN);
     server->send(200, "application/json", "");
-    server->sendContent("{\"card\":true,\"files\":[");
+    server->sendContent("{\"sd\":\"mounted\",\"files\":[");
 
     bool first = true;
     File root = SD.open("/");
@@ -559,7 +566,7 @@ void web::files() noexcept
     server->sendContent("]}");
     server->sendContent("");
 #else
-    server->send(200, "application/json", "{\"card\":false,\"files\":[]}");
+    server->send(200, "application/json", "{\"sd\":\"none\",\"files\":[]}");
 #endif
 }
 

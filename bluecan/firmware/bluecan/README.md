@@ -24,7 +24,7 @@ page is for working on the code.
 | `src/mode/mode.*` | which mode this start runs, normal or Wi-Fi, and the restart that switches; built in with `CONFIG_WIFI` |
 | `src/button/button.*` | the board's button for the switch: held for `CONFIG_BUTTON_HOLD_S` and let go |
 | `src/web/web.*`, `src/web/page.hpp` | the Wi-Fi mode: the access point, the web server and its page, a DNS server that answers every name with the board so that a phone opens the page as a sign-in, the census of ids that takes the frame queue in place of Bluetooth, and the mode's exits. The password is `src/web/secret.hpp`, which git ignores |
-| `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG` on a board with the card's pins: a task on core 1 that looks for the card at start-up and, with one, writes out a ring the CAN interrupt fills. Also its stand-in for a board with no card |
+| `src/sdlog/sdlog.*` | the microSD log, built in with `CONFIG_SDLOG` on a board with the card's pins: a task on core 1 that looks for the card at start-up, telling an empty socket and a card that does not mount from nothing on the pins, and, with one, writes out a ring the CAN interrupt fills. Also its stand-in for a board with no card |
 | `src/led/`, `src/power/`, `src/logging/`, `src/utils/` | the LED drivers, on the pins the board file gives; the MAX17048 battery gauge; the serial logger; a timer |
 
 ## How it runs

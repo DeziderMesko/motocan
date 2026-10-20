@@ -182,8 +182,21 @@ A2, MOSI A3, MISO A4 and CS A5, the board logs every frame it receives to the
 card, whatever RaceChrono has asked for: a new file, `bluecan-NNNN.bin`, at every start.
 It looks for the card once, as it starts, and without one goes on with no log; a card
 put in later is used from the next start, which on the bike is the next wake. The files
-are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). The card must be FAT32. It has not
-yet been run with a card.
+are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). It has not yet been run with a
+card.
+
+The look tells four cases apart, and the console names the one it found:
+
+| Found | Console | The Wi-Fi page |
+|---|---|---|
+| nothing on the card pins: a Lite without the base | `nothing on the card pins` | no Card section |
+| the base, no card in it, or a card that does not answer | `no card in the socket, or one that does not answer` | *The card socket is empty, or its card does not answer.* |
+| a card that answers but does not mount: exFAT, unformatted, or faulty | `a card that does not mount: not FAT32, or faulty` | *There is a card, but it does not mount: not FAT32, or faulty.* |
+| a FAT32 card | `card mounted` | the list of files |
+
+The second case is told from the first by the base's 4.7 kΩ pull-up on MISO: the board
+pulls the pin down weakly, and reads it high only with the base there. A card is never
+formatted by the board.
 
 ## The Wi-Fi mode
 
@@ -214,7 +227,7 @@ to stay on it.
 | Bus | whether the board acknowledges, frames a second and in total, error interrupts, TEC and REC, trips, 29-bit and remote frames, frames dropped |
 | Bike | engine speed, gear, both wheel speeds, water and air temperature, from the frames the LIVE page decodes; `-` when a frame has not arrived for two seconds |
 | Ids | every id seen since the start: how many a second, how many in all, how long since the last, its last payload |
-| Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it. Only when the board found a card as it started the mode |
+| Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it; or why there are none, as under [The microSD log](#the-microsd-log). Not there with nothing on the card pins |
 | Board | free memory, and how many devices are on the network |
 
 While the page is out of sight, behind another app or in a background tab, it stops
