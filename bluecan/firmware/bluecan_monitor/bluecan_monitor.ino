@@ -144,8 +144,10 @@ static constexpr int MON_TS = 0, MON_TS_K = 1, MON_SPEED = 2, MON_MS = 3;
 // its first value, so it stays within int32 for 24 days. g_base_s is that second.
 static int64_t g_base_s = 0;
 
-// The spread of (phone time - board time) over monitor 3's values: how much the delay
-// from the phone's clock to this callback varies. The first value sets the zero.
+// The spread of (phone time - board time) over monitor 3's changes: how much the delay
+// from the phone's clock to this callback varies. Only a value that differs from the
+// one before counts; the app also repeats an unchanged value, late. The first change
+// sets the zero.
 static bool    g_skew_set = false;
 static int64_t g_skew0_us = 0;
 static int64_t g_skew_min_us = 0, g_skew_max_us = 0;
@@ -377,6 +379,7 @@ static void handle_value(int64_t t_us, uint8_t id, int32_t v)
         if (gap > m.gap_max_us) m.gap_max_us = gap;
         m.gap_sum_us += gap;
     }
+    const bool changed = m.count == 0 || m.last != v;
     m.count++;
     m.last = v;
     m.last_us = t_us;
@@ -398,7 +401,7 @@ static void handle_value(int64_t t_us, uint8_t id, int32_t v)
 
     if (v == INVALID) return;
     if (id == MON_TS || id == MON_TS_K) consider_unit(id, v);
-    if (id == MON_MS) {
+    if (id == MON_MS && changed) {
         const int64_t skew = (g_base_s * 1000 + v) * 1000 - t_us;
         if (!g_skew_set) {
             g_skew_set = true;
@@ -725,7 +728,8 @@ void loop()
     }
     if (g_add_ms_pending && (g_sub_config & 2)) {
         g_add_ms_pending = false;
-        add_monitor(MON_MS);
+        // configure() adds it too, when the equation was built while it ran
+        if (!g_mon[MON_MS].sent) add_monitor(MON_MS);
     }
 
     static uint32_t last_status = 0;
