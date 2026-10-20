@@ -185,6 +185,11 @@ put in later is used from the next start, which on the bike is the next wake. Th
 are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). It has not yet been run with a
 card.
 
+**Each file carries the time it was last written**, by the board's
+[clock](#the-clock), in Prague's local time: brought up to date every 5 s while the
+file is open, and as it closes, so it is about when its last frame arrived. A file
+written before the clock was set reads 1980-01-01, the earliest FAT has.
+
 **The card is used in a circle.** Before it opens a new file, the board deletes the
 oldest logs, the lowest numbers first, until 5% of the card is free. The R9's bus is
 about 44 MB an hour, so that is about 18 hours on a 16 GB card and about an hour on a
@@ -236,21 +241,29 @@ to stay on it.
 
 | Section | Shows |
 |---|---|
+| Clock | the board's time, how long ago it was set, and how far off it was at that setting; see [The clock](#the-clock) |
 | Bus | whether the board acknowledges, frames a second and in total, error interrupts, TEC and REC, trips, 29-bit and remote frames, frames dropped |
 | Bike | engine speed, gear, both wheel speeds, water and air temperature, from the frames the LIVE page decodes; `-` when a frame has not arrived for two seconds |
-| Ids | every id seen since the start: how many a second, how many in all, how long since the last, its last payload |
-| Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it; or why there are none, as under [The microSD log](#the-microsd-log). Not there with nothing on the card pins |
+| Card | the log files, `bluecan-NNNN.bin`, newest first, each with the time it was last written and a link to download it; or why there are none, as under [The microSD log](#the-microsd-log). Not there with nothing on the card pins |
 | Board | free memory, and how many devices are on the network |
+| Ids | every id seen since the start: how many a second, how many in all, how long since the last, its last payload |
 
 While the page is out of sight, behind another app or in a background tab, it stops
 asking, so that a page left open does not keep the board in this mode; it starts again
 when it comes back. If the board has gone back to the normal mode meanwhile, or does not
 answer for three seconds, a red bar across the top says so: the page is dead.
 
-Nothing on the page writes anything, and files cannot be deleted from it. The card is
-not written in this mode: frames on the bus meanwhile are not logged. A downloaded file
-is 24 bytes a frame; [firmware/tools/sdlog-to-candump.py](firmware/tools/sdlog-to-candump.py)
-turns it into a candump log.
+Nothing on the page writes to the card, and files cannot be deleted from it; what the
+page changes is the board's clock. The card is not written in this mode: frames on the
+bus meanwhile are not logged. A downloaded file is 24 bytes a frame;
+[firmware/tools/sdlog-to-candump.py](firmware/tools/sdlog-to-candump.py) turns it into a
+candump log.
+
+A file is saved with the time it was last written in its name, as
+`bluecan-0007_2026-10-21_17-42-05+0200.bin`: local time and its offset from UTC. The
+converter takes the start of the log from it, to about two seconds. A file written
+before the clock was set keeps its plain name, and its times count from the board's
+start.
 
 **Back to the normal mode** by a restart, whichever comes first:
 
@@ -265,6 +278,21 @@ turns it into a candump log.
 Any other restart, a reset or the power, also comes back in the normal mode. In the
 Wi-Fi mode the board does not sleep, so that a download is not cut off with the key
 off; the five minutes are what stop it running on.
+
+### The clock
+
+The board keeps the time of day for the card's files. **The page sets it** from the
+phone as it opens, unless it was set less than ten minutes before: a page opened
+twice keeps the first setting. Before it sets the clock, the board measures how far off
+it was, and the page shows that with the time since the setting before, in parts per
+million. Nothing else sets it; Bluetooth and RaceChrono play no part.
+
+The clock runs on through standby and through every restart, the switch between modes
+included, and is **lost with the power**: a board unplugged, or a bike battery
+disconnected, starts at 1970 until a page sets it again. The console says at each start
+`Clock: 2026-10-21 17:42:05 CEST, set 12 min ago`, or `Clock: not set since the power
+came on`. Asleep, it runs on the chip's own RC oscillator rather than its crystal; how
+far it drifts in a night is not yet measured.
 
 ## The LED
 

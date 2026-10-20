@@ -76,8 +76,8 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 1279 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
-| `feather-as-atom`, `atom` | 1244 KB | 93.9 KB | 164 KB in the normal mode with no card, measured on the Feather in a debug build, nothing connected; 114 KB with the stand-in for a card (`--sd-emulate`) |
+| `feather` | 1298 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
+| `feather-as-atom`, `atom` | 1263 KB | 93.9 KB | 164 KB in the normal mode with no card, measured on the Feather in a debug build, nothing connected; 114 KB with the stand-in for a card (`--sd-emulate`) |
 
 The microSD log is in every build, and costs about 61 KB of the program and 1 KB of the
 static RAM. Its ring and its task's stack, 38 KB, are taken from the heap only when a
@@ -85,7 +85,10 @@ card is found at start-up, and the stand-in holds what a mounted card would besi
 
 The Wi-Fi mode is about 570 KB of the program and 21 KB of the static RAM, which the
 Wi-Fi driver sets aside whether the mode runs or not: built without it
-(`CONFIG_NO_WIFI`), `feather-as-atom` is 670 KB and 72.6 KB.
+(`CONFIG_NO_WIFI`), `feather-as-atom` is 687 KB and 72.6 KB.
+
+The clock is about 19 KB of the program, the C library's time zones and time
+formatting, in every build.
 
 ## Building
 
@@ -162,6 +165,8 @@ with the display, is refused at compile time by
 | `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |
 | `CONFIG_SDLOG_SPI_HZ` | 25 MHz | the card's SPI clock, as M5Stack's example for the base has it |
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
+| `CONFIG_CLOCK_TZ` | Prague's, `CET-1CEST,M3.5.0,M10.5.0/3` | the time zone, in POSIX form, of the card's file times and of the stamp in a downloaded file's name ([usage.md](usage.md#the-clock)) |
+| `CONFIG_CLOCK_KEEP_S` | 600 s | the Wi-Fi page sets the board's clock only if it was set longer ago than this, so that a page opened twice keeps the first setting and the drift it measured |
 | `CONFIG_STANDBY` | on for `atom` and `feather-as-atom`, off for `feather` | light sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX, or the board file's button (`BUTTON_PIN`), wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
 | `CONFIG_STANDBY_TIMEOUT_S` | 60 s | the silence before it sleeps. The R9 sends over 500 frames a second with the key on, so a second would do; the rest is time to use the board after waking it with the button, and on the bench |
 | `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 21 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |

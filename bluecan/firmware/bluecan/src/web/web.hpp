@@ -115,6 +115,7 @@ private:
     void stats() noexcept;
     void files() noexcept;
     void file() noexcept;
+    void set_clock() noexcept;
     void leave() noexcept;
 
     /// millis() of the last request, or of the start; a download in progress keeps

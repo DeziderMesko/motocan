@@ -23,7 +23,8 @@
 
 /// The Wi-Fi mode's one page. Everything on it comes from /stats.json, once a second,
 /// and /files.json; it needs nothing from the internet, which the phone does not have
-/// on this network.
+/// on this network. As it opens it sends the phone's time to /clock, which sets the
+/// board's clock.
 constexpr char page_html[] = R"html(<!doctype html>
 <html lang="en">
 <head>
@@ -67,6 +68,14 @@ or ride off.</p>
 <button class="main" id="leave">Back to the normal mode</button>
 <div id="gone">Restarting in the normal mode. RaceChrono can connect again in a few seconds; this page can be closed.</div>
 
+<h2>Clock</h2>
+<div class="grid">
+<div><div class="k">The board's time</div><div class="v" id="clk">-</div></div>
+<div><div class="k">Set</div><div class="v" id="clkset">-</div></div>
+</div>
+<div class="sub" id="clkdrift"></div>
+<div class="sub" id="clknow"></div>
+
 <h2>Bus</h2>
 <div class="grid">
 <div><div class="k">State</div><div class="v" id="state">-</div></div>
@@ -89,18 +98,11 @@ or ride off.</p>
 <div><div class="k">Air, &deg;C</div><div class="v" id="air">-</div></div>
 </div>
 
-<h2>Ids</h2>
-<div class="wrap"><table>
-<thead><tr><th>Id</th><th>Hz</th><th>Frames</th><th>Last</th><th style="text-align:left">Payload</th></tr></thead>
-<tbody id="ids"></tbody>
-</table></div>
-<div class="sub" id="idsnote"></div>
-
 <div id="cardbox" hidden>
 <h2>Card</h2>
 <div id="card" class="sub">-</div>
 <div class="wrap"><table>
-<thead><tr><th>File</th><th>Size</th><th></th></tr></thead>
+<thead><tr><th>File, last written</th><th>Size</th><th></th></tr></thead>
 <tbody id="files"></tbody>
 </table></div>
 <p><button id="refresh">Refresh the list</button></p>
@@ -113,12 +115,27 @@ or ride off.</p>
 <div><div class="k">Devices on the network</div><div class="v" id="stations">-</div></div>
 </div>
 
+<h2>Ids</h2>
+<div class="wrap"><table>
+<thead><tr><th>Id</th><th>Hz</th><th>Frames</th><th>Last</th><th style="text-align:left">Payload</th></tr></thead>
+<tbody id="ids"></tbody>
+</table></div>
+<div class="sub" id="idsnote"></div>
+
 <script>
 const $=id=>document.getElementById(id);
 const n=v=>v==null?'-':v.toLocaleString('en-GB');
 const x100=v=>v==null?'-':(v/100).toFixed(1);
 const x10=v=>v==null?'-':(v/10).toFixed(1);
 function dur(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (h?h+' h ':'')+(h||m?m+' min ':'')+r+' s'}
+const when=ms=>new Date(ms).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function off(ms){return (Math.abs(ms)<1000?Math.abs(ms)+' ms':(Math.abs(ms)/1000).toFixed(1)+' s')+(ms>0?' ahead of':ms<0?' behind':' off')}
+function drift(c){
+  // what the setting measured: how far off the clock was, after how long since the one before
+  if(!c.was_known)return 'At that setting the board did not know the time.';
+  return 'At that setting it was '+off(c.error_ms)+' the phone, '+dur(c.since_s)+' after the setting before: '+
+    (c.since_s>0?Math.round(c.error_ms*1000/c.since_s)+' ppm':'-')+'.';
+}
 function size(b){return b<1e6?(b/1e3).toFixed(1)+' kB':b<1e9?(b/1e6).toFixed(1)+' MB':(b/1e9).toFixed(1)+' GB'}
 let stopped=false,failed=0,timer=null,busy=false;
 async function stats(){
@@ -132,6 +149,10 @@ async function stats(){
     const r=await fetch('/stats.json',{cache:'no-store',signal:ctl.signal});clearTimeout(t);const s=await r.json();
     failed=0;$('dead').style.display='none';
     $('link').textContent='live';$('link').className='ok';
+    const c=s.clock;
+    $('clk').textContent=c.ms==null?'not set':when(c.ms);
+    $('clkset').textContent=c.ms==null?'-':dur(Math.max(0,Math.round(c.ms/1000-c.set_s)))+' ago';
+    $('clkdrift').textContent=c.ms==null?'':drift(c);
     $('ssid').textContent=s.ssid;$('up').textContent=dur(s.up_s);$('idle').textContent=s.idle_s<120?s.idle_s+' s':Math.round(s.idle_s/60)+' minutes';
     const b=s.bus;
     $('state').textContent=b.state;$('state').className='v '+(b.state=='acknowledging'?'ok':b.state.startsWith('tripped')?'bad':'');
@@ -169,9 +190,20 @@ async function files(){
     const l=f.files.sort((a,c)=>c.name.localeCompare(a.name));
     $('card').textContent=l.length+' log files, '+size(l.reduce((t,a)=>t+a.size,0))+'. Newest first.'+
       (f.total?' '+size(f.free)+' free of '+size(f.total)+'; when it fills, the oldest go.':'');
-    $('files').innerHTML=l.map(a=>'<tr><td>'+a.name+'</td><td>'+size(a.size)+
-      '</td><td><a href="/file?name='+a.name+'" download="'+a.name+'">download</a></td></tr>').join('');
+    $('files').innerHTML=l.map(a=>'<tr><td>'+a.name+'<div class="sub">'+(a.t==null?'before the clock was set':when(a.t*1000))+'</div></td><td>'+size(a.size)+
+      '</td><td><a href="/file?name='+a.name+'" download="'+a.save+'">download</a></td></tr>').join('');
   }catch(e){$('card').textContent='The card did not answer.'}
+}
+// The phone's time, once as the page opens. The board takes it unless it was set in the
+// last ten minutes, and says how far off it was.
+async function setclock(){
+  try{
+    const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),3000);
+    const r=await fetch('/clock',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'ms='+Date.now(),signal:ctl.signal});
+    clearTimeout(t);const c=await r.json();
+    $('clknow').textContent=c.set?'Set from this phone just now.':
+      'Not set again, as it was set less than ten minutes ago. It is '+off(c.error_ms)+' this phone.';
+  }catch(e){$('clknow').textContent='The board did not take the time.'}
 }
 $('refresh').onclick=files;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!timer&&!busy)stats()});
@@ -180,7 +212,7 @@ $('leave').onclick=async()=>{
   try{await fetch('/leave',{method:'POST'})}catch(e){}
   stopped=true;$('gone').style.display='block';$('leave').disabled=true;$('link').textContent='left';
 };
-stats();files();
+setclock().then(stats);files();
 </script>
 </body>
 </html>

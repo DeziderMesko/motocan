@@ -24,6 +24,7 @@
 #include "src/canbus/controller.hpp"
 #include "src/canbus/decoder.hpp"
 #include "src/canbus/frame.hpp"
+#include "src/clock/clock.hpp"
 #include "src/display/display.hpp"
 #include "src/led/led.hpp"
 #include "src/mode/mode.hpp"
@@ -72,6 +73,9 @@ void setup()
 
     // The normal mode, Bluetooth and the card's log, or the Wi-Fi mode in its place.
     const bool wifi = mode::on_boot() == mode::run::wifi;
+
+    // The time zone for the card's file times, and the clock in the console.
+    wallclock::on_boot();
 
 #if ARDUINO_USB_CDC_ON_BOOT
     // A USB serial write blocks while a computer is plugged in and not reading, until

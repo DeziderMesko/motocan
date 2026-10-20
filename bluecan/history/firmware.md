@@ -2549,6 +2549,53 @@ on the card pins` as before, 164 504 bytes free. The page against a mock server:
 files, 43.9 MB. Newest first. 1.1 GB free of 15.9 GB; when it fills, the oldest go.`
 **Not run with a card**: no deletion has been seen.
 
+## Patch 47 — the board's clock, set from the Wi-Fi page — **applied, the page run against a mock server**
+
+2026-10-21, asked for by the owner: to know roughly when each log on the card was
+written, for logs made in everyday riding with no phone recording and nothing to pair
+them with. Three ways were put to the owner
+([journal](../../journal/racechrono-monitor-2026-10-20.md)): the phone's time from the
+Wi-Fi page, the phone's time from RaceChrono's Monitor API, and dating files written
+before a setting from a later one. The owner chose the first, left the second for later,
+and the third as a possibility for now.
+
+- **`src/clock/`**: the chip's system clock, which ESP-IDF keeps through light and deep
+  sleep and every restart (`CONFIG_LIBC_TIME_SYSCALL_USE_RTC_HRT`) and loses at a
+  power-on, when it starts at 1970. A clock before 2026-01-01 counts as not set. Asleep
+  it runs on the internal RC oscillator (`CONFIG_RTC_CLK_SRC_INT_RC`); its drift is not
+  measured. The last setting and what it measured are kept in RTC memory. At every start
+  the console says the time and how long since it was set.
+- **The page sets it** as it opens: `POST /clock` with the phone's `Date.now()`. Not
+  again within `CONFIG_CLOCK_KEEP_S`, 600 s, of a setting, so that the first page of a
+  morning keeps its measurement when it is opened twice; it answers with the offset from
+  that phone instead. Before setting, the board takes its own time less the phone's and
+  the phone's time since the setting before, which the page shows with the parts per
+  million: the drift measured at every setting. `/stats.json` has `clock`, the page a
+  Clock section under the button.
+- **The card's file times**: FatFs takes them from the system clock through ESP-IDF's
+  `get_fattime()`, in local time, and 1980-01-01 for a clock before 1980
+  (`components/fatfs/diskio/diskio.c`, IDF 5.5.5). The time zone is set at every start,
+  `CONFIG_CLOCK_TZ`, Prague's. A file's time is brought up to date by the log's sync
+  every 5 s and by its close, so it is about when its last frame arrived.
+- `/files.json` gives each file `t`, the time it was last written, null before 2026, and
+  `save`, the name it is saved under: `bluecan-0007_2026-10-21_17-42-05+0200.bin`, local
+  time with its offset from UTC; the plain name for a file written before the clock was
+  set. `/file` sends the same name. The page shows the time under each file's name.
+- **`sdlog-to-candump.py`** takes the start of the log from a stamped name when `--start`
+  is not given: the time in the name less the last record's.
+- **The page's Ids table is last**, under Board, asked for by the owner: it is long, and
+  was between the bike and the card.
+
+Built for every profile: `feather-as-atom` and `atom` 1263 KB of program and 93.9 KB of
+static RAM, `feather` 1298 KB and 99.9 KB, without the Wi-Fi mode 687 KB and 72.6 KB.
+The 19 KB are the C library's time zone and time formatting. On the Feather built as
+the Lite: flashed, asleep after 60 s, woken by one frame from the CANable; the clock's
+line at the start goes out before the port is back after a wake and was not seen. The
+page in headless Chromium against a mock server, with the clock set and not set: the
+Clock section, the measured drift, the second page in ten minutes not setting it, the
+file times. The converter on a made-up stamped file: the last frame at the stamped time.
+**Not run** on the board: a setting from a phone, a file's time on a card, the drift.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

@@ -3,6 +3,7 @@
 
     ./tools/sdlog-to-candump.py bluecan-0007.bin > bluecan-0007.log
     ./tools/sdlog-to-candump.py bluecan-0007.bin --start 1792440000.0 > bluecan-0007.log
+    ./tools/sdlog-to-candump.py bluecan-0007_2026-10-21_17-42-05+0200.bin > bluecan-0007.log
 
 The card holds one 24-byte record per frame, little-endian (src/sdlog/sdlog.hpp):
 the chip's microseconds since it started, u64; the id, u32, bit 31 set for a 29-bit
@@ -11,16 +12,37 @@ eight bytes of payload. The output is candump's log format, as the analysis tool
 it: `(seconds) can0 ID#PAYLOAD`. The seconds are the chip's own, counted from its
 start, unless --start gives the wall-clock time of that start.
 
+A file downloaded once the board's clock was set carries in its name the local time
+it was last written, with its offset from UTC. That is about when its last frame
+arrived, and without --start the start is taken from it: that time less the last
+frame's. It is good to about two seconds: FAT keeps times to two, and the board brings
+the time up to date every 5 s and as it closes the file.
+
 A file opened again after a failed write begins at a sector boundary, which is
 usually inside a record; the first whole record is found by trying the three offsets
 a 4096-byte sector can leave against 24-byte records, 0, 8 and 16, and keeping the one
 whose records look like records.
 """
 import argparse
+import datetime
+import os
+import re
 import struct
 import sys
 
 RECORD = struct.Struct('<QIBBH8s')
+
+# bluecan-NNNN_2026-10-21_17-42-05+0200.bin
+STAMP = re.compile(r'_(\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d[+-]\d{4})\.bin$')
+
+
+def written(path):
+    """The time the board last wrote the file, epoch seconds, from its name; None if the
+    name has no stamp."""
+    m = STAMP.search(os.path.basename(path))
+    if not m:
+        return None
+    return datetime.datetime.strptime(m.group(1), '%Y-%m-%d_%H-%M-%S%z').timestamp()
 
 
 def plausible(buf, offset, count=64):
@@ -45,8 +67,9 @@ def plausible(buf, offset, count=64):
 def main():
     p = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     p.add_argument('file')
-    p.add_argument('--start', type=float, default=0.0,
-                   help='wall-clock time, epoch seconds, of the chip\'s start')
+    p.add_argument('--start', type=float, default=None,
+                   help='wall-clock time, epoch seconds, of the chip\'s start; '
+                        'from the file\'s name if it has a stamp, else 0')
     p.add_argument('--interface', default='can0')
     a = p.parse_args()
 
@@ -56,6 +79,17 @@ def main():
     offset = max((0, 8, 16), key=lambda o: plausible(buf, o))
     if offset:
         print(f'{a.file}: records start {offset} bytes in', file=sys.stderr)
+
+    start = a.start
+    end = written(a.file)
+    if start is None and end is not None:
+        last = len(buf) - (len(buf) - offset) % RECORD.size - RECORD.size
+        if last >= offset:
+            start = end - RECORD.unpack_from(buf, last)[0] / 1e6
+            print(f'{a.file}: last written {datetime.datetime.fromtimestamp(end).astimezone():%Y-%m-%d %H:%M:%S %z}, '
+                  f'so the chip started at {start:.0f}', file=sys.stderr)
+    if start is None:
+        start = 0.0
 
     out = sys.stdout
     count = 0
@@ -67,7 +101,7 @@ def main():
         else:
             name = f'{ident & 0x7FF:03X}'
         payload = 'R' if flags & 1 else data[:dlc].hex().upper()
-        out.write(f'({a.start + t_us / 1e6:.6f}) {a.interface} {name}#{payload}\n')
+        out.write(f'({start + t_us / 1e6:.6f}) {a.interface} {name}#{payload}\n')
         count += 1
 
     left = (len(buf) - offset) % RECORD.size

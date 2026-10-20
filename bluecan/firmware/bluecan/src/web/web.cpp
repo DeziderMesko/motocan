@@ -34,6 +34,7 @@
 static_assert(sizeof(CONFIG_WIFI_PASSWORD) - 1U >= 8U, "a WPA2 password has 8 characters or more");
 
 #include "../canbus/controller.hpp"
+#include "../clock/clock.hpp"
 #include "../canbus/decoder.hpp"
 #include "../canbus/frame.hpp"
 #if defined(CONFIG_CANBUS_DECODER_YAMAHAR9)
@@ -161,6 +162,22 @@ bool log_name(const char* name) noexcept
         }
     }
     return true;
+}
+
+/// the name a log file is saved under: bluecan-NNNN_<stamp>.bin, with the local time it
+/// was last written, which is about when its last frame arrived; its own name if that
+/// time is from before the clock was set
+void save_name(const char* name, time_t written, char* out, size_t size) noexcept
+{
+    char stamp[32];
+    if (wallclock::stamp(written, stamp, sizeof(stamp)))
+    {
+        snprintf(out, size, "%.12s_%s.bin", name, stamp);
+    }
+    else
+    {
+        snprintf(out, size, "%s", name);
+    }
 }
 
 } // namespace
@@ -374,6 +391,7 @@ void web::serve() noexcept
     s.on("/files.json", HTTP_GET, [this]() { files(); });
     s.on("/file", HTTP_GET, [this]() { file(); });
     s.on("/leave", HTTP_POST, [this]() { leave(); });
+    s.on("/clock", HTTP_POST, [this]() { set_clock(); });
     // A request for any other host is a phone, tablet or laptop checking whether the
     // network reaches the internet -- Android's generate_204, Apple's hotspot-detect,
     // Windows's connecttest -- with its name answered by the DNS server below. A
@@ -441,6 +459,22 @@ void web::stats() noexcept
         ssid, (unsigned long)(now / 1000U), (unsigned long)_stations.load(std::memory_order_relaxed),
         (unsigned)CONFIG_WIFI_IDLE_S,
         (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap());
+    {
+        // The board's time, and the last setting with what it measured; nulls for a
+        // clock not set since the power came on.
+        int64_t at_s = 0;
+        wallclock::setting m{};
+        if (wallclock::last(at_s, m))
+        {
+            put("\"clock\":{\"ms\":%lld,\"set_s\":%lld,\"was_known\":%s,\"error_ms\":%lld,\"since_s\":%lld},",
+                (long long)wallclock::now_ms(), (long long)at_s, m.was_known ? "true" : "false",
+                (long long)m.error_ms, (long long)m.since_s);
+        }
+        else
+        {
+            put("\"clock\":{\"ms\":null},");
+        }
+    }
     put("\"bus\":{\"state\":\"%s\",\"tec\":%lu,\"rec\":%lu,\"trips\":%lu,"
         "\"frames\":%lu,\"rate\":%lu,\"errors\":%lu,\"extended\":%lu,\"remote\":%lu,"
         "\"dropped\":%lu,\"overflow\":%lu},",
@@ -558,9 +592,22 @@ void web::files() noexcept
             }
             if (!f.isDirectory() && log_name(name))
             {
-                char entry[64];
-                snprintf(entry, sizeof(entry), "%s{\"name\":\"%s\",\"size\":%lu}",
-                         first ? "" : ",", name, (unsigned long)f.size());
+                // When it was last written, by the clock as it was then: null for a
+                // file written before the clock was set, which FAT has as 1980.
+                const time_t written = f.getLastWrite();
+                char save[48];
+                save_name(name, written, save, sizeof(save));
+                char entry[128];
+                if (static_cast<int64_t>(written) >= wallclock::earliest_s)
+                {
+                    snprintf(entry, sizeof(entry), "%s{\"name\":\"%s\",\"size\":%lu,\"t\":%lld,\"save\":\"%s\"}",
+                             first ? "" : ",", name, (unsigned long)f.size(), (long long)written, save);
+                }
+                else
+                {
+                    snprintf(entry, sizeof(entry), "%s{\"name\":\"%s\",\"size\":%lu,\"t\":null,\"save\":\"%s\"}",
+                             first ? "" : ",", name, (unsigned long)f.size(), save);
+                }
                 server->sendContent(entry);
                 first = false;
             }
@@ -602,8 +649,10 @@ void web::file() noexcept
     }
 
     const size_t size = f.size();
-    char disposition[48];
-    snprintf(disposition, sizeof(disposition), "attachment; filename=\"%s\"", name.c_str());
+    char save[48];
+    save_name(name.c_str(), f.getLastWrite(), save, sizeof(save));
+    char disposition[80];
+    snprintf(disposition, sizeof(disposition), "attachment; filename=\"%s\"", save);
     server->setContentLength(size);
     server->sendHeader("Content-Disposition", disposition);
     server->send(200, "application/octet-stream", "");
@@ -633,6 +682,50 @@ void web::file() noexcept
 #else
     server->send(404, "text/plain", "this build has no card log\n");
 #endif
+}
+
+void web::set_clock() noexcept
+{
+    _last_ms.store(millis(), std::memory_order_relaxed);
+
+    // The phone's time, in ms since the epoch: from after earliest_s and before 2100,
+    // or it is not a time.
+    const String arg = server->arg("ms");
+    char* end = nullptr;
+    const long long ms = strtoll(arg.c_str(), &end, 10);
+    if (arg.length() == 0U || *end != '\0' || ms < wallclock::earliest_s * 1000LL || ms >= 4102444800000LL)
+    {
+        server->send(400, "text/plain", "ms: the phone's time in ms since the epoch\n");
+        return;
+    }
+
+    // Not again soon after a setting: the page opened twice keeps the first, and the
+    // drift it measured. It says how far off the clock is from this phone instead.
+    int64_t at_s = 0;
+    wallclock::setting before{};
+    if (wallclock::last(at_s, before) && ms / 1000 - at_s < CONFIG_CLOCK_KEEP_S)
+    {
+        const long long off = (long long)(wallclock::now_ms() - ms);
+        bootln("Clock: not set again, set %lld s ago; %+lld ms from the page's", (long long)(ms / 1000 - at_s), off);
+        char reply[64];
+        snprintf(reply, sizeof(reply), "{\"set\":false,\"error_ms\":%lld}", off);
+        server->send(200, "application/json", reply);
+        return;
+    }
+
+    const wallclock::setting m = wallclock::set(ms);
+    if (m.was_known)
+    {
+        bootln("Clock: set from the page; it was %+lld ms off after %lld s", (long long)m.error_ms, (long long)m.since_s);
+    }
+    else
+    {
+        bootln("Clock: set from the page; not set before");
+    }
+    char reply[96];
+    snprintf(reply, sizeof(reply), "{\"set\":true,\"was_known\":%s,\"error_ms\":%lld,\"since_s\":%lld}",
+             m.was_known ? "true" : "false", (long long)m.error_ms, (long long)m.since_s);
+    server->send(200, "application/json", reply);
 }
 
 void web::leave() noexcept
