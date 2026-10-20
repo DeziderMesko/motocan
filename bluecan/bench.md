@@ -149,7 +149,7 @@ In [firmware/tools/](firmware/tools/). Each script's header says more.
 
 ## Bench sketches
 
-Three small sketches for the same board, in [firmware/](firmware/). They are not the
+Four small sketches for the same board, in [firmware/](firmware/). They are not the
 Bluecan firmware; flash it back afterwards.
 
 | Sketch | For |
@@ -157,9 +157,36 @@ Bluecan firmware; flash it back afterwards.
 | [bluecan_bringup](firmware/bluecan_bringup/) | a self-test of the toolchain, the display, the buttons and the CAN controller. With a wire from `A1` to `A0` and no transceiver it tests the chip; with the KAmod wired and its terminator on, it tests the transceiver too. Ends at `CAN READY` |
 | [bluecan_bench](firmware/bluecan_bench/) | a continuous receiver for two-node work: counts, ids, error counters, and a listen-only switch, driven over the serial console. It acknowledges |
 | [bluecan_clock](firmware/bluecan_clock/) | a clock on the screen, set from the computer, for filming the dash with a time base shared with a `candump` log |
+| [bluecan_monitor](firmware/bluecan_monitor/) | RaceChrono's Monitor API, the app writing values back to the device: asks for the phone's `timestamp` and prints what comes. No CAN |
 
 ```bash
 cd bluecan/firmware && ./build.sh bluecan_bringup --upload
 ```
 
 Under WSL2, `./tools/reflash.sh bluecan_bench` does the same with the re-attaching.
+
+### The Monitor test
+
+`bluecan_monitor` finds out whether the phone's time can reach the board through
+RaceChrono. It is the RaceChrono DIY service with the two Monitor characteristics,
+`0x0005` and `0x0006`, beside the CAN-Bus pair, and it asks the app for four values:
+`timestamp`, `timestamp / 1000`, the GPS speed as a control, and, once the first two say
+whether `timestamp` is in seconds or milliseconds, the time in milliseconds since a
+recent second. It starts no CAN controller and notifies no frames.
+
+1. Flash it: `./tools/reflash.sh bluecan_monitor`, and read the console with
+   `./tools/bench.py 600`.
+2. The board advertises as `RC Monitor XX:XX:XX`, with the same Bluetooth address as
+   Bluecan on the same board. In RaceChrono, remove the Bluecan device first, then add
+   this one as a DIY Bluetooth LE device with **CAN-Bus and Monitor** ticked.
+3. Connect. The console shows the subscriptions to `0x0001` and `0x0005`, the
+   allow-list writes to `0x0002`, the app's answer to each equation, and then every
+   value with the board's time of arrival. The screen shows the link, the count of
+   equations accepted, and the phone's time as it arrives.
+4. Try it indoors without a GPS fix, then with one, and with a session recording.
+   While connected, every 30 s the console gets the counts, the intervals between values
+   and the spread of the phone's time against the board's. Single-letter commands go in
+   with `bench.py --at`: `u` asks the app to send every value now, `r` configures again,
+   `z` zeroes the counts, `V` stops printing each value.
+5. Afterwards flash Bluecan back, remove `RC Monitor` from RaceChrono and add Bluecan
+   with CAN-Bus only, as in [usage.md](usage.md#connecting-racechrono).
