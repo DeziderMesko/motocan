@@ -19,7 +19,7 @@ Then:
 bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug
 ```
 
-- [ ] Uploaded. Leave it; it starts in the normal mode, LED blue.
+- [x] Uploaded, by the owner, after a reconnect of the Feather.
 
 ## 1. Wakes keep USB (patch 41)
 
@@ -27,8 +27,9 @@ Run `bluecan/firmware/tools/console-log.sh` in a terminal of its own and `tail -
 bluecan/firmware/build/console.log` in another. Stop traffic; after 60 s the LED goes
 out and the console says `Standby: no frame for 60 s, sleeping`.
 
-- [ ] Woken by traffic, five times: each time the console comes back by itself with
-  `Standby: woken by the bus`, and Windows reports no USB problem.
+- [x] Woken by traffic, five times: the console came back by itself each time. But
+  Windows reported *USB device not recognized* at every sleep: the D+ pull-up stayed on.
+  Fixed in patch 41 (pulls off first); then four in four, nothing listed while asleep.
 - [ ] Woken by a short press of D2, five times: `Standby: woken by the button`, the LED
   blue, asleep again 60 s later.
 - [ ] If any wake fails as before, note which and how many: that decides between this
