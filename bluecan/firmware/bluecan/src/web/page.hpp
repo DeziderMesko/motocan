@@ -119,7 +119,7 @@ const n=v=>v==null?'-':v.toLocaleString('en-GB');
 const x100=v=>v==null?'-':(v/100).toFixed(1);
 const x10=v=>v==null?'-':(v/10).toFixed(1);
 function dur(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (h?h+' h ':'')+(h||m?m+' min ':'')+r+' s'}
-function size(b){return b<1e6?(b/1e3).toFixed(1)+' kB':(b/1e6).toFixed(1)+' MB'}
+function size(b){return b<1e6?(b/1e3).toFixed(1)+' kB':b<1e9?(b/1e6).toFixed(1)+' MB':(b/1e9).toFixed(1)+' GB'}
 let stopped=false,failed=0,timer=null,busy=false;
 async function stats(){
   timer=null;
@@ -167,7 +167,8 @@ async function files(){
       'The card socket is empty, or its card does not answer.':
       'There is a card, but it does not mount: not FAT32, or faulty.';return}
     const l=f.files.sort((a,c)=>c.name.localeCompare(a.name));
-    $('card').textContent=l.length+' log files, '+size(l.reduce((t,a)=>t+a.size,0))+'. Newest first.';
+    $('card').textContent=l.length+' log files, '+size(l.reduce((t,a)=>t+a.size,0))+'. Newest first.'+
+      (f.total?' '+size(f.free)+' free of '+size(f.total)+'; when it fills, the oldest go.':'');
     $('files').innerHTML=l.map(a=>'<tr><td>'+a.name+'</td><td>'+size(a.size)+
       '</td><td><a href="/file?name='+a.name+'" download="'+a.name+'">download</a></td></tr>').join('');
   }catch(e){$('card').textContent='The card did not answer.'}

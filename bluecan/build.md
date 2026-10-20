@@ -76,10 +76,10 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 1277 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
-| `feather-as-atom`, `atom` | 1243 KB | 93.9 KB | 164 KB in the normal mode with no card, measured on the Feather in a debug build, nothing connected; 114 KB with the stand-in for a card (`--sd-emulate`) |
+| `feather` | 1279 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
+| `feather-as-atom`, `atom` | 1244 KB | 93.9 KB | 164 KB in the normal mode with no card, measured on the Feather in a debug build, nothing connected; 114 KB with the stand-in for a card (`--sd-emulate`) |
 
-The microSD log is in every build, and costs about 59 KB of the program and 1 KB of the
+The microSD log is in every build, and costs about 61 KB of the program and 1 KB of the
 static RAM. Its ring and its task's stack, 38 KB, are taken from the heap only when a
 card is found at start-up, and the stand-in holds what a mounted card would besides.
 
@@ -156,7 +156,8 @@ with the display, is refused at compile time by
 | `CONFIG_CANBUS_ACK` | on | lets the controller acknowledge once the bit rate is proved. Undefined, the board only ever listens, which on the R9's diagnostic connector gets almost nothing |
 | `CONFIG_BLE_CONN_ITVL_MIN` / `_MAX` | `6` / `10` (7.5–12.5 ms) | the Bluetooth connection interval asked of the phone, in 1.25 ms units. **For an iPhone, change these to `12` / `24`** (15–30 ms): iOS rejects a request below 15 ms or with less than 15 ms between minimum and maximum, and then uses an interval of its own choosing. `12` / `24` works on Android too |
 | `CONFIG_CELL_FITTED` | off, in `boards/feather_revtft.hpp` | show the battery's state of charge and whether it is charging. Define it only with a cell plugged in; with none, the gauge reports a full, discharging battery that is not there. Untested with a cell |
-| `CONFIG_SDLOG` | on, in both board files, with the card's pins | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. The card is looked for once at start-up, on the log's own task, without holding up Bluetooth or CAN; with none, the task ends and nothing is logged until the next start. The look tells nothing on the pins, an empty socket and a card that does not mount apart ([usage.md](usage.md#the-microsd-log)). A card that fails a write is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. Not yet run with a card |
+| `CONFIG_SDLOG` | on, in both board files, with the card's pins | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. The card is looked for once at start-up, on the log's own task, without holding up Bluetooth or CAN; with none, the task ends and nothing is logged until the next start. The look tells nothing on the pins, an empty socket and a card that does not mount apart ([usage.md](usage.md#the-microsd-log)). A card that fails a write is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. Before each new file the oldest logs are deleted to keep `CONFIG_SDLOG_KEEP_FREE_MB` free. Not yet run with a card |
+| `CONFIG_SDLOG_KEEP_FREE_MB` | 1024 | the room kept free on the card, in MB, by deleting the oldest `bluecan-NNNN.bin` before a new one is opened. Larger than one start's log, so that the card does not fill under an open file: 1 GB is about 23 hours of the R9's bus |
 | `CONFIG_SDLOG_EMULATE` | off | with no card at start-up, drives the SPI bus and holds the heap as a card would, so that its cost can be measured on a board without one. `--sd-emulate` sets it |
 | `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |
 | `CONFIG_SDLOG_SPI_HZ` | 25 MHz | the card's SPI clock, as M5Stack's example for the base has it |

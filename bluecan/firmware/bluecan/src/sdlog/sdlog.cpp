@@ -61,6 +61,9 @@ static_assert(CONFIG_SDLOG_BUFFER % 4096 == 0, "ring must hold whole sectors");
 static_assert((CONFIG_SDLOG_BUFFER & (CONFIG_SDLOG_BUFFER - 1)) == 0, "ring must be a power of two");
 
 constexpr uint32_t sector = 4096U;
+
+/// less free than this after the oldest logs are gone, and no file is opened
+constexpr uint64_t full_below = 1024U * 1024U;
 constexpr uint32_t mask = CONFIG_SDLOG_BUFFER - 1U;
 
 // FatFs keeps its long-file-name buffer on the stack in this core's configuration.
@@ -147,6 +150,7 @@ const char* sdlog::name(card c) noexcept
     case card::empty:      return "no card in the socket, or one that does not answer";
     case card::unreadable: return "a card that does not mount: not FAT32, or faulty";
     case card::mounted:    return "card mounted";
+    case card::full:       return "no room on the card once the oldest logs are gone";
     default:               return "not looked for";
     }
 }
@@ -195,33 +199,24 @@ bool sdlog::open_card() noexcept
         return false;
     }
 
-    // The number after the highest there, found in one pass over the root directory.
-    // Trying each name in turn opened every file on the card on every start, and
-    // every wake adds one. Never a file that exists: FILE_WRITE truncates.
-    unsigned next = 0U;
-    File root = SD.open("/");
-    if (root)
+    make_room();
+
+    // A card the oldest logs could not make room on is left alone: a file opened on
+    // it would fail its first write, and the next try open another, every 5 s. Said
+    // by find_card() at start-up, and by the debug statistics after.
+    uint64_t room = 0U;
+    if (free_bytes(room) && room < full_below)
     {
-        for (String entry = root.getNextFileName(); entry.length() > 0; entry = root.getNextFileName())
-        {
-            if (strncmp(entry.c_str(), "/bluecan-", 9) != 0)
-            {
-                continue;
-            }
-            const char* digits = entry.c_str() + 9;
-            char* end = nullptr;
-            const unsigned long n = strtoul(digits, &end, 10);
-            if (end != digits && strcmp(end, ".bin") == 0 && n >= next)
-            {
-                next = n + 1U;
-            }
-        }
-        root.close();
+        _found = card::full;
+        SD.end();
+        return false;
     }
 
+    // Never a file that exists: FILE_WRITE truncates.
+    const logs l = scan();
     char name[24];
-    snprintf(name, sizeof(name), "/bluecan-%04u.bin", next);
-    if (next <= 9999U && !SD.exists(name))
+    snprintf(name, sizeof(name), "/bluecan-%04u.bin", l.next);
+    if (l.next <= 9999U && !SD.exists(name))
     {
         file = SD.open(name, FILE_WRITE);
     }
@@ -234,6 +229,82 @@ bool sdlog::open_card() noexcept
 
     bootln("SD log: writing %s", name);
     return true;
+}
+
+sdlog::logs sdlog::scan() noexcept
+{
+    // One pass over the root directory. Trying each name in turn opened every file on
+    // the card on every start, and every wake adds one.
+    logs l{0U, ""};
+    bool any = false;
+    unsigned lowest = 0U;
+
+    File root = SD.open("/");
+    if (!root)
+    {
+        return l;
+    }
+    for (String entry = root.getNextFileName(); entry.length() > 0; entry = root.getNextFileName())
+    {
+        if (strncmp(entry.c_str(), "/bluecan-", 9) != 0)
+        {
+            continue;
+        }
+        const char* digits = entry.c_str() + 9;
+        char* end = nullptr;
+        const unsigned long n = strtoul(digits, &end, 10);
+        if (end == digits || strcmp(end, ".bin") != 0)
+        {
+            continue;
+        }
+        if (n >= l.next)
+        {
+            l.next = n + 1U;
+        }
+        if (!any || n < lowest)
+        {
+            lowest = n;
+            snprintf(l.oldest, sizeof(l.oldest), "%s", entry.c_str());
+        }
+        any = true;
+    }
+    root.close();
+    return l;
+}
+
+bool sdlog::free_bytes(uint64_t& room) noexcept
+{
+    // Zero is what the library says when FatFs could not count, never a size.
+    const uint64_t total = SD.totalBytes();
+    if (total == 0U)
+    {
+        return false;
+    }
+    room = total - SD.usedBytes();
+    return true;
+}
+
+void sdlog::make_room() noexcept
+{
+    const uint64_t want = static_cast<uint64_t>(CONFIG_SDLOG_KEEP_FREE_MB) * 1024U * 1024U;
+
+    // Never on a card that cannot say how full it is: a free space read as zero would
+    // delete every log on it.
+    uint64_t room = 0U;
+    while (free_bytes(room) && room < want)
+    {
+        const logs l = scan();
+        if (l.oldest[0] == '\0')
+        {
+            return;
+        }
+        if (!SD.remove(l.oldest))
+        {
+            errorln("ERROR: SD log could not delete %s", l.oldest);
+            return;
+        }
+        bootln("SD log: deleted %s, the oldest, for room", l.oldest);
+    }
 }
 
 void sdlog::close_card() noexcept
@@ -568,7 +639,7 @@ void sdlog::stats() noexcept
         if (_stats_timer.elapsed(CONFIG_RC_STATS_TIMEOUT) > 0UL)
         {
             infoln("            SD log: %s, %lu sectors, %lu errors, %lu reopened, worst %lu us",
-                   _mode == mode_emulated ? "emulated" : _open ? "card" : "no card",
+                   _mode == mode_emulated ? "emulated" : _open ? "card" : name(_found),
                    (unsigned long)_sectors, (unsigned long)_errors,
                    (unsigned long)_reopens, (unsigned long)_worst_us);
             infoln("       SD log ring: %lu waiting, peak %lu of %u, %lu frames dropped",

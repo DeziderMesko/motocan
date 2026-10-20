@@ -75,6 +75,13 @@
 #define CONFIG_SDLOG_SYNC_S 5
 #endif
 
+/// the room kept free on the card, in MB: before a log file is opened, the oldest are
+/// deleted until there is this much. 1 GB is about 23 hours of the R9's bus, more than
+/// any one start lasts, so the card does not fill while a file is open
+#ifndef CONFIG_SDLOG_KEEP_FREE_MB
+#define CONFIG_SDLOG_KEEP_FREE_MB 1024
+#endif
+
 /// how often a card closed after a failed write is mounted again, in seconds
 #ifndef CONFIG_SDLOG_RETRY_S
 #define CONFIG_SDLOG_RETRY_S 5
@@ -134,6 +141,7 @@ public:
         empty,      //!< MISO pulled up, as the TF-Card Base does, but nothing answers
         unreadable, //!< a card answers, but no FAT file system mounts on it
         mounted,
+        full,       //!< mounted, but no room for a log with every old one deleted
     };
 
     /// a phrase for the console
@@ -190,6 +198,19 @@ private:
     bool find_card() noexcept;
     card mount(uint8_t files) noexcept;
     bool open_card() noexcept;
+
+    /// the card's log files, bluecan-NNNN.bin, as one pass over the root finds them
+    struct logs
+    {
+        unsigned next;   //!< the number after the highest
+        char oldest[24]; //!< the lowest-numbered one's path; empty with none
+    };
+    static logs scan() noexcept;
+    /// the oldest log files deleted until CONFIG_SDLOG_KEEP_FREE_MB is free, or none is
+    /// left. Only with no file open, and only files this firmware names
+    static void make_room() noexcept;
+    /// false if the card would not say
+    static bool free_bytes(uint64_t& room) noexcept;
     void close_card() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
     void write_rest() noexcept;

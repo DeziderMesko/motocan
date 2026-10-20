@@ -2515,6 +2515,37 @@ was. On the Feather built as the Lite, nothing on A2–A5: `nothing on the card 
 s after `looking for a card`; 164 672 bytes free. The page in headless Chromium against
 a mock server, all four answers. **Not run** with the base, an empty socket or a card.
 
+## Patch 46 — the card used in a circle — **applied, run on the Feather with nothing on the pins**
+
+2026-10-20, asked for by the owner. Before, a full card failed its writes, and the
+recovery from patch 36 then mounted it again every 5 s and opened a new, empty file
+each time, which failed in turn: an empty file every 5 s up to `bluecan-9999.bin`. The
+owner was offered stopping with a "card full" until the next start, or deleting the
+oldest logs, and chose the circle.
+
+- **Room first.** `open_card()`, at start-up and on every reopen after a failed write,
+  deletes the lowest-numbered `bluecan-NNNN.bin` until `CONFIG_SDLOG_KEEP_FREE_MB`,
+  1024, is free, or none is left. 1 GB is about 23 hours of the R9's 12 KB a second, so
+  a card does not fill under an open file in any start that can happen; if one does,
+  the failed write and the reopen make room in the same way.
+- Only the firmware's own names are deleted, the file being written is closed before
+  any deletion, and the Wi-Fi mode deletes nothing. A card that cannot say how full it
+  is (`SD.totalBytes()` reading 0) has nothing deleted, since that would read as no
+  room at all.
+- **No file on a card with no room**: less than 1 MB free once every log is gone, a card
+  full of other files, is `card::full`, and nothing is opened, so the 5 s retries no
+  longer leave files behind. Said once at start-up, and by the debug statistics, which
+  now name what the last look found rather than `no card`.
+- One pass over the root directory, `scan()`, gives both the next number and the
+  oldest file. The numbers still stop at 9999.
+- The Wi-Fi page says how much of the card is free, and sizes in GB.
+
+Built for every profile: `feather-as-atom` and `atom` 1244 KB, `feather` 1279 KB;
+the static RAM as it was. On the Feather built as the Lite, nothing on the pins: `nothing
+on the card pins` as before, 164 504 bytes free. The page against a mock server: `2 log
+files, 43.9 MB. Newest first. 1.1 GB free of 15.9 GB; when it fills, the oldest go.`
+**Not run with a card**: no deletion has been seen.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

@@ -185,6 +185,16 @@ put in later is used from the next start, which on the bike is the next wake. Th
 are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). It has not yet been run with a
 card.
 
+**The card is used in a circle.** Before it opens a new file, the board deletes the
+oldest logs, the lowest numbers first, until 1 GB of the card is free: about 23 hours
+of the R9's bus, more than one start lasts. It deletes only its own `bluecan-NNNN.bin`
+files, never the one it is writing, and never in the Wi-Fi mode. Anything else on the
+card is left alone; if that leaves no room, nothing is logged. A card that does fill
+while a file is open (a start longer than the free space) fails a write, and the board
+mounts it again 5 s later, makes room the same way and goes on in a new file. The
+numbers go up to 9999; after that no new file is opened, and the old ones have to be
+deleted by hand.
+
 The look tells four cases apart, and the console names the one it found:
 
 | Found | Console | The Wi-Fi page |
@@ -192,7 +202,8 @@ The look tells four cases apart, and the console names the one it found:
 | nothing on the card pins: a Lite without the base | `nothing on the card pins` | no Card section |
 | the base, no card in it, or a card that does not answer | `no card in the socket, or one that does not answer` | *The card socket is empty, or its card does not answer.* |
 | a card that answers but does not mount: exFAT, unformatted, or faulty | `a card that does not mount: not FAT32, or faulty` | *There is a card, but it does not mount: not FAT32, or faulty.* |
-| a FAT32 card | `card mounted` | the list of files |
+| a FAT32 card | `card mounted` | the list of files, and how much of the card is free |
+| a FAT32 card full of other files, with no log left to delete | `no room on the card once the oldest logs are gone` | the list of files |
 
 The second case is told from the first by the base's 4.7 kΩ pull-up on MISO: the board
 pulls the pin down weakly, and reads it high only with the base there. A card is never

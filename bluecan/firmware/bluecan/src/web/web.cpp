@@ -536,7 +536,12 @@ void web::files() noexcept
     // Sent in pieces: a card can hold thousands of files, and the list has no fixed size.
     server->setContentLength(CONTENT_LENGTH_UNKNOWN);
     server->send(200, "application/json", "");
-    server->sendContent("{\"sd\":\"mounted\",\"files\":[");
+    // How full it is, for the page: the oldest logs go when it fills (sdlog.hpp).
+    const uint64_t total = SD.totalBytes();
+    char head[96];
+    snprintf(head, sizeof(head), "{\"sd\":\"mounted\",\"total\":%llu,\"free\":%llu,\"files\":[",
+             (unsigned long long)total, (unsigned long long)(total - SD.usedBytes()));
+    server->sendContent(head);
 
     bool first = true;
     File root = SD.open("/");
