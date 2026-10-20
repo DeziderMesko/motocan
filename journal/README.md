@@ -20,3 +20,5 @@ nothing in this folder from outside it that you would mind losing.
   the Wi-Fi mode and the light-sleep standby left for a hand at the button and a phone.
 - [racechrono-monitor-2026-10-20.md](racechrono-monitor-2026-10-20.md) — whether the
   phone's time reaches the board through RaceChrono's Monitor API, with both console logs.
+- [bluecan-clock-drift-2026-10-21.md](bluecan-clock-drift-2026-10-21.md) — how far the
+  board's clock drifts in a night of standby: the check patch 47 left for a phone.
