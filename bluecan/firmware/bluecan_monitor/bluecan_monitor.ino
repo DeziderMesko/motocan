@@ -40,6 +40,10 @@
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
+#include <host/ble_gap.h>
+#include <host/ble_gatt.h>
+#include <host/ble_hs.h>
+#include <host/ble_hs_mbuf.h>
 #include <time.h>
 
 #if !defined(CONFIG_NIMBLE_ENABLED)
@@ -81,15 +85,15 @@ static Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 // print and every decision is made in loop(), so a slow serial port never holds up
 // the host.
 
-enum : uint8_t { EV_CONNECT, EV_DISCONNECT, EV_MTU, EV_PARAMS, EV_SUBSCRIBE,
-                 EV_FILTER, EV_CONFIG, EV_VALUES };
+enum : uint8_t { EV_CONNECT, EV_DISCONNECT, EV_REASON, EV_MTU, EV_PARAMS, EV_SUBSCRIBE,
+                 EV_FILTER, EV_CONFIG, EV_VALUES, EV_INDICATED };
 
 struct bt_event
 {
     int64_t  t_us;      // esp_timer at the callback
     uint8_t  kind;
     uint8_t  len;       // bytes kept in data
-    uint16_t arg;       // characteristic, interval or MTU, by kind
+    uint16_t arg;       // characteristic, interval, MTU or status, by kind
     uint16_t arg2;      // subscription bits, latency, or the write's full length
     uint8_t  data[48];
 };
@@ -173,7 +177,12 @@ static BLEServer*         g_server;
 static BLECharacteristic* g_frames;
 static BLECharacteristic* g_filter;
 static BLECharacteristic* g_config;
-static volatile int       g_indicate_status = -1;   // the last onStatus() of 0x0005
+static volatile uint16_t  g_conn = BLE_HS_CONN_HANDLE_NONE;
+
+// The phone's confirmation of the last indication: waiting, confirmed, or the host's
+// status when it failed. Set by handle_event().
+static constexpr int CONFIRM_WAITING = -1;
+static int g_confirm = CONFIRM_WAITING;
 
 // The app's answer to the last configuration command, filled in by handle_event().
 static bool    g_reply = false;
@@ -187,10 +196,12 @@ class server_cb : public BLEServerCallbacks
 {
     void onConnect(BLEServer*, ble_gap_conn_desc* d) override
     {
+        g_conn = d->conn_handle;
         push(EV_CONNECT, d->conn_itvl, d->conn_latency, nullptr, 0);
     }
     void onDisconnect(BLEServer*, ble_gap_conn_desc*) override
     {
+        g_conn = BLE_HS_CONN_HANDLE_NONE;
         push(EV_DISCONNECT, 0, 0, nullptr, 0);
         BLEDevice::startAdvertising();
     }
@@ -217,11 +228,38 @@ class chr_cb : public BLECharacteristicCallbacks
         const uint16_t uuid = c == g_frames ? CHR_CAN_FRAMES : c == g_config ? CHR_MON_CONFIG : 0;
         push(EV_SUBSCRIBE, uuid, sub, nullptr, 0);
     }
-    void onStatus(BLECharacteristic*, Status s, uint32_t) override
+    // Reached from the host's BLE_GAP_EVENT_NOTIFY_TX: SUCCESS_INDICATE when the phone
+    // confirmed, ERROR_INDICATE_FAILURE with the host's status when it did not.
+    void onStatus(BLECharacteristic* c, Status s, uint32_t code) override
     {
-        g_indicate_status = (int)s;
+        if (c != g_config) return;
+        if (s == SUCCESS_INDICATE) push(EV_INDICATED, 0, 0, nullptr, 0);
+        else if (s == ERROR_INDICATE_FAILURE) push(EV_INDICATED, (uint16_t)code, 0, nullptr, 0);
     }
 };
+
+// The server callbacks are not told why a link ended; a GAP listener is.
+static ble_gap_event_listener g_gap_listener;
+
+static int on_gap_event(ble_gap_event* ev, void*)
+{
+    if (ev->type == BLE_GAP_EVENT_DISCONNECT) {
+        push(EV_REASON, (uint16_t)ev->disconnect.reason, 0, nullptr, 0);
+    }
+    return 0;
+}
+
+static const char* reason_text(uint16_t r)
+{
+    switch (r) {
+    case BLE_HS_ERR_HCI_BASE + 0x08: return "supervision timeout";
+    case BLE_HS_ERR_HCI_BASE + 0x13: return "the phone ended it";
+    case BLE_HS_ERR_HCI_BASE + 0x16: return "this board ended it";
+    case BLE_HS_ERR_HCI_BASE + 0x22: return "link layer response timeout";
+    case BLE_HS_ERR_HCI_BASE + 0x3e: return "failed to establish";
+    default:                         return "other";
+    }
+}
 
 static server_cb g_server_cb;
 static chr_cb    g_chr_cb;
@@ -393,6 +431,14 @@ static void handle_event(const bt_event& e)
         Serial.println(">> disconnected, advertising");
         break;
 
+    case EV_REASON:
+        Serial.printf(">> disconnect reason 0x%03x, %s\n", e.arg, reason_text(e.arg));
+        break;
+
+    case EV_INDICATED:
+        g_confirm = e.arg;
+        break;
+
     case EV_MTU:
         Serial.printf(">> MTU %u\n", e.arg);
         break;
@@ -459,18 +505,44 @@ static void drain_events()
 
 // Indicates one command and waits for the confirmation, then for the app's answer on
 // 0x0005, draining events meanwhile. Returns false if the link is gone.
+//
+// Straight to the host, as Bluecan notifies frames. In this core's NimBLE build
+// BLECharacteristic::indicate() never sees the confirmation: it waits out its second
+// and reports a timeout whatever the phone did. The confirmation does arrive, as
+// BLE_GAP_EVENT_NOTIFY_TX, which reaches onStatus().
 static bool indicate(const uint8_t* bytes, size_t len, uint32_t answer_ms)
 {
-    g_reply = false;
-    g_indicate_status = -1;
-    g_config->setValue((uint8_t*)bytes, len);
-    g_config->indicate();   // blocks until the phone confirms, or for a second
-    if (g_indicate_status != BLECharacteristicCallbacks::SUCCESS_INDICATE) {
-        Serial.printf(">> indication not confirmed, status %d\n", g_indicate_status);
+    const uint16_t conn = g_conn;
+    if (conn == BLE_HS_CONN_HANDLE_NONE) return false;
+    os_mbuf* om = ble_hs_mbuf_from_flat(bytes, len);
+    if (!om) {
+        Serial.println(">> no mbuf for the indication");
         return false;
     }
+    g_reply = false;
+    g_confirm = CONFIRM_WAITING;
     const uint32_t t0 = millis();
-    while (!g_reply && millis() - t0 < answer_ms) {
+    // consumes the mbuf whatever the outcome
+    const int rc = ble_gatts_indicate_custom(conn, g_config->getHandle(), om);
+    if (rc != 0) {
+        Serial.printf(">> indication refused by the host, rc %d\n", rc);
+        return false;
+    }
+    // ATT gives the phone 30 s to confirm
+    while (g_confirm == CONFIRM_WAITING && millis() - t0 < 31000) {
+        drain_events();
+        if (!g_connected) return false;
+        delay(1);
+    }
+    if (g_confirm != 0) {
+        Serial.printf(">> indication not confirmed after %lu ms, status %d\n",
+                      (unsigned long)(millis() - t0), g_confirm);
+        return false;
+    }
+    Serial.printf(">> 0x0005 indication of %u bytes confirmed in %lu ms\n",
+                  (unsigned)len, (unsigned long)(millis() - t0));
+    const uint32_t t1 = millis();
+    while (!g_reply && millis() - t1 < answer_ms) {
         drain_events();
         if (!g_connected) return false;
         delay(1);
@@ -578,6 +650,7 @@ static void start_ble()
         snprintf(name, sizeof name, "RC Monitor");
     }
     BLEDevice::init(name);
+    ble_gap_event_listener_register(&g_gap_listener, on_gap_event, nullptr);
 
     g_server = BLEDevice::createServer();
     g_server->setCallbacks(&g_server_cb);
