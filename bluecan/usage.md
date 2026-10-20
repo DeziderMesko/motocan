@@ -190,8 +190,11 @@ same way switches back.
 **To connect**, join the network `bluecan-XXXX` (the last four hex digits of the board's
 MAC) with the password from `bluecan/firmware/bluecan/src/web/secret.hpp`, which the
 build script wrote and printed the first time it built ([build.md](build.md#build-time-settings)).
-Then open <http://192.168.4.1/>. The network has no internet, and a phone may ask
-whether to stay on it.
+The phone then opens the page by itself, as it does for a hotel's network that wants a
+sign-in: Android offers *Sign in to network*, and the page opens in that window. It works
+there as in a browser. Otherwise open <http://192.168.4.1/>; any other address typed
+there leads to the page too. The network has no internet, and a phone may ask whether
+to stay on it.
 
 **The page** updates every second:
 
@@ -203,6 +206,11 @@ whether to stay on it.
 | Card | the log files, `bluecan-NNNN.bin`, newest first, each with a link to download it |
 | Board | free memory, and how many devices are on the network |
 
+While the page is out of sight, behind another app or in a background tab, it stops
+asking, so that a page left open does not keep the board in this mode; it starts again
+when it comes back. If the board has gone back to the normal mode meanwhile, or does not
+answer for three seconds, a red bar across the top says so: the page is dead.
+
 Nothing on the page writes anything, and files cannot be deleted from it. The card is
 not written in this mode: frames on the bus meanwhile are not logged. A downloaded file
 is 24 bytes a frame; [firmware/tools/sdlog-to-candump.py](firmware/tools/sdlog-to-candump.py)
@@ -212,8 +220,9 @@ turns it into a candump log.
 
 - the page's button *Back to the normal mode*;
 - the board's button held for five seconds again;
-- five minutes without a request to the page: the page closed, or the phone's browser
-  shut while the phone stays on the network;
+- five minutes without a request to the page: the page closed or out of sight, or the
+  phone's browser shut while the phone stays on the network. The phone's own checks of
+  whether the network reaches the internet do not count;
 - the rear wheel above 10 km/h for a second: the bike is being ridden. RaceChrono, if it
   is waiting, connects again by itself.
 

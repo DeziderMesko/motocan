@@ -2388,6 +2388,36 @@ the board slept, then traffic again:
 - With that, four cycles in four: nothing listed while asleep, the console back 5–6 s
   after the traffic, acknowledging at 515–517 ms.
 
+## Patch 42 — the page opens by itself, says when it is dead, and stops asking out of sight — **applied, run with the owner's phone**
+
+2026-10-20, from the owner's first use of the Wi-Fi mode from a phone, Android.
+
+- **The first try reached nothing.** The phone joined, got 192.168.4.2 from DHCP, and no
+  request arrived at the board in five minutes, mobile data on and then off. After a
+  reflash and a fresh join it worked; the cause is not known. A debug build now prints
+  each device's address and signal, and each request as it arrives.
+- **A sign-in page, as a hotel's network has.** A DNS server answers every name with the
+  board (`DNSServer`, on AsyncUDP), and a request for any host but the board's address is
+  answered with a redirect to the page. That is what Android's `generate_204` check, and
+  Apple's and Windows's, take for a network that wants a sign-in: the phone opens the page
+  by itself. Those checks do not count as requests for the five minutes, or a phone left
+  on the network would keep the board in the mode. Seen on the owner's phone: the page
+  opened by itself in the sign-in window and worked there, the console showing three
+  `/generate_204` redirected and the page's own requests counted.
+- **A dead page says so.** Three seconds without an answer to `/stats.json`, each request
+  given up after three, and a red bar across the top says the board has most likely gone
+  back to the normal mode. Tried in a headless Chromium against a stand-in server that
+  stopped answering.
+- **No asking out of sight.** Found while answering whether the sign-in window would cause
+  trouble: a page left open in a background tab goes on asking, Chrome slowing it to once
+  a minute, which is enough to keep the board in the mode for good. The page now stops
+  while hidden and starts again when it comes back.
+- The owner asked for a countdown to the return to Bluetooth. Not done: the five minutes
+  count from the last request, and an open page asks every second, so it would read five
+  minutes for as long as anyone could see it.
+- The page's button *Back to the normal mode*: the request at 09:58:40.465 by the console,
+  the restart 0.4 s later, Bluetooth up at 09:58:47.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

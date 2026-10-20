@@ -52,9 +52,13 @@ button.main{background:var(--accent);color:var(--bg)}
 a{color:var(--accent)}
 .bad{color:var(--bad)}.ok{color:var(--ok)}
 #gone{display:none;padding:12px;border:1px solid var(--line);border-radius:8px;margin-top:12px}
+#dead{display:none;position:sticky;top:0;padding:12px;margin:0 0 12px;border-radius:8px;background:var(--bad);color:var(--bg)}
 </style>
 </head>
 <body>
+<div id="dead"><b>Bluecan is not answering.</b> It has most likely gone back to the normal mode &ndash; by its
+button, after five minutes without this page, or because the bike moved &ndash; or this phone has left its network.
+This page no longer updates. To come back, hold the board's button for 5&nbsp;s and join its network again.</div>
 <h1>Bluecan, Wi-Fi mode</h1>
 <div class="sub"><span id="ssid">-</span> &middot; up <span id="up">-</span> &middot; <span id="link">connecting</span></div>
 <p class="sub">Bluetooth is off in this mode, and the card is not being written. The board goes back to the normal mode
@@ -114,11 +118,17 @@ const x100=v=>v==null?'-':(v/100).toFixed(1);
 const x10=v=>v==null?'-':(v/10).toFixed(1);
 function dur(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (h?h+' h ':'')+(h||m?m+' min ':'')+r+' s'}
 function size(b){return b<1e6?(b/1e3).toFixed(1)+' kB':(b/1e6).toFixed(1)+' MB'}
-let stopped=false;
+let stopped=false,failed=0,timer=null,busy=false;
 async function stats(){
-  if(stopped)return;
+  timer=null;
+  // Not while the page is out of sight: a background tab that went on asking, even once
+  // a minute, would keep the board in this mode for good. It asks again on coming back.
+  if(stopped||busy||document.hidden)return;
+  busy=true;
   try{
-    const r=await fetch('/stats.json',{cache:'no-store'});const s=await r.json();
+    const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),3000);
+    const r=await fetch('/stats.json',{cache:'no-store',signal:ctl.signal});clearTimeout(t);const s=await r.json();
+    failed=0;$('dead').style.display='none';
     $('link').textContent='live';$('link').className='ok';
     $('ssid').textContent=s.ssid;$('up').textContent=dur(s.up_s);$('idle').textContent=Math.round(s.idle_s/60);
     const b=s.bus;
@@ -138,8 +148,13 @@ async function stats(){
     $('idsnote').textContent=ids.length+' ids'+(b.overflow?', and '+n(b.overflow)+' frames of ids beyond the table\'s 32':'');
     $('heap').textContent=Math.round(s.heap/1024);$('heapmin').textContent=Math.round(s.heap_min/1024);
     $('stations').textContent=s.stations;
-  }catch(e){$('link').textContent='no answer';$('link').className='bad'}
-  setTimeout(stats,1000);
+  }catch(e){
+    $('link').textContent='no answer';$('link').className='bad';
+    // Three seconds of nothing: the board has gone, not a request lost.
+    if(++failed>=3)$('dead').style.display='block';
+  }
+  busy=false;
+  timer=setTimeout(stats,1000);
 }
 async function files(){
   $('card').textContent='reading the card...';
@@ -154,6 +169,7 @@ async function files(){
   }catch(e){$('card').textContent='The card did not answer.'}
 }
 $('refresh').onclick=files;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!timer&&!busy)stats()});
 $('leave').onclick=async()=>{
   if(!confirm('Go back to the normal mode?'))return;
   try{await fetch('/leave',{method:'POST'})}catch(e){}

@@ -46,6 +46,7 @@ static_assert(sizeof(CONFIG_WIFI_PASSWORD) - 1U >= 8U, "a WPA2 password has 8 ch
 #include "../utils/timer.hpp"
 #include "page.hpp"
 
+#include <DNSServer.h>
 #include <WebServer.h>
 #include <WiFi.h>
 #if defined(CONFIG_SDLOG)
@@ -396,7 +397,23 @@ void web::serve() noexcept
     s.on("/files.json", HTTP_GET, [this]() { files(); });
     s.on("/file", HTTP_GET, [this]() { file(); });
     s.on("/leave", HTTP_POST, [this]() { leave(); });
-    s.onNotFound([]() { server->send(404, "text/plain", "not found\n"); });
+    // A request for any other host is a phone, tablet or laptop checking whether the
+    // network reaches the internet -- Android's generate_204, Apple's hotspot-detect,
+    // Windows's connecttest -- with its name answered by the DNS server below. A
+    // redirect to the page is what tells it this network wants a sign-in, and it then
+    // opens the page by itself. None of these counts as a request for the idle rule:
+    // a phone left on the network checks again and again, and would keep the board in
+    // this mode for as long as it stayed.
+    s.onNotFound([]() {
+        const String here = WiFi.softAPIP().toString();
+        if (server->hostHeader() != here)
+        {
+            server->sendHeader("Location", "http://" + here + "/");
+            server->send(302, "text/plain", "");
+            return;
+        }
+        server->send(404, "text/plain", "not found\n");
+    });
 #if defined(DEBUG)
     // Every request in the console, before it is handled: whether anything arrives at
     // all is the first question when the page does not open.
@@ -407,6 +424,11 @@ void web::serve() noexcept
     });
 #endif
     s.begin();
+
+    // Every name answers with this board, so that a device on the network finds the
+    // page whatever it asks for; see onNotFound above. It runs on a task of its own.
+    static DNSServer dns;
+    dns.start(53, "*", WiFi.softAPIP());
 
     uint32_t stations_ms = 0U;
     while (true)
