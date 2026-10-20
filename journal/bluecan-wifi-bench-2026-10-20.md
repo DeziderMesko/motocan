@@ -65,9 +65,11 @@ In the Wi-Fi mode:
 - [ ] Card: `No card.`, or, in a build with `--sd` and a card wired to A2–A5, the list.
 - [x] The page's *Back to the normal mode*: a confirmation, then the note that it is
   restarting; the LED blue within a few seconds.
-- [ ] RaceChrono, if it was connected before the switch, connects again by itself.
-- [ ] Phone left on the network, page closed: back in the normal mode about five minutes
-  after the last request (measured on 2026-10-20 without a phone: 300 s).
+- [x] RaceChrono, if it was connected before the switch, connects again by itself.
+- [x] Phone left on the network, page closed: back in the normal mode after the last
+  request. Seen with `--quick` (30 s), the page in Android's sign-in window put behind
+  another app: it stopped asking, the board went back, RaceChrono connected, and the
+  window showed the red bar on coming back.
 
 ## 4. A download, if a card is at hand
 

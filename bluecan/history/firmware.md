@@ -2412,6 +2412,11 @@ the board slept, then traffic again:
   trouble: a page left open in a background tab goes on asking, Chrome slowing it to once
   a minute, which is enough to keep the board in the mode for good. The page now stops
   while hidden and starts again when it comes back.
+- **Out of sight, then gone**, with `--quick` (30 s): the sign-in window put behind
+  another app, its last request at 11:23:25 by the console, the board back in the
+  normal mode at 11:23:53, Bluetooth up at 11:24:02 and RaceChrono connected by itself
+  0.2 s later. Back in the window, the red bar. The console's times are WSL's clock,
+  which steps; 28.6 s for 30 is that.
 - The owner asked for a countdown to the return to Bluetooth. Not done: the five minutes
   count from the last request, and an open page asks every second, so it would read five
   minutes for as long as anyone could see it.
