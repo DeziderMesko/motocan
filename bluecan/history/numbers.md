@@ -117,7 +117,7 @@ everything downstream and the phone picks it afresh on every reconnect.
 | Free internal heap, no PSRAM | **197 464 bytes** after start-up, largest block 155 636; flat under the full replay | [patch 32](firmware.md#patch-32--the-feather-as-an-atoms3-lite-and-a-build-for-the-lite--applied-run-on-the-feather) |
 | ...with the microSD log | **147 708 bytes**, largest block 106 484 | [patch 33](firmware.md#patch-33--a-microsd-log-and-a-stand-in-for-the-card--applied-run-with-the-stand-in) |
 | ...with standby and the status light, as the `feather-as-atom` profile has them | **190 872 bytes**, largest block 147 444; no phone connected. Before the Wi-Fi mode | [patch 38](firmware.md#patch-38--the-status-light-on-its-own-task-on-both-boards--applied-run-on-the-feather) |
-| ...with the Wi-Fi mode built in, as `feather-as-atom` has it now | **166 184 bytes** in the normal mode, largest block 122 868, after patch 42 and the census module. *Retired: 167 456 at patch 40.* In the Wi-Fi mode **161 964**, nothing on its network, at patch 40. Debug builds, nothing connected | [patch 40](firmware.md#patch-40--the-wi-fi-mode-statistics-and-the-cards-files-on-a-web-page--applied-run-on-the-feather-without-a-phone) |
+| ...with the Wi-Fi mode built in, as `feather-as-atom` has it now | **166 184 bytes** in the normal mode, largest block 122 868, after patch 42 and the census module. *Retired: 167 456 at patch 40.* In the Wi-Fi mode **148 012**, least 131 032, a phone on the page, after patch 43; 161 964 with nothing on its network at patch 40. Debug builds | [patch 40](firmware.md#patch-40--the-wi-fi-mode-statistics-and-the-cards-files-on-a-web-page--applied-run-on-the-feather-without-a-phone) |
 | Program storage / static RAM, `atom` and `feather-as-atom` | 1183 KB / 93.0 KB; with the microSD log 1242 KB / 133 KB. Without the Wi-Fi mode (`CONFIG_NO_WIFI`) 612 KB / 71.3 KB. *Retired: 610 KB / 71.2 KB, 667 KB / 111 KB before the Wi-Fi mode; 1175 KB / 92.5 KB, 1234 KB at patch 40* | `arduino-cli compile`, release build, [patch 40](firmware.md#patch-40--the-wi-fi-mode-statistics-and-the-cards-files-on-a-web-page--applied-run-on-the-feather-without-a-phone) |
 
 ## The serial console
@@ -165,7 +165,7 @@ heap-feather       :: 183 228|183 KB                 :: free heap, Feather built
 stale-heap-p37     :: 195 416|186 712                :: patch 37's heap figures, before the light's task
 heap-lite-sd       :: 147 708|148 KB                 :: free heap, Feather as the Lite with the microSD log
 heap-lite-wifi     :: 166 184|166 KB                 :: free heap, feather-as-atom with the Wi-Fi mode built in
-heap-wifi-mode     :: 161 964|162 KB                 :: free heap in the Wi-Fi mode
+heap-wifi-mode     :: 148 012|148 KB|161 964        :: free heap in the Wi-Fi mode
 size-wifi          :: 1183 KB|93\.0 KB|1222 KB|99\.1 KB|1242 KB :: program and static RAM with the Wi-Fi mode
 stale-size-p40     :: 1175 KB|92\.5 KB|1215 KB|98\.5 KB|1234 KB|167 456 :: patch 40's sizes and heap
 stale-size-p38     :: 652 KB|77\.3 KB|610 KB|71\.2 KB|667 KB|111 KB :: program and static RAM before the Wi-Fi mode

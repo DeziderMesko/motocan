@@ -2445,7 +2445,10 @@ is modular, clean and as simple as works.
 Built for every profile, with and without the card, and with `CONFIG_NO_WIFI`: the
 Feather without the Wi-Fi mode is 652 KB, as before patch 39. Run on the Feather built
 as the Lite with the R9's replayed traffic: 470 frames a second, acknowledging, 166 184
-bytes of heap free in the normal mode.
+bytes of heap free in the normal mode. In the Wi-Fi mode, the owner's phone on the page:
+23 ids, their rates as the replay sends them; 148 012 bytes free, the least 131 032.
+The census task's stack had 692 bytes of 3 KB left, the debug statistics listing the
+phone being the deepest it goes; it is 4 KB now.
 
 ## Open questions before the bike
 

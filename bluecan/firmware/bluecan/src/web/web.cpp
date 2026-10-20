@@ -73,7 +73,9 @@ namespace
 /// bytes: StackType_t is a byte on ESP-IDF. The server's deepest path is the
 /// WebServer library parsing a request, with lwIP and the SD library under it
 constexpr uint32_t server_stack_size = 8 * 1024;
-constexpr uint32_t census_stack_size = 3 * 1024;
+/// The census's own work is small; a debug build's statistics, listing each device on
+/// the network, left 692 bytes of 3 KB with a phone on it on 2026-10-20
+constexpr uint32_t census_stack_size = 4 * 1024;
 
 /// how long the census task blocks on an empty queue, and how many frames it takes
 /// before it yields a tick: as the Bluetooth drain task does, so that core 0's idle
