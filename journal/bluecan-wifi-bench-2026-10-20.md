@@ -42,7 +42,7 @@ With the board awake (traffic or a press of D2 first):
 - [ ] A short press of D2 does nothing visible.
 - [ ] Held: at five seconds the LED turns **steady white**. The console says `Button:
   held 5 s, let go to switch`.
-- [ ] Let go: it restarts; the LED **breathes purple**. Console: `Mode: Wi-Fi`, then the
+- [x] Let go: it restarts; the LED **breathes purple**. Console: `Mode: Wi-Fi`, then the
   network's name and `http://192.168.4.1/`.
 - [ ] Held again for five seconds from the Wi-Fi mode: white, then back to blue.
 - [ ] From asleep: a short press, then hold the button down for five seconds, all in
@@ -52,13 +52,18 @@ With the board awake (traffic or a press of D2 first):
 
 In the Wi-Fi mode:
 
-- [ ] The network `bluecan-C5D8` is listed, asks for a password, and the password works.
-- [ ] With the phone on it, the LED is **steady purple**.
-- [ ] `http://192.168.4.1/` opens; `live` in green at the top, and the numbers move
+- [x] The network `bluecan-C5D8` is listed, asks for a password, and the password works.
+  The phone got 192.168.4.2. The first tries reached nothing: no request arrived at the
+  board in five minutes, mobile data on and then off. After a reflash with debug lines
+  for requests and a fresh join, it worked; the cause is not known.
+- [x] With the phone on it, the LED is **steady purple** (by the console).
+- [x] `http://192.168.4.1/` opens; `live` in green at the top, and the numbers move
   every second. With traffic on: frames a second near what `cangen` sends, the id
-  table filling.
+  table filling. Seen with the replay of `session-2026-10-11_200550`: 476 frames a
+  second, 23 ids, the values moving. The page's button: the request at 09:58:40.465,
+  the restart 0.4 s later, Bluetooth up at 09:58:47.
 - [ ] Card: `No card.`, or, in a build with `--sd` and a card wired to A2–A5, the list.
-- [ ] The page's *Back to the normal mode*: a confirmation, then the note that it is
+- [x] The page's *Back to the normal mode*: a confirmation, then the note that it is
   restarting; the LED blue within a few seconds.
 - [ ] RaceChrono, if it was connected before the switch, connects again by itself.
 - [ ] Phone left on the network, page closed: back in the normal mode about five minutes
