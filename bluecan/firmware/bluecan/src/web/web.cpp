@@ -56,7 +56,9 @@ static_assert(sizeof(CONFIG_WIFI_PASSWORD) - 1U >= 8U, "a WPA2 password has 8 ch
 #include <cstring>
 
 #include <esp_mac.h>
+#include <esp_netif.h>
 #include <esp_task_wdt.h>
+#include <esp_wifi.h>
 
 namespace net
 {
@@ -322,6 +324,27 @@ void web::count() noexcept
                    (unsigned long)_stations.load(std::memory_order_relaxed),
                    (unsigned long)((now - _last_ms.load(std::memory_order_relaxed)) / 1000U),
                    _id_used.load(std::memory_order_relaxed));
+            // Each device on the network, and the address DHCP gave it: a device that
+            // joined and got none, and one that got one and asks for nothing, are
+            // different faults, and the page cannot tell them apart.
+            wifi_sta_list_t list = {};
+            if (esp_wifi_ap_get_sta_list(&list) == ESP_OK && list.num > 0)
+            {
+                esp_netif_pair_mac_ip_t pairs[ESP_WIFI_MAX_CONN_NUM] = {};
+                const int n = list.num < ESP_WIFI_MAX_CONN_NUM ? list.num : ESP_WIFI_MAX_CONN_NUM;
+                for (int i = 0; i < n; i++)
+                {
+                    memcpy(pairs[i].mac, list.sta[i].mac, 6);
+                }
+                esp_netif_dhcps_get_clients_by_mac(esp_netif_get_handle_from_ifkey("WIFI_AP_DEF"), n, pairs);
+                for (int i = 0; i < n; i++)
+                {
+                    infoln("       Wi-Fi station: %02x:%02x:%02x:%02x:%02x:%02x at " IPSTR ", RSSI %d",
+                           pairs[i].mac[0], pairs[i].mac[1], pairs[i].mac[2],
+                           pairs[i].mac[3], pairs[i].mac[4], pairs[i].mac[5],
+                           IP2STR(&pairs[i].ip), list.sta[i].rssi);
+                }
+            }
             infoln("        Wi-Fi heap: %lu bytes free, least %lu; stacks free: web %lu, census %lu",
                    (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
                    (unsigned long)uxTaskGetStackHighWaterMark(server_handle),
@@ -374,6 +397,15 @@ void web::serve() noexcept
     s.on("/file", HTTP_GET, [this]() { file(); });
     s.on("/leave", HTTP_POST, [this]() { leave(); });
     s.onNotFound([]() { server->send(404, "text/plain", "not found\n"); });
+#if defined(DEBUG)
+    // Every request in the console, before it is handled: whether anything arrives at
+    // all is the first question when the page does not open.
+    s.addMiddleware([](WebServer& srv, Middleware::Callback next) {
+        infoln("         Wi-Fi GET: %s from %s", srv.uri().c_str(),
+               srv.client().remoteIP().toString().c_str());
+        return next();
+    });
+#endif
     s.begin();
 
     uint32_t stations_ms = 0U;
