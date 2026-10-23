@@ -180,8 +180,9 @@ A2, MOSI A3, MISO A4 and CS A5, the board logs every frame it receives to the
 card, whatever RaceChrono has asked for: a new file, `bluecan-NNNN.bin`, at every start.
 It looks for the card once, as it starts, and without one goes on with no log; a card
 put in later is used from the next start, which on the bike is the next wake. The files
-are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). It has not yet been run with a
-card.
+are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). On the AtomS3 Lite with a 16 GB
+card, three minutes of the R9's bus replayed beside a phone came back from the card
+frame for frame ([history](history/firmware.md#patch-50--the-card-through-esp-idfs-sdspi-driver--applied-run-on-the-lite)). It has not been run with a card on the Feather.
 
 **Each file carries the time it was last written**, by the board's
 [clock](#the-clock), in Prague's local time: brought up to date every 5 s while the

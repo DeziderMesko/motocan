@@ -52,7 +52,8 @@ first time it is, follow [at-the-bike.md](at-the-bike.md).
   records. With a card on the board's card pins at start-up, such as the AtomS3 Lite's
   TF-Card Base ([hardware.md](hardware.md#the-m5stack-atoms3-lite)), the board also logs
   every frame to it, and the files are downloaded from the Wi-Fi mode. The same build
-  runs with the card and without; it has not yet been run with one.
+  runs with the card and without. Run on the AtomS3 Lite with a 16 GB card; not yet on the
+  Feather.
 - **It has no GPS.** RaceChrono needs its own position source, the phone's or an external
   receiver.
 - **It decodes only what has been worked out.** Brake pressure and lean angle are not

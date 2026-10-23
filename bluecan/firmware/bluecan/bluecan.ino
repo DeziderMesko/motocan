@@ -176,7 +176,7 @@ void setup()
     // under the task watchdog: five seconds
     // without a pass restarts the board. Nothing in it is known to block for that
     // long; this is for whatever is not known. The core resets the watchdog between
-    // passes. The microSD task is left out on purpose: the SD library may wait
+    // passes. The microSD task is left out on purpose: the card driver may wait
     // seconds on a card that is slow to mount or stalls, and the card is not worth
     // restarting the link to the phone for.
     enableLoopWDT();

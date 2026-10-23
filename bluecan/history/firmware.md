@@ -2679,7 +2679,8 @@ again to leave it. Both switches by the button, as on the Feather.
 **The LED.** The owner saw its colours through the day as the table in
 [usage.md](../usage.md#the-led) gives them, and saw it dark while the board slept.
 
-Not seen: a microSD card, the board on the bike's 12 V.
+Not seen: the board on the bike's 12 V. The microSD card is
+[patch 50](#patch-50--the-card-through-esp-idfs-sdspi-driver--applied-run-on-the-lite).
 
 ## Patch 49 — the Feather no longer stands in for the Lite — **applied, built**
 
@@ -2690,6 +2691,85 @@ is gone, with `boards/feather_as_atom.hpp`, its line in `board.hpp` and its case
 own USB port, so that what is measured on it is still what the Lite runs. Both profiles
 built: `atom` 1 263 337 bytes of program and 93 884 of static RAM, `feather` 1 297 800 and
 99 908; without the Wi-Fi mode `atom` is 686 745 and 72 592, as the stand-in was.
+
+## Patch 50 — the card through ESP-IDF's sdspi driver — **applied, run on the Lite**
+
+2026-10-23, the first card: a Goodram M1AA, 16 GB, class 10, FAT32, in an Atomic TF-Card
+Base under the Lite, with the Unit Mini CAN on Grove and USB power. Each run below
+replayed `session-2026-10-11_200550` from the CANable.
+
+**With Arduino's SD library, the card's writes failed.** The board found the card,
+logged, and after anything from seconds to minutes a sector's write came back short: the
+log closed the card, mounted it again 5 s later and went on in a new file, and the ring
+overflowed meanwhile.
+
+| Run | Build | Phone | Length | Failed writes | Frames the ring dropped |
+|---|---|---|---|---|---|
+| 1 | release, 25 MHz | not recorded | about 120 s | 7 or 8: files 0001 to 0008 opened | not counted |
+| 2 | debug, 25 MHz | not recorded | 90 s | 8 | 1 955 |
+| 3 | debug, 10 MHz | not recorded | 90 s | 3 | 0 |
+| 4 | debug, the core's log at *error* | not recorded | 90 s | 1 | not recorded |
+| 5 | the same, and `errno` printed on a failure | not recorded | 120 s | 0 | 0 |
+| 6 | the same | not recorded | 240 s | 0 | 74 |
+| 7 | debug, the core's log at *warn* | not recorded | 240 s | 2 | 4 621 |
+| 8 | debug | none | 180 s | 9 | 0 |
+| 9 | debug, the CAN controller only listening | none | 180 s | 5 | 0 |
+| 10 | debug, Bluetooth at 0 dBm, not +12 | none | 180 s | 18 | 985 |
+| 11 | debug, Bluetooth not started | none | 180 s | **0** | 0 |
+
+What the library said, at *warn*: three `crc error` on a command, the card reporting a
+command it received as corrupted, and once `token error [13] 0x7`, the card answering
+SEND_STATUS in the idle state, as after a reset of its own. The writes failed with
+`errno` 5, EIO: after 180–190 ms in run 7, after 5–6 ms, about one sector's time, in runs
+8–10. In runs 4–7 the core's log was on, and with no chip select the library logs two
+errors about pin 255 at every select, which slowed every operation: their write times,
+up to 536 ms, are not the card's.
+
+The card alone was clean. M5Stack's own example for the base, `testFileIO` with the same
+`SPI.begin(7, 8, 6, -1)` and `SD.begin(-1, SPI, 25000000)`, without M5Unified and the
+display, ten times: 1 MiB written in 651–660 ms and read in 630–632 ms, the slowest
+512-byte write 10.7 ms, no short write. Bluecan's own pattern alone, a file kept open,
+4096 bytes every 360 ms and a flush every 5 s, for 180 s: 495 sectors, no failure, the
+slowest write 5.2 ms and flush 3.4 ms.
+
+So the failures came with Bluetooth running, not with the phone, the acknowledging, the
+transmit power or the card: run 11 is the only Bluecan run without Bluetooth, and the
+only one at 25 MHz with neither a failure nor the core's log. How Bluetooth reaches the
+library was not found.
+
+**With ESP-IDF's `sdspi` driver, none failed.** The card is mounted with
+`esp_vfs_fat_sdspi_mount()` on its own SPI host with DMA, no chip select
+(`SDSPI_SLOT_NO_CS`), 25 MHz, FatFs at `/sd` as before; Arduino's `File` reads and writes
+it through the same VFS layer the SD library used, so names, times and the Wi-Fi page are
+as they were. SPI3, not SPI2, because SPI2 is Arduino's `SPI`, which the Feather's
+display library drives. A failed mount tells the cases apart as before: `ESP_FAIL` is a
+card that answers with no file system FatFs mounts, any other error a card that does not
+answer, and then MISO's pull-up tells an empty socket from no base.
+
+| Run | Bus | Phone | Length | Failed writes | Ring dropped | Slowest write |
+|---|---|---|---|---|---|---|
+| trial | SPI2 | none | 180 s | 0 | 0 | 24.7 ms |
+| trial | SPI2 | streaming everything, `flt ALL` | 300 s | 0 | 0 | 34.8 ms |
+| patch 50, debug | SPI3 | streaming everything | 180 s | 0 | 0 | 22.8 ms |
+
+Over the 300 s with the phone, Bluetooth refused 6.6% of the frames offered, and 7.1% in
+the 180 s run; the replay without a card earlier that day lost 7%, in the bursts
+`canplayer` sends after its WSL2 pauses ([bench.md](../bench.md#traffic)).
+
+**The file holds what was sent.** In the last run `candump` recorded the 96 542 frames the
+CANable put on the bus. The owner switched the board to the Wi-Fi mode, which closes the
+file the way standby does (`SDLOG.stop()`), and downloaded `bluecan-0067.bin` from the
+page: 97 341 records, 2 336 184 bytes. The first 800 are one frame, the CANable's first,
+repeated over 204.5 ms while the board proved the bit rate after its restart
+([bench.md](../bench.md#acknowledging-on-the-bench)); from the last of them on, the card's
+96 542 frames are the CANable's, the same ids and data in the same order. The largest
+gap between two records is 20.1 ms.
+
+Built: `atom` 1 306 061 bytes of program and 94 144 of static RAM, `feather` 1 342 000
+and 100 152, `atom` without the Wi-Fi mode 728 821 and 72 848; against patch 49's
+1 263 337, the driver is about 43 KB. The release build is on the Lite.
+Not run: the Feather with a card, a wake from standby with a card, and how long the
+driver takes to give up on an empty socket.
 
 ## Open questions before the bike
 

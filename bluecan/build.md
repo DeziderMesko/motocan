@@ -75,16 +75,16 @@ it either way.
 
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
-| `feather` | 1298 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
-| `atom` | 1263 KB | 93.9 KB | 166 660 bytes in the normal mode with no card, measured on the Lite on 2026-10-23 in a debug build with no standby, no phone connected; 114 KB with the stand-in for a card (`--sd-emulate`), measured on the Feather with the Lite's parts |
+| `feather` | 1342 KB | 100.2 KB | not measured with the Wi-Fi mode built in |
+| `atom` | 1306 KB | 94.1 KB | 166 660 bytes in the normal mode with no card, measured on the Lite on 2026-10-23 in a debug build with no standby, no phone connected, before patch 50 added ESP-IDF's card driver; 114 KB with the stand-in for a card (`--sd-emulate`), measured on the Feather with the Lite's parts |
 
-The microSD log is in every build, and costs about 61 KB of the program and 1 KB of the
+The microSD log is in every build, and costs about 104 KB of the program and 1 KB of the
 static RAM. Its ring and its task's stack, 38 KB, are taken from the heap only when a
 card is found at start-up, and the stand-in holds what a mounted card would besides.
 
 The Wi-Fi mode is about 570 KB of the program and 21 KB of the static RAM, which the
 Wi-Fi driver sets aside whether the mode runs or not: built without it
-(`CONFIG_NO_WIFI`), `atom` is 687 KB and 72.6 KB.
+(`CONFIG_NO_WIFI`), `atom` is 729 KB and 72.8 KB.
 
 The clock is about 19 KB of the program, the C library's time zones and time
 formatting, in every build.
@@ -157,7 +157,7 @@ with the display, is refused at compile time by
 | `CONFIG_CANBUS_ACK` | on | lets the controller acknowledge once the bit rate is proved. Undefined, the board only ever listens, which on the R9's diagnostic connector gets almost nothing |
 | `CONFIG_BLE_CONN_ITVL_MIN` / `_MAX` | `6` / `10` (7.5–12.5 ms) | the Bluetooth connection interval asked of the phone, in 1.25 ms units. **For an iPhone, change these to `12` / `24`** (15–30 ms): iOS rejects a request below 15 ms or with less than 15 ms between minimum and maximum, and then uses an interval of its own choosing. `12` / `24` works on Android too |
 | `CONFIG_CELL_FITTED` | off, in `boards/feather_revtft.hpp` | show the battery's state of charge and whether it is charging. Define it only with a cell plugged in; with none, the gauge reports a full, discharging battery that is not there. Untested with a cell |
-| `CONFIG_SDLOG` | on, in both board files, with the card's pins | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. The card is looked for once at start-up, on the log's own task, without holding up Bluetooth or CAN; with none, the task ends and nothing is logged until the next start. The look tells nothing on the pins, an empty socket and a card that does not mount apart ([usage.md](usage.md#the-microsd-log)). A card that fails a write is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. Before each new file the oldest logs are deleted to keep `CONFIG_SDLOG_KEEP_FREE_PCT` of the card free. Not yet run with a card |
+| `CONFIG_SDLOG` | on, in both board files, with the card's pins | log every standard data frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base: 24 bytes a frame, written in 4096-byte sectors by a task on core 1, into a new `/bluecan-NNNN.bin` on every start. The card keeps the whole bus whatever the app's filter. The card is looked for once at start-up, on the log's own task, without holding up Bluetooth or CAN; with none, the task ends and nothing is logged until the next start. The look tells nothing on the pins, an empty socket and a card that does not mount apart ([usage.md](usage.md#the-microsd-log)). A card that fails a write is mounted again every 5 s (`CONFIG_SDLOG_RETRY_S`) into a new file. Before each new file the oldest logs are deleted to keep `CONFIG_SDLOG_KEEP_FREE_PCT` of the card free. The card goes through ESP-IDF's `sdspi` driver on SPI3 with DMA, not Arduino's SD library, whose writes failed beside Bluetooth ([history](history/firmware.md#patch-50--the-card-through-esp-idfs-sdspi-driver--applied-run-on-the-lite)). Run on the Lite with a card, not yet on the Feather |
 | `CONFIG_SDLOG_KEEP_FREE_PCT` | 5 | the room kept free on the card, in percent of its size, by deleting the oldest `bluecan-NNNN.bin` before a new one is opened. A share, so that a 1 or 2 GB card still keeps most of itself for logs: 5% is about 18 hours of the R9's bus on a 16 GB card, about an hour on a 1 GB one |
 | `CONFIG_SDLOG_EMULATE` | off | with no card at start-up, drives the SPI bus and holds the heap as a card would, so that its cost can be measured on a board without one. `--sd-emulate` sets it |
 | `CONFIG_SDLOG_BUFFER` | 32 768 bytes | the RAM between the CAN interrupt and the card, about 2.7 s of the R9's bus |

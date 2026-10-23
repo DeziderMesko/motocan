@@ -138,6 +138,12 @@ here. The pages as they stood with every correction written into them are at com
   first Lite was run on 2026-10-23 and the owner had the profile removed that day; the
   pages said until then that the button wakes a Feather built as the Lite on D2, and gave
   the Lite's free heap as measured on that Feather.
+- The microSD log's pages said from 2026-10-19 to 2026-10-23 that it had not been run with
+  a card, that it went through Arduino's SD library, which takes about 1.5 s to give up
+  on a missing card, and that it cost about 61 KB of the program. The first card, on the
+  Lite on 2026-10-23, failed its writes beside Bluetooth with that library; from that
+  day the card goes through ESP-IDF's `sdspi` driver on SPI3, and the log costs about
+  104 KB ([patch 50](../bluecan/history/firmware.md#patch-50--the-card-through-esp-idfs-sdspi-driver--applied-run-on-the-lite)).
 - Its hardware page said on 2026-10-18 and 2026-10-19 that the AtomS3 Lite would have no
   status light, the firmware driving it from the display's task. From patch 38, the same
   day, the light has a task of its own and the Lite's LED carries it.

@@ -51,7 +51,7 @@ static_assert(sizeof(CONFIG_WIFI_PASSWORD) - 1U >= 8U, "a WPA2 password has 8 ch
 #include <WebServer.h>
 #include <WiFi.h>
 #if defined(CONFIG_SDLOG)
-#include <SD.h>
+#include <FS.h>
 #endif
 
 #include <cstdarg>
@@ -72,7 +72,7 @@ namespace
 // statically: the normal mode never runs it, and Bluetooth wants that memory there.
 
 /// bytes: StackType_t is a byte on ESP-IDF. The server's deepest path is the
-/// WebServer library parsing a request, with lwIP and the SD library under it
+/// WebServer library parsing a request, with lwIP and FatFs under it
 constexpr uint32_t server_stack_size = 8 * 1024;
 /// The census's own work is small; a debug build's statistics, listing each device on
 /// the network, left 692 bytes of 3 KB with a phone on it on 2026-10-20
@@ -99,7 +99,7 @@ char* json = nullptr;
 size_t json_len = 0U;
 
 /// one block of a file on its way to the phone. A multiple of the card's 512-byte
-/// sectors, so that the SD library reads whole ones
+/// sectors, so that FatFs reads whole ones
 constexpr size_t block_size = 4096U;
 uint8_t* block = nullptr;
 
@@ -377,9 +377,9 @@ void web::server_task(void* self)
 void web::serve() noexcept
 {
 #if defined(CONFIG_SDLOG)
-    // The card is looked for once, before the first request: without one the SD
-    // library takes about 1.5 s to give up, which is better spent here than on every
-    // look at the page. A phone takes longer than that to join.
+    // The card is looked for once, before the first request: without one the driver
+    // takes a while to give up, which is better spent here than on every look at the
+    // page. A phone takes a few seconds to join.
     SDLOG.mount_for_reading();
 #endif
 
@@ -571,20 +571,22 @@ void web::files() noexcept
     server->setContentLength(CONTENT_LENGTH_UNKNOWN);
     server->send(200, "application/json", "");
     // How full it is, for the page: the oldest logs go when it fills (sdlog.hpp).
-    const uint64_t total = SD.totalBytes();
+    uint64_t total = 0U;
+    uint64_t room = 0U;
+    storage::sdlog::space(total, room);
     char head[96];
     snprintf(head, sizeof(head), "{\"sd\":\"mounted\",\"total\":%llu,\"free\":%llu,\"files\":[",
-             (unsigned long long)total, (unsigned long long)(total - SD.usedBytes()));
+             (unsigned long long)total, (unsigned long long)room);
     server->sendContent(head);
 
     bool first = true;
-    File root = SD.open("/");
+    File root = storage::sdlog::files().open("/");
     if (root)
     {
         for (File f = root.openNextFile(); f; f = root.openNextFile())
         {
-            // The SD library gives names with or without the leading slash
-            // depending on its version; the check wants them without.
+            // Arduino's FS gives names with or without the leading slash depending on
+            // its version; the check wants them without.
             const char* name = f.name();
             if (name[0] == '/')
             {
@@ -641,7 +643,7 @@ void web::file() noexcept
 
     char path[24];
     snprintf(path, sizeof(path), "/%s", name.c_str());
-    File f = SD.open(path, FILE_READ);
+    File f = storage::sdlog::files().open(path, FILE_READ);
     if (!f)
     {
         server->send(404, "text/plain", "no such file\n");

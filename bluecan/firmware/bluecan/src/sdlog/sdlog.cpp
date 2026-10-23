@@ -28,13 +28,16 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <memory>
+
 #include <FS.h>
-#include <SD.h>
 #include <SPI.h>
-#include <diskio.h>
+#include <driver/sdspi_host.h>
+#include <driver/spi_common.h>
 #include <esp_timer.h>
+#include <esp_vfs_fat.h>
 #include <ff.h>
-#include <sd_diskio.h>
+#include <vfs_api.h>
 #endif
 
 storage::sdlog& SDLOG = storage::sdlog::get();
@@ -69,11 +72,69 @@ constexpr uint32_t mask = CONFIG_SDLOG_BUFFER - 1U;
 // FatFs keeps its long-file-name buffer on the stack in this core's configuration.
 constexpr uint32_t stack_size = 6 * 1024;
 
-SPIClass sd_spi(FSPI);
+// The card goes through ESP-IDF's driver for SD cards on SPI, sdspi, on SPI3 with DMA,
+// and FatFs mounted at /sd; Arduino's File reads and writes it there, through the same
+// VFS layer as the SD library's. Not the SD library: beside Bluetooth its writes failed,
+// over 50 times in about 25 minutes of runs, and sdspi's not once in 11
+// (history/firmware.md, patch 50). SPI3, not SPI2: SPI2 is Arduino's SPI, which the
+// Feather's display library drives.
+constexpr const char* base_path = "/sd";
+constexpr spi_host_device_t host_id = SPI3_HOST;
+
+std::shared_ptr<VFSImpl> card_vfs = std::make_shared<VFSImpl>();
+fs::FS card_fs(card_vfs);
+sdmmc_card_t* card_handle = nullptr;
+bool bus_taken = false;
+
+/// the emulation's bus, the same SPI3, taken only while no card holds it
+SPIClass sd_spi(HSPI);
 File file;
 
-// Busy-poll the bus for `us`, as sdWait() in the SD library does while a card
-// programs: clocking 0xFF until the card lets go of MISO.
+bool take_bus() noexcept
+{
+    if (bus_taken)
+    {
+        return true;
+    }
+    spi_bus_config_t bus = {};
+    bus.mosi_io_num = SDLOG_MOSI;
+    bus.miso_io_num = SDLOG_MISO;
+    bus.sclk_io_num = SDLOG_SCK;
+    bus.quadwp_io_num = -1;
+    bus.quadhd_io_num = -1;
+    bus.max_transfer_sz = 4096;
+    const esp_err_t err = spi_bus_initialize(host_id, &bus, SPI_DMA_CH_AUTO);
+    if (err != ESP_OK)
+    {
+        errorln("ERROR: SD log could not take the SPI bus: %s", esp_err_to_name(err));
+        return false;
+    }
+    bus_taken = true;
+    return true;
+}
+
+void give_bus() noexcept
+{
+    if (bus_taken)
+    {
+        spi_bus_free(host_id);
+        bus_taken = false;
+    }
+}
+
+void unmount() noexcept
+{
+    if (card_handle != nullptr)
+    {
+        esp_vfs_fat_sdcard_unmount(base_path, card_handle);
+        card_handle = nullptr;
+    }
+    card_vfs->mountpoint(nullptr);
+    give_bus();
+}
+
+// Busy-poll the bus for `us`, as a card driver does while a card programs: clocking 0xFF
+// until the card lets go of MISO.
 void poll(uint32_t us) noexcept
 {
     const int64_t end = esp_timer_get_time() + us;
@@ -83,7 +144,9 @@ void poll(uint32_t us) noexcept
     }
 }
 
-// What AcquireSPI and sdSelectCard() do around each disk operation in the SD library.
+// What Arduino's SD library did around each disk operation. The emulation drives the bus
+// as that library did, by the CPU; sdspi uses DMA, so the emulation is the dearer of the
+// two.
 struct emulated_op
 {
     emulated_op() noexcept
@@ -157,36 +220,51 @@ const char* sdlog::name(card c) noexcept
 
 sdlog::card sdlog::mount(uint8_t files) noexcept
 {
-    sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
-
-    // Whether anything answers, apart from whether it holds a file system: SD.begin()
-    // says neither. Registering the drive does not touch the card; initialising it
-    // does, and is what takes about 1.5 s when nothing answers.
-    // -1, a board with no chip select, reaches the library as 255, and its writes to
-    // that pin do nothing -- which is what M5Stack's example relies on as well.
-    const uint8_t drive = sdcard_init(SDLOG_CS, &sd_spi, CONFIG_SDLOG_SPI_HZ);
-    if (drive == 0xFF)
+    if (!take_bus())
     {
         return card::unreadable;
     }
-    const bool answered = (disk_initialize(drive) & STA_NOINIT) == 0;
-    sdcard_uninit(drive);
 
-    if (!answered)
+    sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+    host.slot = host_id;
+    host.max_freq_khz = CONFIG_SDLOG_SPI_HZ / 1000U;
+    sdspi_device_config_t device = SDSPI_DEVICE_CONFIG_DEFAULT();
+    device.host_id = host_id;
+    // -1, a board with no chip select: the TF-Card Base holds the card selected, which
+    // is what M5Stack's example relies on as well.
+    device.gpio_cs = SDLOG_CS < 0 ? SDSPI_SLOT_NO_CS : static_cast<gpio_num_t>(SDLOG_CS);
+    esp_vfs_fat_sdmmc_mount_config_t config = {};
+    config.format_if_mount_failed = false;
+    config.max_files = files;
+
+    const esp_err_t err = esp_vfs_fat_sdspi_mount(base_path, &host, &device, &config, &card_handle);
+    if (err == ESP_OK)
     {
-        // The Atomic TF-Card Base pulls MISO up through 4.7 kOhm, card or no card.
-        // With nothing on the pins the chip's own pull-down, about 45 kOhm, takes it
-        // low.
-        sd_spi.end();
-        pinMode(SDLOG_MISO, INPUT_PULLDOWN);
-        delayMicroseconds(100);
-        const bool pulled_up = digitalRead(SDLOG_MISO) == HIGH;
-        pinMode(SDLOG_MISO, INPUT);
-        return pulled_up ? card::empty : card::no_base;
+        card_vfs->mountpoint(base_path);
+        return card::mounted;
+    }
+    card_handle = nullptr;
+    give_bus();
+
+    // ESP_FAIL is a card that answered and holds no file system FatFs mounts; anything
+    // else is the card's initialisation failing, which is a card that does not answer.
+    if (err == ESP_FAIL)
+    {
+        return card::unreadable;
     }
 
-    // The card is initialised again here, which with a card takes milliseconds.
-    return SD.begin(SDLOG_CS, sd_spi, CONFIG_SDLOG_SPI_HZ, "/sd", files) ? card::mounted : card::unreadable;
+    // The Atomic TF-Card Base pulls MISO up through 4.7 kOhm, card or no card. With
+    // nothing on the pins the chip's own pull-down, about 45 kOhm, takes it low.
+    pinMode(SDLOG_MISO, INPUT_PULLDOWN);
+    delayMicroseconds(100);
+    const bool pulled_up = digitalRead(SDLOG_MISO) == HIGH;
+    pinMode(SDLOG_MISO, INPUT);
+    return pulled_up ? card::empty : card::no_base;
+}
+
+fs::FS& sdlog::files() noexcept
+{
+    return card_fs;
 }
 
 bool sdlog::open_card() noexcept
@@ -209,7 +287,7 @@ bool sdlog::open_card() noexcept
     if (space(total, room) && room < full_below)
     {
         _found = card::full;
-        SD.end();
+        unmount();
         return false;
     }
 
@@ -217,14 +295,14 @@ bool sdlog::open_card() noexcept
     const logs l = scan();
     char name[24];
     snprintf(name, sizeof(name), "/bluecan-%04u.bin", l.next);
-    if (l.next <= 9999U && !SD.exists(name))
+    if (l.next <= 9999U && !card_fs.exists(name))
     {
-        file = SD.open(name, FILE_WRITE);
+        file = card_fs.open(name, FILE_WRITE);
     }
     if (!file)
     {
         errorln("ERROR: SD log could not open %s", name);
-        SD.end();
+        unmount();
         return false;
     }
 
@@ -240,7 +318,7 @@ sdlog::logs sdlog::scan() noexcept
     bool any = false;
     unsigned lowest = 0U;
 
-    File root = SD.open("/");
+    File root = card_fs.open("/");
     if (!root)
     {
         return l;
@@ -275,13 +353,12 @@ sdlog::logs sdlog::scan() noexcept
 
 bool sdlog::space(uint64_t& total, uint64_t& room) noexcept
 {
-    // Zero is what the library says when FatFs could not count, never a size.
-    total = SD.totalBytes();
-    if (total == 0U)
+    uint64_t free_bytes = 0U;
+    if (esp_vfs_fat_info(base_path, &total, &free_bytes) != ESP_OK || total == 0U)
     {
         return false;
     }
-    room = total - SD.usedBytes();
+    room = free_bytes;
     return true;
 }
 
@@ -298,7 +375,7 @@ void sdlog::make_room() noexcept
         {
             return;
         }
-        if (!SD.remove(l.oldest))
+        if (!card_fs.remove(l.oldest))
         {
             errorln("ERROR: SD log could not delete %s", l.oldest);
             return;
@@ -310,7 +387,7 @@ void sdlog::make_room() noexcept
 void sdlog::close_card() noexcept
 {
     file.close();
-    SD.end();
+    unmount();
     _open = false;
 }
 
@@ -347,7 +424,7 @@ bool sdlog::find_card() noexcept
         {
             memset(_charge, 0, sizeof(FATFS) + sizeof(FIL) + 64U);
         }
-        // A failed look may have released the bus; take it back for the emulation.
+        // A failed look has given the bus back; the emulation takes it.
         sd_spi.begin(SDLOG_SCK, SDLOG_MISO, SDLOG_MOSI, SDLOG_CS);
         if (SDLOG_CS >= 0)
         {
@@ -487,7 +564,7 @@ void sdlog::run() noexcept
             }
             if (!written)
             {
-                // After a failed write the SD library's state is not to be trusted,
+                // After a failed write the driver's state is not to be trusted,
                 // so the card is closed and mounted again rather than written to
                 // blind. The sector stays in the ring and goes into the new file.
                 _errors++;

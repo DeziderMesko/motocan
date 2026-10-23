@@ -27,6 +27,11 @@
 #include <atomic>
 #include <cstdint>
 
+namespace fs
+{
+class FS;
+}
+
 /// CONFIG_SDLOG, set by a board file that gives the card's pins, builds in a log of
 /// every received frame to a microSD card on SPI, as on M5Stack's Atomic TF-Card Base.
 /// The CAN interrupt copies each standard data frame into a ring in RAM before the app's
@@ -40,8 +45,8 @@
 /// that does not mount, and one that does.
 ///
 /// CONFIG_SDLOG_EMULATE stands in for a card that is not there: if none mounts, the
-/// task still drives the SPI bus as the SD library would for every sector -- the same
-/// bytes at the same clock, the same busy-polling while the card programs, a long
+/// task still drives the SPI bus for every sector as Arduino's SD library did, by the
+/// CPU -- the same bytes at the same clock, busy-polling while the card programs, a long
 /// stall now and then -- and holds the heap a mounted card would. It is for measuring
 /// what the card costs the rest of the board, on a board without one.
 #if defined(CONFIG_SDLOG)
@@ -57,15 +62,15 @@
 #define CONFIG_SDLOG_BUFFER 32768
 #endif
 
-/// SPI clock: M5Stack's example for the Atomic TF-Card Base runs it at 25 MHz. The SD
-/// library's own default is 4 MHz
+/// SPI clock: M5Stack's example for the Atomic TF-Card Base runs it at 25 MHz. ESP-IDF's
+/// own default for a card is 20 MHz
 #ifndef CONFIG_SDLOG_SPI_HZ
 #define CONFIG_SDLOG_SPI_HZ 25000000
 #endif
 
 /// Core 1 by default: core 0 has Bluetooth and the frame path to it, core 1 only the
-/// CAN interrupt and loop(). The SD library busy-polls the card, so the core it runs
-/// on is the core that pays for a slow card.
+/// CAN interrupt and loop(). The card driver busy-polls the card while it programs, so
+/// the core it runs on is the core that pays for a slow card.
 #ifndef CONFIG_SDLOG_CORE
 #define CONFIG_SDLOG_CORE 1
 #endif
@@ -156,8 +161,8 @@ public:
     /**
      * Start the writer task, which looks for the card first. With a card, or the
      * emulation, it takes the ring from the heap and logs; without one it ends, and
-     * nothing is logged until the next start. Returns at once: the SD library takes
-     * about 1.5 s to give up on a card that is not there.
+     * nothing is logged until the next start. Returns at once: a card that is not
+     * there takes the driver a while to give up on.
      * @return false if the task could not be started
      */
     bool start() noexcept;
@@ -172,7 +177,7 @@ public:
      * Write out what the ring holds, partial sector included, close the file and stop
      * the task. For a board about to lose its power or go to sleep. Waits up to three
      * seconds: closing a file is several single-block writes, each of which the
-     * specification lets a card take 250 ms over (500 ms for SDXC), and the SD library
+     * specification lets a card take 250 ms over (500 ms for SDXC), and the driver
      * retries. Not longer, because it is called from loop(), which the task watchdog
      * restarts after five.
      */
@@ -180,11 +185,17 @@ public:
 
     /**
      * Mount the card to read its files, in place of start(), for the Wi-Fi mode: no
-     * ring, no writer task, nothing written. The files are then the SD library's, under
-     * "/". Tried once; later calls say what that found.
+     * ring, no writer task, nothing written. The files are then files(), under "/".
+     * Tried once; later calls say what that found.
      * @return true if the card is mounted
      */
     bool mount_for_reading() noexcept;
+
+    /// the card's files while it is mounted, through Arduino's FS
+    static fs::FS& files() noexcept;
+
+    /// the card's size and its free bytes; false if it would not say
+    static bool space(uint64_t& total, uint64_t& room) noexcept;
 #else
     bool start() noexcept { return true; }
     void note(canbus::frame const&) noexcept {}
@@ -211,8 +222,6 @@ private:
     /// the oldest log files deleted until CONFIG_SDLOG_KEEP_FREE_PCT is free, or none
     /// is left. Only with no file open, and only files this firmware names
     static void make_room() noexcept;
-    /// the card's size and its free bytes; false if it would not say
-    static bool space(uint64_t& total, uint64_t& room) noexcept;
     void close_card() noexcept;
     bool write_sector(uint8_t const* p) noexcept;
     void write_rest() noexcept;
