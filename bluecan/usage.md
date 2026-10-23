@@ -297,8 +297,7 @@ far it drifts in a night is not yet measured.
 One RGB LED, readable at a glance. The colour is the state of the chain from the bus to
 the phone; the blinking is frames moving. It never shows bike data. On the Feather it is
 the NeoPixel beside the screen; on the AtomS3 Lite, the LED under the button, with the
-same colours (seen dark while a Lite sleeps; its colours not yet checked by eye on one). A board that sleeps while the bus is silent
-puts it out first.
+same colours. A board that sleeps while the bus is silent puts it out first.
 
 | LED | Meaning |
 |---|---|

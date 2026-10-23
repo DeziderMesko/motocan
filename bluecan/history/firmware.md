@@ -2676,7 +2676,10 @@ under WSL2 runs about 9% under the bike's 506 msg/s.
 (`Mode: Wi-Fi`, network `bluecan-EB18`), the owner joined its network, and held the button
 again to leave it. Both switches by the button, as on the Feather.
 
-Not seen: the LED's colours by eye, a microSD card, the board on the bike's 12 V.
+**The LED.** The owner saw its colours through the day as the table in
+[usage.md](../usage.md#the-led) gives them, and saw it dark while the board slept.
+
+Not seen: a microSD card, the board on the bike's 12 V.
 
 ## Patch 49 — the Feather no longer stands in for the Lite — **applied, built**
 
