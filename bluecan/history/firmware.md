@@ -2768,8 +2768,11 @@ gap between two records is 20.1 ms.
 Built: `atom` 1 306 061 bytes of program and 94 144 of static RAM, `feather` 1 342 000
 and 100 152, `atom` without the Wi-Fi mode 728 821 and 72 848; against patch 49's
 1 263 337, the driver is about 43 KB. The release build is on the Lite.
-Not run: the Feather with a card, a wake from standby with a card, and how long the
-driver takes to give up on an empty socket.
+The card taken out, the same day: the Wi-Fi mode's look said `no card in the socket, or
+one that does not answer`, within 1.4 s of the mode's start, Wi-Fi's start included, and
+the normal mode's the same, within 1.6 s of the restart; the console's lines came in
+batches, so neither is finer than that. Not run: the Feather with a card, and a wake from
+standby with a card.
 
 ## Open questions before the bike
 
