@@ -43,7 +43,7 @@ git clone https://github.com/DeziderMesko/motocan.git
 
 ## Profiles
 
-Bluecan is built for one of three profiles. Each is a board, and with it what the board
+Bluecan is built for one of two profiles. Each is a board, and with it what the board
 has: one file per profile under
 [firmware/bluecan/src/boards/](firmware/bluecan/src/boards/) gives the pins and the parts,
 and the build options are in
@@ -53,11 +53,10 @@ and the build options are in
 |---|---|---|
 | `feather` (the default) | Adafruit Feather ESP32-S3 Reverse TFT | display, buttons, status light, battery gauge |
 | `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | the status light on its RGB LED, and nothing else of those; sleeps while the bus is silent ([standby](#build-time-settings)). Run on the bench from USB ([history](history/firmware.md#the-atoms3-lite-on-the-bench--run-and-it-works)) |
-| `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: the status light on the NeoPixel, D2 as the Lite's one button, the display, D0, D1 and the gauge dark, standby on. Temporary, until a Lite is on the bench |
 
 ### Build options
 
-| Option | `feather`, `feather-as-atom` | `atom` | Why |
+| Option | `feather` | `atom` | Why |
 |---|---|---|---|
 | FQBN | `esp32:esp32:adafruit_feather_esp32s3_reversetft` | `esp32:esp32:m5stack_atoms3` | |
 | `PartitionScheme` | `tinyuf2_noota` | `default_8MB` | the Feather's keeps its UF2 bootloader, with 2816 KB for the application. **Not `huge_app`**, which overwrites the bootloader. The Lite has 8 MB and no UF2 bootloader to keep |
@@ -77,7 +76,7 @@ it either way.
 | Build, release | Program storage | Static RAM | Free heap after start-up |
 |---|---|---|---|
 | `feather` | 1298 KB | 99.9 KB | not measured with the Wi-Fi mode built in |
-| `feather-as-atom`, `atom` | 1263 KB | 93.9 KB | 164 KB in the normal mode with no card, measured on the Feather in a debug build, nothing connected; 114 KB with the stand-in for a card (`--sd-emulate`) |
+| `atom` | 1263 KB | 93.9 KB | 166 660 bytes in the normal mode with no card, measured on the Lite on 2026-10-23 in a debug build with no standby, no phone connected; 114 KB with the stand-in for a card (`--sd-emulate`), measured on the Feather with the Lite's parts |
 
 The microSD log is in every build, and costs about 61 KB of the program and 1 KB of the
 static RAM. Its ring and its task's stack, 38 KB, are taken from the heap only when a
@@ -85,7 +84,7 @@ card is found at start-up, and the stand-in holds what a mounted card would besi
 
 The Wi-Fi mode is about 570 KB of the program and 21 KB of the static RAM, which the
 Wi-Fi driver sets aside whether the mode runs or not: built without it
-(`CONFIG_NO_WIFI`), `feather-as-atom` is 687 KB and 72.6 KB.
+(`CONFIG_NO_WIFI`), `atom` is 687 KB and 72.6 KB.
 
 The clock is about 19 KB of the program, the C library's time zones and time
 formatting, in every build.
@@ -98,7 +97,7 @@ From `bluecan/firmware/`:
 ./tools/reflash-bluecan.sh feather --no-upload
 ```
 
-It compiles the profile into `build/bluecan-feather/`, and for the two Feather profiles
+It compiles the profile into `build/bluecan-feather/`, and for the Feather
 writes `bluecan.uf2` beside the binaries. Without `--no-upload` it also uploads, under
 WSL2 as [below](#under-wsl2). The same with `arduino-cli` alone, from the repository root:
 
@@ -106,7 +105,6 @@ WSL2 as [below](#under-wsl2). The same with `arduino-cli` alone, from the reposi
 arduino-cli compile --fqbn "esp32:esp32:adafruit_feather_esp32s3_reversetft:PartitionScheme=tinyuf2_noota,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=4M" --build-path build/bluecan-feather bluecan/firmware/bluecan
 ```
 
-`feather-as-atom` is the same with `--build-property "compiler.cpp.extra_flags=-DBOARD_FEATHER_AS_ATOM"`;
 `atom` takes its own FQBN and options from the table. In the Arduino IDE, open
 `bluecan/firmware/bluecan/bluecan.ino` and set the Tools menu as in the table.
 
@@ -137,7 +135,7 @@ flags are for the bench, and combine with it and with each other:
 |---|---|---|
 | `--sd-emulate` | `CONFIG_SDLOG_EMULATE` | stands in for a card when none is found at start-up |
 | `--recording` | `CONFIG_RC_BENCH_RECORDING` | the filter RaceChrono sends when it records |
-| `--no-standby` | `CONFIG_NO_STANDBY` | keeps `atom` and `feather-as-atom` awake on a silent bus |
+| `--no-standby` | `CONFIG_NO_STANDBY` | keeps `atom` awake on a silent bus |
 | `--quick` | `CONFIG_WIFI_IDLE_S=30`, `CONFIG_STANDBY_TIMEOUT_S=15` | short timeouts, to try them out without waiting: the Wi-Fi mode gives way after 30 s without a request, standby sleeps after 15 s of silence |
 | `--no-upload` | | compile only |
 
@@ -167,7 +165,7 @@ with the display, is refused at compile time by
 | `CONFIG_SDLOG_CORE` | 1 | the core the card's task runs on. The SD library waits for the card by polling, so this is the core a slow card costs |
 | `CONFIG_CLOCK_TZ` | Prague's, `CET-1CEST,M3.5.0,M10.5.0/3` | the time zone, in POSIX form, of the card's file times and of the stamp in a downloaded file's name ([usage.md](usage.md#the-clock)) |
 | `CONFIG_CLOCK_KEEP_S` | 600 s | the Wi-Fi page sets the board's clock only if it was set longer ago than this, so that a page opened twice keeps the first setting and the drift it measured |
-| `CONFIG_STANDBY` | on for `atom` and `feather-as-atom`, off for `feather` | light sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX, or the board file's button (`BUTTON_PIN`), wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
+| `CONFIG_STANDBY` | on for `atom`, off for `feather` | light sleep once no frame has arrived for `CONFIG_STANDBY_TIMEOUT_S`; the first frame on CAN RX, or the board file's button (`BUTTON_PIN`), wakes the board, which then starts from the top. For a board powered from the diagnostic connector's unswitched 12 V. Not with the display. `--no-standby` (`CONFIG_NO_STANDBY`) turns it off |
 | `CONFIG_STANDBY_TIMEOUT_S` | 60 s | the silence before it sleeps. The R9 sends over 500 frames a second with the key on, so a second would do; the rest is time to use the board after waking it with the button, and on the bench |
 | `CONFIG_WIFI` | on | the Wi-Fi mode: an access point and a web page with the bus's statistics and the card's files, run in place of Bluetooth when the board's button is held ([usage.md](usage.md#the-wi-fi-mode)). Needs `BUTTON_PIN` in the board file. It costs the normal mode about 21 KB of RAM, which the Wi-Fi driver sets aside whether it runs or not; `CONFIG_NO_WIFI` leaves it out |
 | `CONFIG_WIFI_PASSWORD` | random, in `src/web/secret.hpp` | the access point's WPA2 password. `reflash-bluecan.sh` writes the file with a random twelve characters the first time it builds, and prints them; git ignores the file, so the password stays on the computer that built the board. Edit the file to change it, eight characters or more |
@@ -248,7 +246,7 @@ bluecan/firmware/tools/reflash-bluecan.sh feather
 ```
 
 ```bash
-bluecan/firmware/tools/reflash-bluecan.sh feather-as-atom --debug
+bluecan/firmware/tools/reflash-bluecan.sh atom --debug
 ```
 
 The UF2 drive is visible from Windows; copy the `.uf2` there from Explorer if WSL does not

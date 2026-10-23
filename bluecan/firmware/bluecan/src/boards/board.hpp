@@ -21,13 +21,10 @@
 // SOFTWARE.
 #pragma once
 
-// Which board this build is for. The core names the board (ARDUINO_*, from the FQBN);
-// BOARD_FEATHER_AS_ATOM, from tools/reflash-bluecan.sh, picks the Feather standing in
-// for an AtomS3 Lite. A board file gives the pins and says what is on the board; the
-// modules ask only for the CONFIG_* switches it sets, never for a board.
-#if defined(ARDUINO_ADAFRUIT_FEATHER_ESP32S3_REVTFT) && defined(BOARD_FEATHER_AS_ATOM)
-#include "feather_as_atom.hpp"
-#elif defined(ARDUINO_ADAFRUIT_FEATHER_ESP32S3_REVTFT)
+// Which board this build is for. The core names the board (ARDUINO_*, from the FQBN).
+// A board file gives the pins and says what is on the board; the modules ask only for
+// the CONFIG_* switches it sets, never for a board.
+#if defined(ARDUINO_ADAFRUIT_FEATHER_ESP32S3_REVTFT)
 #include "feather_revtft.hpp"
 #elif defined(ARDUINO_M5STACK_ATOMS3)
 #include "atoms3_lite.hpp"

@@ -2674,6 +2674,16 @@ under WSL2 runs about 9% under the bike's 506 msg/s.
 
 Not seen: the LED's colours by eye, a microSD card, the board on the bike's 12 V.
 
+## Patch 49 — the Feather no longer stands in for the Lite — **applied, built**
+
+2026-10-23, asked for by the owner once the Lite had run: the `feather-as-atom` profile of
+[patch 37](#patch-37--build-profiles-one-file-per-board-the-feather-built-as-the-lite--applied-run-on-the-feather)
+is gone, with `boards/feather_as_atom.hpp`, its line in `board.hpp` and its case in
+`reflash-bluecan.sh`. The Feather keeps the Lite's build options, PSRAM off and the chip's
+own USB port, so that what is measured on it is still what the Lite runs. Both profiles
+built: `atom` 1 263 337 bytes of program and 93 884 of static RAM, `feather` 1 297 800 and
+99 908; without the Wi-Fi mode `atom` is 686 745 and 72 592, as the stand-in was.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

@@ -37,7 +37,7 @@
 #endif
 
 #if defined(CONFIG_STANDBY) && defined(CONFIG_DISPLAY_TFT)
-#error "CONFIG_STANDBY does not put the display to sleep; build the atom or feather-as-atom profile"
+#error "CONFIG_STANDBY does not put the display to sleep; build the atom profile"
 #endif
 
 #if defined(CONFIG_WIFI) && !defined(BUTTON_PIN)

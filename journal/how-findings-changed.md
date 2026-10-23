@@ -133,6 +133,11 @@ here. The pages as they stood with every correction written into them are at com
   The same page said that asserting DTR does not reset the board and that a crash does
   not show on the console; both were about TinyUSB, and were rewritten for the chip's own
   port the same day.
+- The build page had a third profile, `feather-as-atom`, the Feather with the Lite's parts
+  and standby, from 2026-10-19 to 2026-10-23, kept until a Lite was on the bench. The
+  first Lite was run on 2026-10-23 and the owner had the profile removed that day; the
+  pages said until then that the button wakes a Feather built as the Lite on D2, and gave
+  the Lite's free heap as measured on that Feather.
 - Its hardware page said on 2026-10-18 and 2026-10-19 that the AtomS3 Lite would have no
   status light, the firmware driving it from the display's task. From patch 38, the same
   day, the light has a task of its own and the Lite's LED carries it.

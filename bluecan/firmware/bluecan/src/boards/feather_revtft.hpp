@@ -52,8 +52,7 @@
 /// the 240x135 ST7789 and the three buttons; src/display drives them
 #define CONFIG_DISPLAY_TFT 1
 
-/// the button for the mode switch, and in feather-as-atom for the wake from standby:
-/// D2, high when pressed, as the display reads it to freeze the screen. On the Lite
+/// the button for the mode switch: D2, high when pressed, as the display reads it to freeze the screen. On the Lite
 /// it is G41, its one button
 #define BUTTON_PIN     GPIO_NUM_2
 #define BUTTON_PRESSED 1

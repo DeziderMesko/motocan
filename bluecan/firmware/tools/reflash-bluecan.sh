@@ -8,15 +8,13 @@
 #
 #   feather          the Feather ESP32-S3 Reverse TFT, with its display (the default)
 #   atom             an M5Stack AtomS3 Lite on a Unit Mini CAN; sleeps when the bus is silent
-#   feather-as-atom  TEMPORARY: the Feather standing in for an AtomS3 Lite -- the
-#                    Feather's pins, the Lite's parts. Goes when a Lite is on the bench
 #
 # The flags are for the bench, and combine:
 #
 #   --debug       adds -DDEBUG: 5 s stats over serial
 #   --sd-emulate  with no card at start-up, drive the SPI bus as one would
 #   --recording   filter as RaceChrono does when it records, whatever it asks for
-#   --no-standby  keep atom and feather-as-atom awake on a silent bus
+#   --no-standby  keep atom awake on a silent bus
 #   --quick       short timeouts, for trying them out: the Wi-Fi mode gives way after
 #                 30 s without a request instead of 5 min, standby sleeps after 15 s
 #   --no-upload   compile only
@@ -43,7 +41,7 @@ QUICK=""
 UPLOAD=1
 for a in "$@"; do
     case "$a" in
-        feather|atom|feather-as-atom) PROFILE="$a" ;;
+        feather|atom) PROFILE="$a" ;;
         --debug)      DEBUG=1 ;;
         --sd-emulate) SD_EMULATE=1 ;;
         --recording)  RECORDING=1 ;;
@@ -65,9 +63,6 @@ FLAGS=()
 case "$PROFILE" in
     feather)
         FQBN="$FEATHER_FQBN"; OPTS="$FEATHER_OPTS" ;;
-    feather-as-atom)
-        FQBN="$FEATHER_FQBN"; OPTS="$FEATHER_OPTS"
-        FLAGS+=(-DBOARD_FEATHER_AS_ATOM) ;;
     atom)
         FQBN="esp32:esp32:m5stack_atoms3"
         OPTS="PartitionScheme=default_8MB,PSRAM=disabled,LoopCore=1,EventsCore=1,CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=8M" ;;

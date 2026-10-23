@@ -36,8 +36,8 @@ cd "$(dirname "$0")"
 
 # Bluecan has board profiles, and their options are kept in one place.
 if [[ "$SKETCH" == "bluecan" ]]; then
-    echo "!! Bluecan is built by profile: ./tools/reflash-bluecan.sh [feather|atom|feather-as-atom]" >&2
-    echo "   (--no-upload compiles only; the feather profiles also write a .uf2)" >&2
+    echo "!! Bluecan is built by profile: ./tools/reflash-bluecan.sh [feather|atom]" >&2
+    echo "   (--no-upload compiles only; the feather profile also writes a .uf2)" >&2
     exit 2
 fi
 
