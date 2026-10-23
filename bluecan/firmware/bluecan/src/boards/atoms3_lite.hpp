@@ -23,7 +23,7 @@
 
 // M5Stack AtomS3 Lite (ESP32-S3FN8: 8 MB flash, no PSRAM), powered from the diagnostic
 // connector's unswitched 12 V through a Unit Mini CAN. Profile `atom` in
-// tools/reflash-bluecan.sh. Built, not yet run: no Lite has been on the bench.
+// tools/reflash-bluecan.sh. Run on the bench from USB on 2026-10-23; not yet on the bike.
 //
 // The core has one variant for the Lite and the AtomS3 with a display; nothing here
 // drives the display's.

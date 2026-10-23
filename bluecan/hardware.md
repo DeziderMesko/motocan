@@ -152,14 +152,15 @@ as the CANable 2.0 Pro are the safer way to look at an unknown bus.
 - **Other boards the firmware builds for**: Adafruit Feather ESP32-S3 (RX GPIO18, TX
   GPIO17), Adafruit HUZZAH32 and ESP32 Dev Module (RX GPIO26, TX GPIO25), and the M5Stack
   AtomS3 Lite, below. On those there is no display, no status LED and no battery
-  reading; only the Reverse TFT Feather has been run.
+  reading; only the Reverse TFT Feather and the AtomS3 Lite have been run.
 - **The transceiver must work at 3.3 V logic.** The SN65HVD230 does. On the KAmod its
   slope-control pin is tied on the board; on a bare SN65HVD230 module, check that `Rs` is
   tied low, or the transceiver sits in standby.
 
 ### The M5Stack AtomS3 Lite
 
-A smaller board the firmware builds for, not yet bought or run. It is the `atom` profile in
+A smaller board the firmware builds for, run on the bench from USB on 2026-10-23 and not yet
+on the bike's 12 V ([the bench run](history/firmware.md#the-atoms3-lite-on-the-bench--run-and-it-works)). It is the `atom` profile in
 [build.md](build.md#profiles).
 
 | | Feather #6303 | [AtomS3 Lite](https://docs.m5stack.com/en/core/AtomS3%20Lite) |

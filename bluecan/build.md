@@ -52,7 +52,7 @@ and the build options are in
 | Profile | Board | What it has |
 |---|---|---|
 | `feather` (the default) | Adafruit Feather ESP32-S3 Reverse TFT | display, buttons, status light, battery gauge |
-| `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | the status light on its RGB LED, and nothing else of those; sleeps while the bus is silent ([standby](#build-time-settings)). Built, not yet run: there is no Lite here yet |
+| `atom` | [M5Stack AtomS3 Lite](hardware.md#the-m5stack-atoms3-lite) on a Unit Mini CAN | the status light on its RGB LED, and nothing else of those; sleeps while the bus is silent ([standby](#build-time-settings)). Run on the bench from USB ([history](history/firmware.md#the-atoms3-lite-on-the-bench--run-and-it-works)) |
 | `feather-as-atom` | the Feather standing in for an AtomS3 Lite | the Feather's pins and the Lite's parts: the status light on the NeoPixel, D2 as the Lite's one button, the display, D0, D1 and the gauge dark, standby on. Temporary, until a Lite is on the bench |
 
 ### Build options

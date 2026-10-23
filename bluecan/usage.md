@@ -299,7 +299,7 @@ far it drifts in a night is not yet measured.
 One RGB LED, readable at a glance. The colour is the state of the chain from the bus to
 the phone; the blinking is frames moving. It never shows bike data. On the Feather it is
 the NeoPixel beside the screen; on the AtomS3 Lite, the LED under the button, with the
-same colours (built, not yet seen on a Lite). A board that sleeps while the bus is silent
+same colours (seen dark while a Lite sleeps; its colours not yet checked by eye on one). A board that sleeps while the bus is silent
 puts it out first.
 
 | LED | Meaning |
@@ -326,7 +326,7 @@ light the red flash; see [Limits](#limits).
 
 You need **RaceChrono Pro**. The free version does not add DIY devices.
 
-- The board advertises as **`RaceChrono XX:XX:XX`**, the last three bytes of its Bluetooth
+- The board advertises as **`Bluecan XX:XX:XX`**, the last three bytes of its Bluetooth
   address. There is no pairing and no PIN.
 - **Add it from inside RaceChrono**, as a DIY Bluetooth LE device, not from the phone's
   Bluetooth settings.
@@ -357,7 +357,7 @@ One phone at a time. A second connection lights the red flash.
 | CAN | 500 kbps, standard 11-bit ids. The bit rate is fixed in the firmware |
 | The R9's diagnostic bus | 23 ids, 506 frames a second |
 | Filter | up to 32 ids. Each is sent at most once per interval the app asks for; measured within 3% of 20 Hz at a 50 ms request |
-| Bluetooth throughput | without a filter, clean to about 590 frames a second; past that the Bluetooth stack starts refusing frames (0.6% at 718, 22% at 914). The R9's 506 fit. Recording the R9's channels is about 91 frames a second, 88 measured against a replay ([racechrono-channels.md](racechrono-channels.md#load-on-the-link)) |
+| Bluetooth throughput | without a filter, the Feather is clean to about 590 frames a second at a 15 ms connection interval; past that the Bluetooth stack starts refusing frames (0.6% at 718, 22% at 914). The AtomS3 Lite is clean to 726 at 11.25 ms (1.2% at 749, 9.7% at 929, [history](history/firmware.md#the-atoms3-lite-on-the-bench--run-and-it-works)); the two intervals differ, so the boards are not compared by this. The R9's 506 fit. Recording the R9's channels is about 91 frames a second, 88 measured against a replay ([racechrono-channels.md](racechrono-channels.md#load-on-the-link)) |
 | Connection interval | chosen by the phone. The firmware asks for 7.5–12.5 ms; an Android phone has given 11.25, 12.5 and 15 ms on different connections. Throughput depends on it |
 | Queue | 2000 frames between the CAN receiver and Bluetooth, about 4 seconds of the R9's whole bus |
 | Display | costs nothing measurable: frames are not lost while it repaints |

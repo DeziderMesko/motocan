@@ -2596,6 +2596,84 @@ Clock section, the measured drift, the second page in ten minutes not setting it
 file times. The converter on a made-up stamped file: the last frame at the stamped time.
 **Not run** on the board: a setting from a phone, a file's time on a card, the drift.
 
+## Patch 48 — the board advertises as `Bluecan` — **applied**
+
+2026-10-23, asked for by the owner: the board advertises as `Bluecan XX:XX:XX`, the last
+three bytes of its Bluetooth address, where it was `RaceChrono XX:XX:XX`, the name it had
+from the reader it was forked from; `Bluecan` alone when the address cannot be read. On the
+AtomS3 Lite on 2026-10-23, RaceChrono, which had the board under the old name, connected
+to it after the flash without being told of the new one: it keeps the device by its
+address, and the name is only what the list shows. It keeps showing the old name until
+the device is removed and added again.
+
+## The AtomS3 Lite on the bench — **run, and it works**
+
+2026-10-23, the first Lite here: an AtomS3 Lite on a Unit Mini CAN, powered from USB with
+`HPWR+` left free, the Mini CAN's `CAN_H`, `CAN_L` and `GND` to the CANable's with the
+CANable's terminator on, an Android phone running RaceChrono. The Lite needed its own
+`usbipd bind`, once; the ESP32-S3's USB port has a serial number per chip, so a bind for
+the Feather does not carry over. Flashed with `reflash-bluecan.sh atom --debug --no-standby`
+for the link, then `atom` for standby, each on the first attempt. The release build is
+1 263 353 bytes of program and 93 884 of static RAM.
+
+**The bus.** 40 single frames from `cansend`, with the CANable in one-shot mode, were all
+received and none acknowledged: the first 16 or so ended in an active error flag before
+the CANable went error-passive, and the 24 after them fell short of the 32 the proof
+needs. 80 more and the Lite acknowledged, TEC and REC at 0, the CANable back to
+error-active.
+
+**The link, with RaceChrono asking for everything** (`flt ALL`), the phone at 11.25 ms
+throughout. `ble-load.py`, 20 s per rate, one id from `cangen`; `tx/frame` is the share
+of the frames offered that went onto the air:
+
+| Bus offers | `lost` | `tx/frame` | `dropped` |
+|---|---|---|---|
+| 196.8 msg/s | 0 | 1.00 | 0 |
+| 481.4 msg/s | 0 | 1.00 | 0 |
+| 513.6 msg/s | 0 | 1.00 | 0 |
+| 725.5 msg/s | 0 | 1.00 | 0 |
+| 749.3 msg/s | 174 (1.2%) | 0.99 | 0 |
+| 928.5 msg/s | 1 809 (9.7%) | 0.90 | 0 |
+| 1054.7 msg/s | 6 267 (29.7%) | 0.70 | 0 |
+| 1539.4 msg/s | 14 320 (46.5%) | 0.54 | 0 |
+
+The percentages are `lost` over the rate times 20 s, and agree with `tx/frame`. Clean to
+726 msg/s; at the top about 800 frames a second reached the air whatever the bus offered.
+The Feather's figures, clean to about 590 and 0.6% refused at 718, were measured at
+15.00 ms ([patch 12](#patch-12--the-drain-tasks-priority--applied)), so the two boards are not
+compared by this: at 11.25 ms there are a third more connection events a second, which
+alone could account for the difference. The owner's view is that the Lite's built-in
+antenna gives it the better signal. A ramp on the Feather when the phone gives it
+11.25 ms would tell the two apart.
+
+A replay of `session-2026-10-11_200550` with `flt ALL`: the values ran in RaceChrono. At
+445–463 msg/s, `lost` did not move over five 5 s blocks. It moved only when `canplayer`
+caught up after one of its WSL2 pauses: 969 in the first block, at 584 msg/s, and 1 118
+in one block at 715 msg/s ([bench.md](../bench.md#traffic)). No frame was dropped from the
+queue, whose peak was 52.
+
+**Recording.** RaceChrono recording, the LED green: 84.7–85.4 msg/s over the radio
+against 459–474 msg/s on the bus, from the same replay; `lost` unchanged over 35 s,
+including a block at 644 msg/s while `canplayer` caught up. Against a replay the Feather
+sent 88 ([racechrono-channels.md](../racechrono-channels.md#load-on-the-link)); a replay
+under WSL2 runs about 9% under the bike's 506 msg/s.
+
+**Standby**, the release build, read with `console-log.sh`:
+
+- Asleep 60 s after the last frame, three times out of three, at 13:51:56, 13:53:46 and
+  13:55:17. The owner saw the Atom's LED go dark. The Unit Mini CAN's power LED stays lit,
+  as its schematic has it ([hardware.md](../hardware.md#current-while-asleep)).
+- Woken by one `cansend` frame at 13:52:25.461; its port was back 2.2 s later. It
+  acknowledged when traffic resumed, 8 835 ms after its start, on 718 copies of the
+  CANable's first unacknowledged frame, which is the start described in
+  [bench.md](../bench.md#acknowledging-on-the-bench). The 8 s were the wait before
+  `cangen` was started.
+- Woken by the button, pressed by the owner; asleep again 59 s after its port came back.
+- The port came back after every wake. Windows reported no failed device, so the deep
+  sleep of patch 41 does on the Lite what it was meant to.
+
+Not seen: the LED's colours by eye, a microSD card, the board on the bike's 12 V.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

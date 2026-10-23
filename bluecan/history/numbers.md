@@ -57,6 +57,7 @@ History belongs in [firmware.md](firmware.md) (per patch) and [bench-link.md](be
 | What the drain path can take | **3399 frames/s** off the queue at a saturated bus, all offered to the radio | [patch 12](firmware.md#patch-12--the-drain-tasks-priority--applied) |
 | Why it refuses | `BLE_HS_ENOMEM` — the host is out of mbufs, every time | [patch 13](firmware.md#patch-13--the-frame-path-goes-straight-at-the-host--applied) |
 | Connection interval | **assigned by the phone, not granted**: 15.00, 12.50 and 11.25 ms have all come back from the same 7.5–12.5 ms request | [patch 11](firmware.md#patch-11--ask-the-phone-for-a-faster-connection-interval--applied) |
+| AtomS3 Lite, at 11.25 ms | clean to **726 msg/s**; 1.2% refused at 749, 9.7% at 929, 30% at 1055, 46% at 1539 | [the Lite on the bench](firmware.md#the-atoms3-lite-on-the-bench--run-and-it-works) |
 | First phone session | **8018 frames, 0 lost, 0 errors**, one subscribed peer | [the phone session](firmware.md#the-phone-session--run-and-it-works) |
 
 **Never compare two BLE runs at different negotiated intervals.** It is the ceiling on
