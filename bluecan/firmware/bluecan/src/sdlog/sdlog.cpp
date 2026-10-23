@@ -190,6 +190,8 @@ sdlog::sdlog() noexcept
     , _worst_us(0U)
     , _errors(0U)
     , _reopens(0U)
+    , _file_bytes(0U)
+    , _file_name{}
     , _mode(mode_off)
     , _open(false)
     , _found(card::not_looked)
@@ -306,6 +308,8 @@ bool sdlog::open_card() noexcept
         return false;
     }
 
+    _file_bytes = 0U;
+    snprintf(_file_name, sizeof(_file_name), "%s", name);
     bootln("SD log: writing %s", name);
     return true;
 }
@@ -387,6 +391,12 @@ void sdlog::make_room() noexcept
 void sdlog::close_card() noexcept
 {
     file.close();
+    // A start that received nothing, such as a wake by the button with the bus silent,
+    // leaves no file.
+    if (_file_bytes == 0U && card_fs.remove(_file_name))
+    {
+        bootln("SD log: %s received nothing, deleted", _file_name);
+    }
     unmount();
     _open = false;
 }
@@ -598,7 +608,12 @@ bool sdlog::write_sector(uint8_t const* p) noexcept
 {
     if (_mode == mode_card)
     {
-        return file.write(p, sector) == sector;
+        if (file.write(p, sector) != sector)
+        {
+            return false;
+        }
+        _file_bytes += sector;
+        return true;
     }
 
     // Emulated: a multiple-block write of eight blocks, and every so often the long
@@ -669,7 +684,7 @@ void sdlog::write_rest() noexcept
     {
         if (_mode == mode_card)
         {
-            file.write(ring + (tail & mask), rest);
+            _file_bytes += file.write(ring + (tail & mask), rest);
         }
         else
         {

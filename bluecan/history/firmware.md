@@ -2785,6 +2785,20 @@ whole. The button's wake before the Wi-Fi mode left `bluecan-0073.bin` at 0 byte
 earlier wake with no frame had left `bluecan-0070.bin`: every start in the normal mode
 opens a file. Not run: the Feather with a card.
 
+## Patch 51 — a log that received nothing is deleted — **applied, run on the Lite**
+
+2026-10-23, asked for by the owner after the empty `bluecan-0070.bin` and
+`bluecan-0073.bin` of patch 50's runs. The log counts the bytes written to its file, and
+closing a file it wrote nothing to deletes it, with `SD log: … received nothing, deleted`
+on the console. The card is still mounted and the file opened at the start, so a waking
+frame is still logged.
+
+On the Lite, the release build, the same day: started with the bus silent, it said
+`/bluecan-0075.bin received nothing, deleted` as it went to sleep 60 s later. Woken by a
+frame and given 20 s of the replay, it slept and kept `bluecan-0075.bin`, 254 KB; the
+owner's wake by the button into the Wi-Fi mode after it left no file behind. Built:
+`atom` 1 306 213 bytes of program and 94 176 of static RAM, `feather` 1 342 140.
+
 ## Open questions before the bike
 
 Written down in the order they would hurt. The two that headed this list became patches

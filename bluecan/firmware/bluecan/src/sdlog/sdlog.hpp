@@ -248,6 +248,8 @@ private:
     uint32_t _worst_us;             //!< slowest sector write
     uint32_t _errors;               //!< failed writes
     uint32_t _reopens;              //!< files opened after the first attempt
+    uint32_t _file_bytes;           //!< bytes written to the open file
+    char _file_name[24];            //!< the open file's path
     mode_t _mode;
     bool _open;                     //!< card mode: a file is open; the task's alone
     card _found;
