@@ -177,7 +177,8 @@ deep sleep. What either costs the bike's battery is estimated in
 With a microSD card on the board's card pins, the AtomS3 Lite's TF-Card Base
 ([hardware.md](hardware.md#the-m5stack-atoms3-lite)) or, on the Feather, a card on SCK
 A2, MOSI A3, MISO A4 and CS A5, the board logs every frame it receives to the
-card, whatever RaceChrono has asked for: a new file, `bluecan-NNNN.bin`, at every start.
+card, whatever RaceChrono has asked for: a new file, `bluecan-NNNN.bin`, at every start,
+so a wake by the button with the bus silent leaves an empty one.
 It looks for the card once, as it starts, and without one goes on with no log; a card
 put in later is used from the next start, which on the bike is the next wake. The files
 are downloaded from the [Wi-Fi mode](#the-wi-fi-mode). On the AtomS3 Lite with a 16 GB

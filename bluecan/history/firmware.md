@@ -2771,8 +2771,19 @@ and 100 152, `atom` without the Wi-Fi mode 728 821 and 72 848; against patch 49'
 The card taken out, the same day: the Wi-Fi mode's look said `no card in the socket, or
 one that does not answer`, within 1.4 s of the mode's start, Wi-Fi's start included, and
 the normal mode's the same, within 1.6 s of the restart; the console's lines came in
-batches, so neither is finer than that. Not run: the Feather with a card, and a wake from
-standby with a card.
+batches, so neither is finer than that.
+
+A wake from standby with the card in, the release build, the same day. The board asleep,
+one `cansend` frame woke it at 16:33:48.975; 5 s later `canplayer` replayed 60 s, which
+`candump` recorded as 31 287 frames, and the board slept again at 16:35:58. The owner
+woke it with the button, held it into the Wi-Fi mode and downloaded the file of that
+wake, `bluecan-0072.bin`: 31 814 records, its time 16:36:00. The first is the waking
+frame, 0.317 s after the chip's start, repeated 527 times over 139.8 ms while the board
+proved the bit rate; then, after the 4.9 s pause, the 31 287 frames, the same in the same
+order. So the card is logging before the board acknowledges, and standby closes the file
+whole. The button's wake before the Wi-Fi mode left `bluecan-0073.bin` at 0 bytes, as an
+earlier wake with no frame had left `bluecan-0070.bin`: every start in the normal mode
+opens a file. Not run: the Feather with a card.
 
 ## Open questions before the bike
 
