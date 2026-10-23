@@ -2672,6 +2672,10 @@ under WSL2 runs about 9% under the bike's 506 msg/s.
 - The port came back after every wake. Windows reported no failed device, so the deep
   sleep of patch 41 does on the Lite what it was meant to.
 
+**The Wi-Fi mode.** At 14:00 the owner held the button: the board restarted into the mode
+(`Mode: Wi-Fi`, network `bluecan-EB18`), the owner joined its network, and held the button
+again to leave it. Both switches by the button, as on the Feather.
+
 Not seen: the LED's colours by eye, a microSD card, the board on the bike's 12 V.
 
 ## Patch 49 — the Feather no longer stands in for the Lite — **applied, built**
